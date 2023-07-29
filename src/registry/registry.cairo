@@ -98,16 +98,17 @@ mod Registry {
             constructor_calldata.append(token_contract.into());
             constructor_calldata.append(token_id.low.into());
             constructor_calldata.append(token_id.high.into());
-            
+            let constructor_calldata_hash = self.array_hashing(constructor_calldata.span(), 0);
+
             let salt = pedersen(token_contract.into(), token_id.low.into());
-            let constructor_calldata_hash = self.array_hashing(constructor_calldata.span());
-            let account_address = pedersen(
-                'STARKNET_CONTRACT_ADDRESS',
-                0,
-                salt,
-                implementation_hash,
-                constructor_calldata_hash
-            );
+            
+            let mut computation_calldata: Array<felt252> = ArrayTrait::new();
+            computation_calldata.append(0);
+            computation_calldata.append(salt);
+            computation_calldata.append(implementation_hash);
+            computation_calldata.append(constructor_calldata_hash);
+
+            let account_address = self.array_hashing(computation_calldata.span(), 'STARKNET_CONTRACT_ADDRESS');
 
             account_address.try_into().unwrap()
         }
@@ -119,9 +120,9 @@ mod Registry {
 
     #[generate_trait]
     impl RegistryHelperImpl of RegistryHelperTrait {
-        fn array_hashing(self: @ContractState, array: Span<felt252>) -> felt252 {
+        fn array_hashing(self: @ContractState, array: Span<felt252>, first_element: felt252) -> felt252 {
             let mut array = array;
-            let mut array_hash: felt252 = 0;
+            let mut array_hash: felt252 = first_element;
             
             loop {
                 match array.pop_front() {
