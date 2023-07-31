@@ -1,5 +1,5 @@
 use array::{ArrayTrait, SpanTrait};
-use starknet::{account::Call, ContractAddress};
+use starknet::{account::Call, ContractAddress, ClassHash};
 
 #[starknet::interface]
 trait IAccount<TContractState>{
@@ -12,6 +12,7 @@ trait IAccount<TContractState>{
     fn token(self:@TContractState) -> (ContractAddress, u256);
     fn owner(ref self: TContractState, token_contract:ContractAddress, token_id:u256) -> ContractAddress; 
     fn nonce(self:@TContractState) -> felt252;
+    fn upgrade(ref self: TContractState, implementation: ClassHash);
 }
 
 #[starknet::interface]
@@ -34,7 +35,7 @@ trait IERC721<TContractState> {
 
 #[starknet::contract]
 mod Account {
-    use starknet::{get_tx_info, get_caller_address, get_contract_address,ContractAddress, account::Call, call_contract_syscall};
+    use starknet::{get_tx_info, get_caller_address, get_contract_address,ContractAddress, account::Call, call_contract_syscall, replace_class_syscall, ClassHash};
     use ecdsa::check_ecdsa_signature;
     use array::{SpanTrait, ArrayTrait};
     use box::BoxTrait;
@@ -45,15 +46,28 @@ mod Account {
     #[storage]
     struct Storage{
         _public_key: felt252,
-        _token_contract:ContractAddress,
-        _token_id:u256,
+        _token_contract: ContractAddress,
+        _token_id: u256,
+    }
+
+    #[event]
+    #[derive(Drop, starknet::Event)]
+    enum Event {
+        Upgraded: Upgraded
+    }
+
+    #[derive(Drop, starknet::Event)]
+    struct Upgraded {
+        tokenContract: ContractAddress, 
+        tokenId: u256, 
+        implementation: ClassHash
     }
 
     #[constructor]
     fn constructor(ref self: ContractState, _public_key:felt252, token_contract:ContractAddress, token_id:u256){
-            self._public_key.write(_public_key);
-            self._token_contract.read();
-            self._token_id.read();
+        self._public_key.write(_public_key);
+        self._token_contract.read();
+        self._token_id.read();
     }
 
 
@@ -107,7 +121,19 @@ mod Account {
             let contract = self._token_contract.read();
             let tokenId = self._token_id.read();
             return (contract, tokenId);
-        }       
+        } 
+
+        fn upgrade(ref self: ContractState, implementation: ClassHash) {
+            assert(!implementation.is_zero(), 'Invalid class hash');
+            replace_class_syscall(implementation).unwrap_syscall();
+            self.emit(
+                Upgraded{
+                    tokenContract: self._token_contract.read(),
+                    tokenId: self._token_id.read(),
+                    implementation,
+                }
+            );
+        }      
     }
 
 
