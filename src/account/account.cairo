@@ -65,10 +65,10 @@ use super::{IERC721DispatcherTrait, IERC721Dispatcher};
 
 
         #[constructor]
-        fn constructor(ref self: ContractState, _public_key:felt252, token_contract:ContractAddress, token_id:u256){
+        fn constructor(ref self: ContractState, _public_key:felt252, token_contract:ContractAddress, token_id:u256, _token_contract:ContractAddress, _token_id:u256){
                 self._public_key.write(_public_key);
-                self._token_contract.read();
-                self._token_id.read();
+                self._token_contract.write(_token_contract);
+                self._token_id.write(_token_id);
         }
 
 
