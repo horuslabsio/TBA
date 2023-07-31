@@ -5,14 +5,9 @@ use starknet::ContractAddress;
 
 
 
-// #[starknet::interface]
-// trait IsupportInterface<TContractState>{
-//     fn register_interface(self:@TContractState, interface_id: felt252) -> bool;
-//     fn deresgister_interface(self:@TContractState, interface_id:felt252) -> bool;
-// }
 
-const QUERY_VERSION: felt252 = 340282366920938463463374607431768211457;
-const TRANSACTION_VERSION: felt252 = 1;
+// const QUERY_VERSION: felt252 = 340282366920938463463374607431768211457;
+// const TRANSACTION_VERSION: felt252 = 1;
 
 
 #[starknet::interface]
@@ -24,7 +19,6 @@ trait IAccount<TContractState>{
     fn set_public_key(ref self: TContractState, new_public_key:felt252);
     fn get_public_key(self: @TContractState) -> felt252;
     fn is_valid_signature(self:@TContractState, hash:felt252, signature:Array<felt252>) -> felt252;
-    // fn support_interface(self:@TContractState, interface_id:felt252) -> bool;
     fn token(self:@TContractState) -> (ContractAddress, u256);
     fn owner(ref self: TContractState, token_contract:ContractAddress, token_id:u256) -> ContractAddress; 
     fn nonce(self:@TContractState) -> felt252;
@@ -51,17 +45,15 @@ trait IERC721<TContractState> {
 #[starknet::contract]
 mod Account {
 
-use starknet::{get_tx_info, get_caller_address, get_contract_address};
+use starknet::{get_tx_info, get_caller_address, get_contract_address,ContractAddress };
 use ecdsa::check_ecdsa_signature;
-use array::SpanTrait;
-use array::ArrayTrait;
+use array::{SpanTrait, ArrayTrait};
 use box::BoxTrait;
 use option::OptionTrait;
 use zeroable::Zeroable;
 use starknet::account::Call;
-use starknet::ContractAddress;
-use super::IERC721DispatcherTrait;
-use super::IERC721Dispatcher;
+use super::{IERC721DispatcherTrait, IERC721Dispatcher};
+
 
     #[storage]
     struct Storage{
@@ -74,7 +66,9 @@ use super::IERC721Dispatcher;
 
         #[constructor]
         fn constructor(ref self: ContractState, _public_key:felt252, token_contract:ContractAddress, token_id:u256){
-        self.initializer(_public_key, token_contract, token_id);
+                self._public_key.write(_public_key);
+                self._token_contract.read();
+                self._token_id.read();
         }
 
 
@@ -118,14 +112,14 @@ use super::IERC721Dispatcher;
                 // equivalent of executeCall
                 fn __execute__(ref self: ContractState, mut calls:Array<Call>, token_contract:ContractAddress, token_id:u256) -> Array<Span<felt252>>{
                 let owner = IERC721Dispatcher { contract_address: token_contract }.owner_of(token_id);
-                assert(owner == get_caller_address(), 'CALLER_IS_NOT_OWNER');
                     let sender = get_caller_address();
-                    assert(sender.is_zero(), 'Account: invalid caller');
-                        let tx_info = get_tx_info().unbox();
-                        let version = tx_info.version;
-                        if version != super::TRANSACTION_VERSION {
-                            assert(version == super::QUERY_VERSION, 'Account: invalid tx version');
-                        }
+                    assert(owner == sender,'CALLER_IS_NOT_OWNER');
+                    // assert(sender.is_zero(), 'Account: invalid caller');
+                        // let tx_info = get_tx_info().unbox();
+                        // let version = tx_info.version;
+                        // if version != super::TRANSACTION_VERSION {
+                        //     assert(version == super::QUERY_VERSION, 'Account: invalid tx version');
+                        // }
 
                         _execute_calls(calls)
                 }
@@ -151,11 +145,6 @@ use super::IERC721Dispatcher;
 
         #[generate_trait]
         impl internalImpl of InternalTrait{
-            fn initializer(ref self:ContractState, public_key:felt252, token_contract:ContractAddress, token_id:u256){
-                self._public_key.write(public_key);
-                self._token_contract.read();
-                self._token_id.read();
-            }
 
                 fn validate_transaction(self: @ContractState) -> felt252 {
                     let tx_info = get_tx_info().unbox();
