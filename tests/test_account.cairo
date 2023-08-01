@@ -1,6 +1,6 @@
 use starknet::ContractAddress;
 use traits::TryInto;
-use array::ArrayTrait;
+use array::{ArrayTrait, SpanTrait};
 use result::ResultTrait;
 use option::OptionTrait;
 use cheatcodes::PreparedContract;
@@ -10,8 +10,9 @@ use TBA::account::account::IAccountDispatcher;
 use TBA::account::account::IAccountDispatcherTrait;
 use TBA::account::account::Account;
 
-const PUBLIC_KEY: felt252 = 0x333333;
-const NEW_PUBKEY: felt252 = 0x789789;
+const PUBLIC_KEY: felt252 = 883045738439352841478194533192765345509759306772397516907181243450667673002;
+const NEW_PUBKEY: felt252 = 927653455097593347819453319276534550975930677239751690718124346772397516907;
+const SALT: felt252 = 123;
 const TOKEN: felt252 = 0x242424;
 const ID: felt252 = 1;
 
@@ -57,6 +58,40 @@ fn test_constructor() {
 
     let pubkey = dispatcher.get_public_key();
     assert(pubkey == PUBLIC_KEY, 'invalid public key');
+
+    let (token_contract, token_id) = dispatcher.token();
+    assert(token_contract == TOKEN.try_into().unwrap(), 'invalid token address');
+    assert(token_id.low == ID.try_into().unwrap(), 'invalid token id');
+}
+
+// TODO: implement test for set_public_key, testing all possible cases once cheatcodes are available.
+
+#[test]
+fn test_is_valid_signature() {
+    let contract_address = __setup__();
+    let dispatcher = IAccountDispatcher { contract_address };
+    let data = SIGNED_TX_DATA();
+    let hash = data.transaction_hash;
+
+    let mut good_signature = ArrayTrait::new();
+    good_signature.append(data.r);
+    good_signature.append(data.s);
+
+    let mut bad_signature = ArrayTrait::new();
+    bad_signature.append(0x284);
+    bad_signature.append(0x492);
+
+    let is_valid = dispatcher.isValidSignature(hash, good_signature.span());
+    assert(is_valid == true, 'should accept valid signature');
+
+    let is_valid = dispatcher.isValidSignature(hash, bad_signature.span());
+    assert(is_valid == false, 'should reject invalid signature');
+}
+
+#[test]
+fn test_get_token() {
+    let contract_address = __setup__();
+    let dispatcher = IAccountDispatcher { contract_address };
 
     let (token_contract, token_id) = dispatcher.token();
     assert(token_contract == TOKEN.try_into().unwrap(), 'invalid token address');
