@@ -1,4 +1,4 @@
-use starknet::ContractAddress;
+use starknet::{ContractAddress, account::Call};
 use traits::TryInto;
 use array::{ArrayTrait, SpanTrait};
 use result::ResultTrait;
@@ -9,6 +9,9 @@ use forge_print::PrintTrait;
 use TBA::account::account::IAccountDispatcher;
 use TBA::account::account::IAccountDispatcherTrait;
 use TBA::account::account::Account;
+use TBA::test_data::hello_starknet::IHelloStarknetDispatcher;
+use TBA::test_data::hello_starknet::IHelloStarknetDispatcherTrait;
+use TBA::test_data::hello_starknet::HelloStarknet;
 
 const PUBLIC_KEY: felt252 = 883045738439352841478194533192765345509759306772397516907181243450667673002;
 const NEW_PUBKEY: felt252 = 927653455097593347819453319276534550975930677239751690718124346772397516907;
@@ -64,8 +67,6 @@ fn test_constructor() {
     assert(token_id.low == ID.try_into().unwrap(), 'invalid token id');
 }
 
-// TODO: implement test for set_public_key, testing all possible cases once cheatcodes are available.
-
 #[test]
 fn test_is_valid_signature() {
     let contract_address = __setup__();
@@ -88,6 +89,81 @@ fn test_is_valid_signature() {
     assert(is_valid == false, 'should reject invalid signature');
 }
 
+// PS: both test_execute and test_execute_multicall will fail ATM since caller is not a zero address, till we get a cheatcode to prank address
+#[test]
+fn test_execute() {
+    let contract_address = __setup__();
+    let dispatcher = IAccountDispatcher { contract_address };
+    let data = SIGNED_TX_DATA();
+
+    // deploy `HelloStarknet` contract for testing
+    let class_hash = declare('HelloStarknet').unwrap();
+    let prepared = PreparedContract { class_hash: class_hash, constructor_calldata: @ArrayTrait::new() };
+    let test_address = deploy(prepared).unwrap();
+    let test_address: ContractAddress = test_address.try_into().unwrap();
+
+    // craft calldata for call array
+    let mut calldata = ArrayTrait::new();
+    calldata.append(100);
+    let call = Call {
+        to: test_address, 
+        selector: 1530486729947006463063166157847785599120665941190480211966374137237989315360,
+        calldata: calldata
+    };
+
+    // construct call array
+    let mut calls = ArrayTrait::new();
+    calls.append(call);
+
+    dispatcher.__execute__(calls);
+    
+    // check test contract state was updated
+    let test_dispatcher = IHelloStarknetDispatcher { contract_address: test_address };
+    let balance = test_dispatcher.get_balance();
+    assert(balance == 100, 'execute was not successful');
+}
+
+#[test]
+fn test_execute_multicall() {
+    let contract_address = __setup__();
+    let dispatcher = IAccountDispatcher { contract_address };
+    let data = SIGNED_TX_DATA();
+
+    // deploy `HelloStarknet` contract for testing
+    let class_hash = declare('HelloStarknet').unwrap();
+    let prepared = PreparedContract { class_hash: class_hash, constructor_calldata: @ArrayTrait::new() };
+    let test_address = deploy(prepared).unwrap();
+    let test_address: ContractAddress = test_address.try_into().unwrap();
+
+    // craft calldata and create call array
+    let mut calldata = ArrayTrait::new();
+    calldata.append(100);
+    let call1 = Call {
+        to: test_address, 
+        selector: 1530486729947006463063166157847785599120665941190480211966374137237989315360,
+        calldata: calldata
+    };
+    let mut calldata2 = ArrayTrait::new();
+    calldata2.append(200);
+    let call2 = Call {
+        to: test_address, 
+        selector: 1157683809588496510300162709548024577765603117833695133799390448986300456129,
+        calldata: calldata2
+    };
+
+    // construct call array
+    let mut calls = ArrayTrait::new();
+    calls.append(call1);
+    calls.append(call2);
+
+    dispatcher.__execute__(calls);
+    
+    // check test contract state was updated
+    let test_dispatcher = IHelloStarknetDispatcher { contract_address: test_address };
+    let balance = test_dispatcher.get_balance();
+    assert(balance == 500, 'execute was not successful');
+}
+
 #[test]
 fn test_get_token() {
     let contract_address = __setup__();
@@ -97,3 +173,5 @@ fn test_get_token() {
     assert(token_contract == TOKEN.try_into().unwrap(), 'invalid token address');
     assert(token_id.low == ID.try_into().unwrap(), 'invalid token id');
 }
+
+// TODO: implement test for set/get public key, getting owner and upgradeability when the necessary cheatcodes are made available
