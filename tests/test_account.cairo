@@ -1,8 +1,9 @@
-use starknet::{ContractAddress, account::Call};
+use starknet::{ContractAddress, contract_address_to_felt252, account::Call};
 use traits::TryInto;
 use array::{ArrayTrait, SpanTrait};
 use result::ResultTrait;
 use option::OptionTrait;
+use integer::u256_from_felt252;
 use cheatcodes::PreparedContract;
 use forge_print::PrintTrait;
 
@@ -18,11 +19,14 @@ use TBA::test_helper::account_upgrade::IUpgradedAccountDispatcher;
 use TBA::test_helper::account_upgrade::IUpgradedAccountDispatcherTrait;
 use TBA::test_helper::account_upgrade::UpgradedAccount;
 
+use TBA::test_helper::erc721_helper::IERC721Dispatcher;
+use TBA::test_helper::erc721_helper::IERC721DispatcherTrait;
+use TBA::test_helper::erc721_helper::ERC721;
+
 const PUBLIC_KEY: felt252 = 883045738439352841478194533192765345509759306772397516907181243450667673002;
 const NEW_PUBKEY: felt252 = 927653455097593347819453319276534550975930677239751690718124346772397516907;
 const SALT: felt252 = 123;
-const TOKEN: felt252 = 0x242424;
-const ID: felt252 = 1;
+const ACCOUNT: felt252 = 1234;
 
 #[derive(Drop)]
 struct SignedTransactionData {
@@ -43,36 +47,50 @@ fn SIGNED_TX_DATA() -> SignedTransactionData {
     }
 }
 
-fn __setup__() -> ContractAddress {
-    let class_hash = declare('Account');
+fn __setup__() -> (ContractAddress, ContractAddress) {
+    // deploy erc721 helper contract
+    let erc721_class_hash = declare('ERC721');
+    let mut erc721_constructor_calldata = ArrayTrait::new();
+    erc721_constructor_calldata.append('tokenbound');
+    erc721_constructor_calldata.append('TBA');
 
-    let mut constructor_calldata = ArrayTrait::new();
-    constructor_calldata.append(PUBLIC_KEY);
-    constructor_calldata.append(TOKEN);
-    constructor_calldata.append(ID);
-    constructor_calldata.append(0);
+    let erc721_prepared = PreparedContract { class_hash: erc721_class_hash, constructor_calldata: @erc721_constructor_calldata };
+    let erc721_contract_address = deploy(erc721_prepared).unwrap();
 
-    let prepared = PreparedContract { class_hash: class_hash, constructor_calldata: @constructor_calldata };
-    let contract_address = deploy(prepared).unwrap();
-    contract_address
+    // mint a new token
+    let dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };
+    let recipient: ContractAddress = ACCOUNT.try_into().unwrap();
+    dispatcher.mint(recipient, u256_from_felt252(1));
+
+    // deploy account contract
+    let account_class_hash = declare('Account');
+    let mut acct_constructor_calldata = ArrayTrait::new();
+    acct_constructor_calldata.append(PUBLIC_KEY);
+    acct_constructor_calldata.append(contract_address_to_felt252(erc721_contract_address));
+    acct_constructor_calldata.append(1);
+    acct_constructor_calldata.append(0);
+
+    let acct_prepared = PreparedContract { class_hash: account_class_hash, constructor_calldata: @acct_constructor_calldata };
+    let acct_contract_address = deploy(acct_prepared).unwrap();
+    (acct_contract_address, erc721_contract_address)
 }
 
 #[test]
 fn test_constructor() {
-    let contract_address = __setup__();
+    let (contract_address, erc721_contract_address) = __setup__();
     let dispatcher = IAccountDispatcher { contract_address };
 
     let pubkey = dispatcher.get_public_key();
     assert(pubkey == PUBLIC_KEY, 'invalid public key');
 
     let (token_contract, token_id) = dispatcher.token();
-    assert(token_contract == TOKEN.try_into().unwrap(), 'invalid token address');
-    assert(token_id.low == ID.try_into().unwrap(), 'invalid token id');
+    assert(token_contract == erc721_contract_address, 'invalid token address');
+    assert(token_id.low == 1.try_into().unwrap(), 'invalid token id');
 }
 
 #[test]
 fn test_setting_getting_public_key() {
-    let contract_address = __setup__();
+    let (contract_address, erc721_contract_address) = __setup__();
     let dispatcher = IAccountDispatcher { contract_address };
 
     start_prank(contract_address, contract_address);
@@ -84,7 +102,7 @@ fn test_setting_getting_public_key() {
 
 #[test]
 fn test_is_valid_signature() {
-    let contract_address = __setup__();
+    let (contract_address, erc721_contract_address) = __setup__();
     let dispatcher = IAccountDispatcher { contract_address };
     let data = SIGNED_TX_DATA();
     let hash = data.transaction_hash;
@@ -106,7 +124,7 @@ fn test_is_valid_signature() {
 
 #[test]
 fn test_execute() {
-    let contract_address = __setup__();
+    let (contract_address, erc721_contract_address) = __setup__();
     let dispatcher = IAccountDispatcher { contract_address };
     let data = SIGNED_TX_DATA();
 
@@ -143,7 +161,7 @@ fn test_execute() {
 
 #[test]
 fn test_execute_multicall() {
-    let contract_address = __setup__();
+    let (contract_address, erc721_contract_address) = __setup__();
     let dispatcher = IAccountDispatcher { contract_address };
     let data = SIGNED_TX_DATA();
 
@@ -188,17 +206,28 @@ fn test_execute_multicall() {
 
 #[test]
 fn test_token() {
-    let contract_address = __setup__();
+    let (contract_address, erc721_contract_address) = __setup__();
     let dispatcher = IAccountDispatcher { contract_address };
 
     let (token_contract, token_id) = dispatcher.token();
-    assert(token_contract == TOKEN.try_into().unwrap(), 'invalid token address');
-    assert(token_id.low == ID.try_into().unwrap(), 'invalid token id');
+    assert(token_contract == erc721_contract_address, 'invalid token address');
+    assert(token_id.low == 1.try_into().unwrap(), 'invalid token id');
+}
+
+#[test]
+fn test_owner() {
+    let (contract_address, erc721_contract_address) = __setup__();
+    let acct_dispatcher = IAccountDispatcher { contract_address: contract_address };
+    let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };   
+
+    let owner = acct_dispatcher.owner(erc721_contract_address, u256_from_felt252(1));
+    let token_owner = token_dispatcher.owner_of(u256_from_felt252(1));
+    assert(owner == token_owner, 'invalid owner');
 }
 
 #[test]
 fn test_upgrade() {
-    let contract_address = __setup__();
+    let (contract_address, erc721_contract_address) = __setup__();
     let dispatcher = IAccountDispatcher { contract_address };
 
     let new_class_hash = declare('UpgradedAccount');
