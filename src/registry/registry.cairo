@@ -3,7 +3,7 @@ use starknet::ContractAddress;
 
 #[starknet::interface]
 trait IRegistry<TContractState> {
-    fn create_account(ref self: TContractState, implementation_hash: felt252, public_key: felt252, token_contract: ContractAddress, token_id: u256);
+    fn create_account(ref self: TContractState, implementation_hash: felt252, public_key: felt252, token_contract: ContractAddress, token_id: u256) -> ContractAddress;
     fn get_account(self: @TContractState, implementation_hash: felt252, public_key: felt252, token_contract: ContractAddress, token_id: u256) -> ContractAddress;
     fn total_deployed_accounts(self: @TContractState, token_contract: ContractAddress, token_id: u256) -> u8;
 }
@@ -65,7 +65,7 @@ mod Registry {
             public_key: felt252,
             token_contract: ContractAddress,
             token_id: u256,
-        ) {
+        ) -> ContractAddress {
             let owner = IERC721Dispatcher { contract_address: token_contract }.owner_of(token_id);
             assert(owner == get_caller_address(), 'CALLER_IS_NOT_OWNER');
 
@@ -90,6 +90,8 @@ mod Registry {
                     token_id,
                 }
             );
+
+            account_address
         }
 
         fn get_account(self: @ContractState, implementation_hash: felt252, public_key: felt252, token_contract: ContractAddress, token_id: u256) -> ContractAddress {
