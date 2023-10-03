@@ -36,7 +36,7 @@ trait IERC721<TContractState> {
 
 #[starknet::contract]
 mod UpgradedAccount {
-    use starknet::{get_tx_info, get_caller_address, get_contract_address,ContractAddress, account::Call, call_contract_syscall, replace_class_syscall, ClassHash};
+    use starknet::{get_tx_info, get_caller_address, get_contract_address,ContractAddress, account::Call, call_contract_syscall, replace_class_syscall, ClassHash, SyscallResultTrait};
     use ecdsa::check_ecdsa_signature;
     use array::{SpanTrait, ArrayTrait};
     use box::BoxTrait;

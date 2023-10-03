@@ -28,13 +28,15 @@ trait IERC721<TContractState> {
 
 #[starknet::contract]
 mod Registry {
-    use starknet::{ContractAddress, get_caller_address, syscalls::call_contract_syscall, class_hash::ClassHash, class_hash::Felt252TryIntoClassHash, syscalls::deploy_syscall};
+    use core::hash::HashStateTrait;
+use starknet::{ContractAddress, get_caller_address, syscalls::call_contract_syscall, class_hash::ClassHash, class_hash::Felt252TryIntoClassHash, syscalls::deploy_syscall, SyscallResultTrait};
     use zeroable::Zeroable;
     use traits::TryInto;
     use traits::Into;
     use option::OptionTrait;
     use array::ArrayTrait;
     use array::SpanTrait;
+    use pedersen::PedersenTrait;
 
     use super::IERC721DispatcherTrait;
     use super::IERC721Dispatcher;
@@ -76,7 +78,7 @@ mod Registry {
             constructor_calldata.append(token_id.high.into());
 
             let class_hash: ClassHash = implementation_hash.try_into().unwrap();
-            let salt = pedersen(token_contract.into(), token_id.low.into());
+            let salt = PedersenTrait::new(token_contract.into()).update(token_id.low.into()).finalize();
             let result = deploy_syscall(class_hash, salt, constructor_calldata.span(), true);
             let (account_address, _) = result.unwrap_syscall();
 
@@ -95,47 +97,27 @@ mod Registry {
         }
 
         fn get_account(self: @ContractState, implementation_hash: felt252, public_key: felt252, token_contract: ContractAddress, token_id: u256) -> ContractAddress {
-            let mut constructor_calldata: Array<felt252> = ArrayTrait::new();
-            constructor_calldata.append(public_key);
-            constructor_calldata.append(token_contract.into());
-            constructor_calldata.append(token_id.low.into());
-            constructor_calldata.append(token_id.high.into());
-            let constructor_calldata_hash = self.array_hashing(constructor_calldata.span(), 0);
+            let mut constructor_calldata: Array<felt252> = array![token_contract.into(), token_id.low.into(), token_id.high.into()];
+            let constructor_calldata_hash = PedersenTrait::new(0)
+                .update(token_contract.into())
+                .update(token_id.low.into())
+                .update(token_id.high.into())
+                .finalize();
 
-            let salt = pedersen(token_contract.into(), token_id.low.into());
+            let salt = PedersenTrait::new(token_contract.into()).update(token_id.low.into()).finalize();
             
-            let mut computation_calldata: Array<felt252> = ArrayTrait::new();
-            computation_calldata.append(0);
-            computation_calldata.append(salt);
-            computation_calldata.append(implementation_hash);
-            computation_calldata.append(constructor_calldata_hash);
-
-            let account_address = self.array_hashing(computation_calldata.span(), 'STARKNET_CONTRACT_ADDRESS');
+            let account_address = PedersenTrait::new('STARKNET_CONTRACT_ADDRESS')
+                .update(0)
+                .update(salt)
+                .update(implementation_hash)
+                .update(constructor_calldata_hash)
+                .finalize();
 
             account_address.try_into().unwrap()
         }
 
         fn total_deployed_accounts(self: @ContractState, token_contract: ContractAddress, token_id: u256) -> u8 {
             self.registry_deployed_accounts.read((token_contract, token_id))
-        }
-    }
-
-    #[generate_trait]
-    impl RegistryHelperImpl of RegistryHelperTrait {
-        fn array_hashing(self: @ContractState, array: Span<felt252>, first_element: felt252) -> felt252 {
-            let mut array = array;
-            let mut array_hash: felt252 = first_element;
-            
-            loop {
-                match array.pop_front() {
-                    Option::Some(item) => {
-                        array_hash = pedersen(array_hash, *item);
-                    },
-                    Option::None(_) => {
-                        break array_hash;
-                    }
-                };
-            }
         }
     }
 }
