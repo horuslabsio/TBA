@@ -71,11 +71,7 @@ use starknet::{ContractAddress, get_caller_address, syscalls::call_contract_sysc
             let owner = IERC721Dispatcher { contract_address: token_contract }.owner_of(token_id);
             assert(owner == get_caller_address(), 'CALLER_IS_NOT_OWNER');
 
-            let mut constructor_calldata: Array<felt252> = ArrayTrait::new();
-            constructor_calldata.append(public_key);
-            constructor_calldata.append(token_contract.into());
-            constructor_calldata.append(token_id.low.into());
-            constructor_calldata.append(token_id.high.into());
+            let mut constructor_calldata: Array<felt252> = array![public_key, token_contract.into(), token_id.low.into(), token_id.high.into()];
 
             let class_hash: ClassHash = implementation_hash.try_into().unwrap();
             let salt = PedersenTrait::new(token_contract.into()).update(token_id.low.into()).finalize();
@@ -97,8 +93,8 @@ use starknet::{ContractAddress, get_caller_address, syscalls::call_contract_sysc
         }
 
         fn get_account(self: @ContractState, implementation_hash: felt252, public_key: felt252, token_contract: ContractAddress, token_id: u256) -> ContractAddress {
-            let mut constructor_calldata: Array<felt252> = array![token_contract.into(), token_id.low.into(), token_id.high.into()];
             let constructor_calldata_hash = PedersenTrait::new(0)
+                .update(public_key)
                 .update(token_contract.into())
                 .update(token_id.low.into())
                 .update(token_id.high.into())
