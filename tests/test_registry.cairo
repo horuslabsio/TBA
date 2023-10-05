@@ -63,7 +63,6 @@ fn test_create_account() {
     let acct_dispatcher = IAccountDispatcher { contract_address: account_address };
     let public_key = acct_dispatcher.get_public_key();
     assert(public_key == PUBLIC_KEY, 'acct deployed wrongly');
-    account_address.print();
 }
 
 #[test]
@@ -105,7 +104,5 @@ fn test_get_account() {
     let account = registry_dispatcher.get_account(class_hash_to_felt252(acct_class_hash), PUBLIC_KEY, erc721_contract_address, u256_from_felt252(1));
 
     // compare both addresses
-    account.print();
-    account_address.print();
     assert(account == account_address, 'get_account computes wrongly');
 }
