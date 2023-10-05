@@ -3,8 +3,8 @@ use starknet::ContractAddress;
 
 #[starknet::interface]
 trait IRegistry<TContractState> {
-    fn create_account(ref self: TContractState, implementation_hash: felt252, public_key: felt252, token_contract: ContractAddress, token_id: u256) -> ContractAddress;
-    fn get_account(self: @TContractState, implementation_hash: felt252, public_key: felt252, token_contract: ContractAddress, token_id: u256) -> ContractAddress;
+    fn create_account(ref self: TContractState, implementation_hash: felt252, public_key: felt252, token_contract: ContractAddress, token_id: u256, salt: felt252) -> ContractAddress;
+    fn get_account(self: @TContractState, implementation_hash: felt252, public_key: felt252, token_contract: ContractAddress, token_id: u256, salt: felt252) -> ContractAddress;
     fn total_deployed_accounts(self: @TContractState, token_contract: ContractAddress, token_id: u256) -> u8;
 }
 
@@ -67,6 +67,7 @@ use starknet::{ContractAddress, get_caller_address, syscalls::call_contract_sysc
             public_key: felt252,
             token_contract: ContractAddress,
             token_id: u256,
+            salt: felt252
         ) -> ContractAddress {
             let owner = IERC721Dispatcher { contract_address: token_contract }.owner_of(token_id);
             assert(owner == get_caller_address(), 'CALLER_IS_NOT_OWNER');
@@ -74,13 +75,11 @@ use starknet::{ContractAddress, get_caller_address, syscalls::call_contract_sysc
             let mut constructor_calldata: Array<felt252> = array![public_key, token_contract.into(), token_id.low.into(), token_id.high.into()];
 
             let class_hash: ClassHash = implementation_hash.try_into().unwrap();
-            let salt = PedersenTrait::new(token_contract.into()).update(token_id.low.into()).finalize();
-            
             let result = deploy_syscall(class_hash, salt, constructor_calldata.span(), true);
             let (account_address, _) = result.unwrap_syscall();
 
-            let no_of_deployed_accounts: u8 = self.registry_deployed_accounts.read((token_contract, token_id));
-            self.registry_deployed_accounts.write((token_contract, token_id), no_of_deployed_accounts + 1_u8);
+            let new_deployment_index: u8 = self.registry_deployed_accounts.read((token_contract, token_id)) + 1_u8;
+            self.registry_deployed_accounts.write((token_contract, token_id), new_deployment_index);
 
             self.emit(
                 AccountCreated {
@@ -93,7 +92,7 @@ use starknet::{ContractAddress, get_caller_address, syscalls::call_contract_sysc
             account_address
         }
 
-        fn get_account(self: @ContractState, implementation_hash: felt252, public_key: felt252, token_contract: ContractAddress, token_id: u256) -> ContractAddress {
+        fn get_account(self: @ContractState, implementation_hash: felt252, public_key: felt252, token_contract: ContractAddress, token_id: u256, salt: felt252) -> ContractAddress {
             let constructor_calldata_hash = PedersenTrait::new(0)
                 .update(public_key)
                 .update(token_contract.into())
@@ -101,8 +100,6 @@ use starknet::{ContractAddress, get_caller_address, syscalls::call_contract_sysc
                 .update(token_id.high.into())
                 .update(4)
                 .finalize();
-
-            let salt = PedersenTrait::new(token_contract.into()).update(token_id.low.into()).finalize();
 
             let prefix: felt252 = 'STARKNET_CONTRACT_ADDRESS';
             let account_address = PedersenTrait::new(0)
