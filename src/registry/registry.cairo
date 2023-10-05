@@ -75,6 +75,7 @@ use starknet::{ContractAddress, get_caller_address, syscalls::call_contract_sysc
 
             let class_hash: ClassHash = implementation_hash.try_into().unwrap();
             let salt = PedersenTrait::new(token_contract.into()).update(token_id.low.into()).finalize();
+            
             let result = deploy_syscall(class_hash, salt, constructor_calldata.span(), true);
             let (account_address, _) = result.unwrap_syscall();
 
@@ -98,15 +99,19 @@ use starknet::{ContractAddress, get_caller_address, syscalls::call_contract_sysc
                 .update(token_contract.into())
                 .update(token_id.low.into())
                 .update(token_id.high.into())
+                .update(4)
                 .finalize();
 
             let salt = PedersenTrait::new(token_contract.into()).update(token_id.low.into()).finalize();
-            
-            let account_address = PedersenTrait::new('STARKNET_CONTRACT_ADDRESS')
+
+            let prefix: felt252 = 'STARKNET_CONTRACT_ADDRESS';
+            let account_address = PedersenTrait::new(0)
+                .update(prefix)
                 .update(0)
                 .update(salt)
                 .update(implementation_hash)
                 .update(constructor_calldata_hash)
+                .update(5)
                 .finalize();
 
             account_address.try_into().unwrap()
