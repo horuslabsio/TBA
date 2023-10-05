@@ -53,7 +53,7 @@ fn test_create_account() {
 
     // create account
     let acct_class_hash = declare('Account').class_hash;
-    let account_address = registry_dispatcher.create_account(class_hash_to_felt252(acct_class_hash), PUBLIC_KEY, erc721_contract_address, u256_from_felt252(1));
+    let account_address = registry_dispatcher.create_account(class_hash_to_felt252(acct_class_hash), PUBLIC_KEY, erc721_contract_address, u256_from_felt252(1), 245828);
     
     // check total_deployed_accounts
     let total_deployed_accounts = registry_dispatcher.total_deployed_accounts(erc721_contract_address, u256_from_felt252(1));
@@ -77,9 +77,9 @@ fn test_getting_total_deployed_accounts() {
 
     let acct_class_hash = declare('Account').class_hash;
     // create multiple accounts for same NFT
-    let account_address1 = registry_dispatcher.create_account(class_hash_to_felt252(acct_class_hash), PUBLIC_KEY, erc721_contract_address, u256_from_felt252(1));
-    let account_address2 = registry_dispatcher.create_account(class_hash_to_felt252(acct_class_hash), PUBLIC_KEY1, erc721_contract_address, u256_from_felt252(1));
-    let account_address3 = registry_dispatcher.create_account(class_hash_to_felt252(acct_class_hash), PUBLIC_KEY2, erc721_contract_address, u256_from_felt252(1));
+    let account_address1 = registry_dispatcher.create_account(class_hash_to_felt252(acct_class_hash), PUBLIC_KEY, erc721_contract_address, u256_from_felt252(1), 3554633);
+    let account_address2 = registry_dispatcher.create_account(class_hash_to_felt252(acct_class_hash), PUBLIC_KEY1, erc721_contract_address, u256_from_felt252(1), 363256);
+    let account_address3 = registry_dispatcher.create_account(class_hash_to_felt252(acct_class_hash), PUBLIC_KEY2, erc721_contract_address, u256_from_felt252(1), 484734);
 
     // check total_deployed_accounts
     let total_deployed_accounts = registry_dispatcher.total_deployed_accounts(erc721_contract_address, u256_from_felt252(1));
@@ -98,10 +98,10 @@ fn test_get_account() {
 
     // deploy account
     let acct_class_hash = declare('Account').class_hash;
-    let account_address = registry_dispatcher.create_account(class_hash_to_felt252(acct_class_hash), PUBLIC_KEY, erc721_contract_address, u256_from_felt252(1));
+    let account_address = registry_dispatcher.create_account(class_hash_to_felt252(acct_class_hash), PUBLIC_KEY, erc721_contract_address, u256_from_felt252(1), 252520);
 
     // get account
-    let account = registry_dispatcher.get_account(class_hash_to_felt252(acct_class_hash), PUBLIC_KEY, erc721_contract_address, u256_from_felt252(1));
+    let account = registry_dispatcher.get_account(class_hash_to_felt252(acct_class_hash), PUBLIC_KEY, erc721_contract_address, u256_from_felt252(1), 252520);
 
     // compare both addresses
     assert(account == account_address, 'get_account computes wrongly');
