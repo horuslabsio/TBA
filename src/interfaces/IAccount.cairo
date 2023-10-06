@@ -12,6 +12,6 @@ trait IAccount<TContractState>{
     fn __validate_deploy__(self: @TContractState, class_hash:felt252, contract_address_salt:felt252, public_key:felt252) -> felt252;
     fn __execute__(ref self: TContractState, calls:Array<Call>) -> Array<Span<felt252>>;
     fn token(self:@TContractState) -> (ContractAddress, u256);
-    fn owner(ref self: TContractState, token_contract:ContractAddress, token_id:u256) -> ContractAddress;
+    fn owner(self: @TContractState, token_contract:ContractAddress, token_id:u256) -> ContractAddress;
     fn upgrade(ref self: TContractState, implementation: ClassHash);
 }
