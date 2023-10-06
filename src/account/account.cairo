@@ -1,6 +1,9 @@
 use array::{ArrayTrait, SpanTrait};
 use starknet::{account::Call, ContractAddress, ClassHash};
 
+////////////////////////////////
+// account interface
+////////////////////////////////
 #[starknet::interface]
 trait IAccount<TContractState>{
     fn get_public_key(self: @TContractState) -> felt252;
@@ -15,6 +18,9 @@ trait IAccount<TContractState>{
     fn upgrade(ref self: TContractState, implementation: ClassHash);
 }
 
+////////////////////////////////
+// ERC721 interface
+////////////////////////////////
 #[starknet::interface]
 trait IERC721<TContractState> {
     fn balance_of(self: @TContractState, account: ContractAddress) -> u256;
@@ -33,6 +39,9 @@ trait IERC721<TContractState> {
     fn token_uri(self: @TContractState, token_id: u256) -> felt252;
 }
 
+////////////////////////////////
+// Account contract
+////////////////////////////////
 #[starknet::contract]
 mod Account {
     use starknet::{get_tx_info, get_caller_address, get_contract_address,ContractAddress, account::Call, call_contract_syscall, replace_class_syscall, ClassHash, SyscallResultTrait};
@@ -45,9 +54,9 @@ mod Account {
 
     #[storage]
     struct Storage{
-        _public_key: felt252,
-        _token_contract: ContractAddress,
-        _token_id: u256,
+        _public_key: felt252, // account signer key
+        _token_contract: ContractAddress, // contract address of NFT
+        _token_id: u256, // token ID of NFT
     }
 
     #[event]
@@ -56,6 +65,10 @@ mod Account {
         Upgraded: Upgraded
     }
 
+    /// @notice Emitted when the account upgrades to a new implementation
+    /// @param tokenContract the contract address of the NFT 
+    /// @param tokenId the token ID of the NFT
+    /// @param implementation the upgraded account class hash
     #[derive(Drop, starknet::Event)]
     struct Upgraded {
         tokenContract: ContractAddress, 
@@ -73,16 +86,22 @@ mod Account {
 
     #[external(v0)]
     impl IAccountImpl of super::IAccount<ContractState>{
+        /// @notice get the account signer key
         fn get_public_key(self: @ContractState) -> felt252{
             self._public_key.read()
         }
 
+        /// @notice sets a new public key for the account
+        /// @param new_public_key The new public key
         fn set_public_key(ref self:ContractState, new_public_key:felt252){
             self.assert_only_self();
             self._public_key.write(new_public_key);
         }
 
-        fn isValidSignature(self: @ContractState, hash:felt252, signature: Span<felt252>) -> bool {
+        /// @notice used for signature validation
+        /// @param hash The message hash 
+        /// @param signature The signature to be validated
+        fn isValidSignature(self: @ContractState, hash: felt252, signature: Span<felt252>) -> bool {
             self.is_valid_signature(hash, signature)
         } 
 
@@ -99,10 +118,14 @@ mod Account {
             self.validate_transaction()
         }
 
+        /// @notice validate an account transaction
+        /// @param calls an array of transactions to be executed
         fn __validate__( ref self: ContractState, mut calls:Array<Call>) -> felt252{
             self.validate_transaction()
         }
 
+        /// @notice executes a transaction
+        /// @param calls an array of transactions to be executed
         fn __execute__(ref self: ContractState, mut calls:Array<Call>) -> Array<Span<felt252>> {
             let caller = get_caller_address();
             assert(caller.is_zero(), 'invalid caller');
@@ -113,16 +136,22 @@ mod Account {
             self._execute_calls(calls.span())
         }
 
+        /// @notice gets the token bound NFT owner
+        /// @param token_contract the contract address of the NFT
+        /// @param token_id the token ID of the NFT
         fn owner(self: @ContractState, token_contract:ContractAddress, token_id:u256) -> ContractAddress {
             IERC721Dispatcher { contract_address: token_contract }.owner_of(token_id)
         }
 
+        /// @notice returns the contract address and token ID of the NFT
         fn token(self: @ContractState) -> (ContractAddress, u256) {
             let contract = self._token_contract.read();
             let tokenId = self._token_id.read();
             return (contract, tokenId);
         }  
 
+        /// @notice ugprades an account implementation
+        /// @param implementation the new class_hash
         fn upgrade(ref self: ContractState, implementation: ClassHash) {
             self.assert_only_self();
             assert(!implementation.is_zero(), 'Invalid class hash');
@@ -139,12 +168,14 @@ mod Account {
 
     #[generate_trait]
     impl internalImpl of InternalTrait{
+        /// @notice check that caller is the token bound account
         fn assert_only_self(ref self: ContractState){
             let caller = get_caller_address();
             let self = get_contract_address();
             assert(self == caller, 'Account: unathorized');
         }
 
+        /// @notice internal transaction for tx validation
         fn validate_transaction(self: @ContractState) -> felt252 {
             let tx_info = get_tx_info().unbox();
             let tx_hash = tx_info.transaction_hash;
@@ -153,6 +184,7 @@ mod Account {
             starknet::VALIDATED
         }
 
+        /// @notice internal transaction for signature validation
         fn is_valid_signature(self: @ContractState, hash:felt252, signature: Span<felt252>) -> bool {
             let valid_length = signature.len() == 2_u32;
             let public_key = self._public_key.read();
@@ -169,6 +201,8 @@ mod Account {
             }
         }
         
+        /// @notice internal transaction for executing transactions
+        /// @param calls An array of transactions to be executed
         fn _execute_calls(ref self: ContractState, mut calls: Span<Call>) -> Array<Span<felt252>> {
             let mut result: Array<Span<felt252>> = ArrayTrait::new();
             let mut calls = calls;
