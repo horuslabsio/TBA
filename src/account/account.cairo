@@ -78,7 +78,6 @@ mod Account {
             self: @ContractState,
             class_hash:felt252,
             contract_address_salt:felt252,
-            public_key:felt252
         ) -> felt252{
             self._validate_transaction()
         }
