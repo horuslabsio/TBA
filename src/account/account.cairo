@@ -57,7 +57,7 @@ mod Account {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, _public_key: felt252, token_contract: ContractAddress, token_id: u256) {
+    fn constructor(ref self: ContractState, token_contract: ContractAddress, token_id: u256) {
         self._token_contract.write(token_contract);
         self._token_id.write(token_id);
 
