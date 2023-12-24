@@ -13,4 +13,5 @@ trait IAccount<TContractState>{
     fn owner(self: @TContractState, token_contract:ContractAddress, token_id:u256) -> ContractAddress;
     fn upgrade(ref self: TContractState, implementation: ClassHash);
     fn lock(ref self: TContractState, duration: u64);
+    fn supports_interface(self: @TContractState, interface_id: felt252) -> bool;
 }

@@ -12,6 +12,9 @@ mod Account {
     use token_bound_accounts::interfaces::IERC721::{IERC721DispatcherTrait, IERC721Dispatcher};
     use token_bound_accounts::interfaces::IAccount::IAccount;
 
+    // SRC5 interface for token bound accounts
+    const TBA_INTERFACE_ID: felt252 = 0x251ab656ee78eb2a3a3df25badcc6668c653f674b09c18d940d73936da0e5b8;
+
     #[storage]
     struct Storage{
         _token_contract: ContractAddress, // contract address of NFT
@@ -140,7 +143,17 @@ mod Account {
             let current_timestamp = get_block_timestamp();
             let unlock_time = current_timestamp + duration;
             self._unlock_timestamp.write(unlock_time);
-        }   
+        } 
+
+        // @notice check that account supports TBA interface
+        // @param interface_id interface to be checked against
+        fn supports_interface(self: @ContractState, interface_id: felt252) -> bool {
+            if(interface_id == TBA_INTERFACE_ID) {
+                return true;
+            } else {
+                return false;
+            }
+        }  
     }
 
     #[generate_trait]
