@@ -4,7 +4,7 @@ use array::{ArrayTrait, SpanTrait};
 use result::ResultTrait;
 use option::OptionTrait;
 use integer::u256_from_felt252;
-use snforge_std::{declare, start_prank, stop_prank, ContractClassTrait, ContractClass, io::PrintTrait};
+use snforge_std::{declare, start_prank, stop_prank, ContractClassTrait, ContractClass, PrintTrait, CheatTarget};
 
 use token_bound_accounts::interfaces::IRegistry::IRegistryDispatcherTrait;
 use token_bound_accounts::interfaces::IRegistry::IRegistryDispatcher;
@@ -46,7 +46,7 @@ fn test_create_account() {
     // prank contract as token owner
     let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };  
     let token_owner = token_dispatcher.owner_of(u256_from_felt252(1));
-    start_prank(registry_contract_address, token_owner);
+    start_prank(CheatTarget::One(registry_contract_address), token_owner);
 
     // create account
     let acct_class_hash = declare('Account').class_hash;
@@ -70,7 +70,7 @@ fn test_getting_total_deployed_accounts() {
     // prank contract as token owner
     let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };  
     let token_owner = token_dispatcher.owner_of(u256_from_felt252(1));
-    start_prank(registry_contract_address, token_owner);
+    start_prank(CheatTarget::One(registry_contract_address), token_owner);
 
     let acct_class_hash = declare('Account').class_hash;
     // create multiple accounts for same NFT
@@ -91,7 +91,7 @@ fn test_get_account() {
     // prank contract as token owner
     let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };  
     let token_owner = token_dispatcher.owner_of(u256_from_felt252(1));
-    start_prank(registry_contract_address, token_owner);
+    start_prank(CheatTarget::One(registry_contract_address), token_owner);
 
     // deploy account
     let acct_class_hash = declare('Account').class_hash;

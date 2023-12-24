@@ -161,8 +161,8 @@ mod Account {
         /// @notice check that caller is the token bound account
         fn _assert_only_owner(ref self: ContractState){
             let caller = get_caller_address();
-            let self = get_contract_address();
-            assert(self == caller, 'Account: unathorized');
+            let owner = self._get_owner(self._token_contract.read(), self._token_id.read());
+            assert(caller == owner, 'Account: unathorized');
         }
 
         /// @notice internal function for getting NFT owner
@@ -184,8 +184,11 @@ mod Account {
             let unlock_timestamp = self._unlock_timestamp.read();
             let current_time = get_block_timestamp();
             let time_until_unlocks = unlock_timestamp - current_time;
-            assert(time_until_unlocks > 0, 'Account: account is unlocked!');
-            (true, time_until_unlocks)
+            if(time_until_unlocks > 0) {
+                return (true, time_until_unlocks);
+            } else {
+                return (false, 0_u64);
+            } 
         }
 
         /// @notice internal function for tx validation
