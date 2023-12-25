@@ -4,10 +4,12 @@ use array::{ArrayTrait, SpanTrait};
 use result::ResultTrait;
 use option::OptionTrait;
 use integer::u256_from_felt252;
-use snforge_std::{declare, start_prank, stop_prank, ContractClassTrait, ContractClass, io::PrintTrait};
+use snforge_std::{declare, start_prank, stop_prank, start_warp, stop_warp, ContractClassTrait, ContractClass, PrintTrait, CheatTarget};
 
-use token_bound_accounts::account::account::IAccountDispatcher;
-use token_bound_accounts::account::account::IAccountDispatcherTrait;
+use token_bound_accounts::interfaces::IAccount::IAccountDispatcher;
+use token_bound_accounts::interfaces::IAccount::IAccountDispatcherTrait;
+use token_bound_accounts::interfaces::IAccount::IAccountSafeDispatcher;
+use token_bound_accounts::interfaces::IAccount::IAccountSafeDispatcherTrait;
 use token_bound_accounts::account::account::Account;
 
 use token_bound_accounts::test_helper::hello_starknet::IHelloStarknetDispatcher;
@@ -22,10 +24,9 @@ use token_bound_accounts::test_helper::erc721_helper::IERC721Dispatcher;
 use token_bound_accounts::test_helper::erc721_helper::IERC721DispatcherTrait;
 use token_bound_accounts::test_helper::erc721_helper::ERC721;
 
-const PUBLIC_KEY: felt252 = 883045738439352841478194533192765345509759306772397516907181243450667673002;
-const NEW_PUBKEY: felt252 = 927653455097593347819453319276534550975930677239751690718124346772397516907;
-const SALT: felt252 = 123;
 const ACCOUNT: felt252 = 1234;
+const ACCOUNT2: felt252 = 5729;
+const SALT: felt252 = 123;
 
 #[derive(Drop)]
 struct SignedTransactionData {
@@ -59,7 +60,7 @@ fn __setup__() -> (ContractAddress, ContractAddress) {
 
     // deploy account contract
     let account_contract = declare('Account');
-    let mut acct_constructor_calldata = array![PUBLIC_KEY, contract_address_to_felt252(erc721_contract_address), 1, 0];
+    let mut acct_constructor_calldata = array![contract_address_to_felt252(erc721_contract_address), 1, 0];
     let account_contract_address = account_contract.deploy(@acct_constructor_calldata).unwrap();
 
     (account_contract_address, erc721_contract_address)
@@ -70,24 +71,9 @@ fn test_constructor() {
     let (contract_address, erc721_contract_address) = __setup__();
     let dispatcher = IAccountDispatcher { contract_address };
 
-    let pubkey = dispatcher.get_public_key();
-    assert(pubkey == PUBLIC_KEY, 'invalid public key');
-
     let (token_contract, token_id) = dispatcher.token();
     assert(token_contract == erc721_contract_address, 'invalid token address');
     assert(token_id.low == 1.try_into().unwrap(), 'invalid token id');
-}
-
-#[test]
-fn test_setting_getting_public_key() {
-    let (contract_address, erc721_contract_address) = __setup__();
-    let dispatcher = IAccountDispatcher { contract_address };
-
-    start_prank(contract_address, contract_address);
-    dispatcher.set_public_key(NEW_PUBKEY);
-
-    let new_pub_key = dispatcher.get_public_key();
-    assert(new_pub_key == NEW_PUBKEY, 'invalid public key');
 }
 
 #[test]
@@ -97,34 +83,33 @@ fn test_is_valid_signature() {
     let data = SIGNED_TX_DATA();
     let hash = data.transaction_hash;
 
-    let mut good_signature = ArrayTrait::new();
-    good_signature.append(data.r);
-    good_signature.append(data.s);
+    let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };  
+    let token_owner = token_dispatcher.owner_of(u256_from_felt252(1));
 
-    let mut bad_signature = ArrayTrait::new();
-    bad_signature.append(0x284);
-    bad_signature.append(0x492);
+    start_prank(CheatTarget::One(contract_address), token_owner);
+    let mut good_signature = array![data.r, data.s];
+    let is_valid = dispatcher.is_valid_signature(hash, good_signature.span());
+    assert(is_valid == 'VALID', 'should accept valid signature');
+    stop_prank(CheatTarget::One(contract_address));
 
-    let is_valid = dispatcher.isValidSignature(hash, good_signature.span());
-    assert(is_valid == true, 'should accept valid signature');
-
-    let is_valid = dispatcher.isValidSignature(hash, bad_signature.span());
-    assert(is_valid == false, 'should reject invalid signature');
+    start_prank(CheatTarget::One(contract_address), ACCOUNT2.try_into().unwrap());
+    let mut bad_signature = array![0x284, 0x492];
+    let is_valid = dispatcher.is_valid_signature(hash, bad_signature.span());
+    assert(is_valid == 0, 'should reject invalid signature');
+    stop_prank(CheatTarget::One(contract_address));
 }
 
 #[test]
 fn test_execute() {
     let (contract_address, erc721_contract_address) = __setup__();
     let dispatcher = IAccountDispatcher { contract_address };
-    let data = SIGNED_TX_DATA();
 
     // deploy `HelloStarknet` contract for testing
     let test_contract = declare('HelloStarknet');
     let test_address = test_contract.deploy(@array![]).unwrap();
 
     // craft calldata for call array
-    let mut calldata = ArrayTrait::new();
-    calldata.append(100);
+    let mut calldata = array![100];
     let call = Call {
         to: test_address, 
         selector: 1530486729947006463063166157847785599120665941190480211966374137237989315360,
@@ -132,12 +117,14 @@ fn test_execute() {
     };
 
     // construct call array
-    let mut calls = ArrayTrait::new();
-    calls.append(call);
+    let mut calls = array![call];
     
+    // get token owner
+    let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };  
+    let token_owner = token_dispatcher.owner_of(u256_from_felt252(1));
+
     // start prank
-    let caller_address: ContractAddress = 0.try_into().unwrap();
-    start_prank(contract_address, caller_address);
+    start_prank(CheatTarget::One(contract_address), token_owner);
 
     // make calls
     dispatcher.__execute__(calls);
@@ -152,22 +139,19 @@ fn test_execute() {
 fn test_execute_multicall() {
     let (contract_address, erc721_contract_address) = __setup__();
     let dispatcher = IAccountDispatcher { contract_address };
-    let data = SIGNED_TX_DATA();
 
     // deploy `HelloStarknet` contract for testing
     let test_contract = declare('HelloStarknet');
     let test_address = test_contract.deploy(@array![]).unwrap();
 
     // craft calldata and create call array
-    let mut calldata = ArrayTrait::new();
-    calldata.append(100);
+    let mut calldata = array![100];
     let call1 = Call {
         to: test_address, 
         selector: 1530486729947006463063166157847785599120665941190480211966374137237989315360,
         calldata: calldata
     };
-    let mut calldata2 = ArrayTrait::new();
-    calldata2.append(200);
+    let mut calldata2 = array![200];
     let call2 = Call {
         to: test_address, 
         selector: 1157683809588496510300162709548024577765603117833695133799390448986300456129,
@@ -175,13 +159,14 @@ fn test_execute_multicall() {
     };
 
     // construct call array
-    let mut calls = ArrayTrait::new();
-    calls.append(call1);
-    calls.append(call2);
+    let mut calls = array![call1, call2];
+
+    // get token owner
+    let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };  
+    let token_owner = token_dispatcher.owner_of(u256_from_felt252(1));
 
     // start prank
-    let caller_address: ContractAddress = 0.try_into().unwrap();
-    start_prank(contract_address, caller_address);
+    start_prank(CheatTarget::One(contract_address), token_owner);
 
     // make calls
     dispatcher.__execute__(calls);
@@ -220,12 +205,139 @@ fn test_upgrade() {
 
     let new_class_hash = declare('UpgradedAccount').class_hash;
 
+    // get token owner
+    let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };  
+    let token_owner = token_dispatcher.owner_of(u256_from_felt252(1));
+
     // call the upgrade function
-    start_prank(contract_address, contract_address);
+    start_prank(CheatTarget::One(contract_address), token_owner);
     dispatcher.upgrade(new_class_hash);
 
     // try to call the version function
-    let dispatcher = IUpgradedAccountDispatcher { contract_address };
-    let version = dispatcher.version();
+    let upgraded_dispatcher = IUpgradedAccountDispatcher { contract_address };
+    let version = upgraded_dispatcher.version();
     assert(version == 1_u8, 'upgrade unsuccessful');
+    stop_prank(CheatTarget::One(contract_address));
+
+    // call upgrade function with an unauthorized address
+    start_prank(CheatTarget::One(contract_address), ACCOUNT2.try_into().unwrap());
+    let safe_upgrade_dispatcher = IAccountSafeDispatcher { contract_address };
+    match safe_upgrade_dispatcher.upgrade(new_class_hash) {
+        Result::Ok(_) => panic_with_felt252('expected to panic'),
+        Result::Err(panic_data) => {
+            stop_prank(CheatTarget::One(contract_address));
+            panic_data.print();
+            return();
+        }
+    }  
+}
+
+#[test]
+fn test_locking() {
+    let (contract_address, erc721_contract_address) = __setup__();
+    let dispatcher = IAccountDispatcher { contract_address };
+    let lock_duration = 3000_u64;
+
+    // lock account
+    start_warp(CheatTarget::One(contract_address), 1000);
+    dispatcher.lock(lock_duration);
+    stop_warp(CheatTarget::One(contract_address));
+
+    // check locking works
+    start_warp(CheatTarget::One(contract_address), 2000);
+    let (status, time_left) = dispatcher.is_locked();
+    stop_warp(CheatTarget::One(contract_address));
+
+    assert(status == true, 'account is meant to be locked');
+    assert(time_left == 2000, 'incorrect time left');
+}
+
+#[test]
+fn test_should_not_execute_when_locked() {
+    let (contract_address, erc721_contract_address) = __setup__();
+    let dispatcher = IAccountSafeDispatcher { contract_address };
+    let lock_duration = 3000_u64;
+
+    // lock account
+    start_warp(CheatTarget::One(contract_address), 1000);
+    dispatcher.lock(lock_duration);
+    stop_warp(CheatTarget::One(contract_address));
+
+    // deploy `HelloStarknet` contract for testing purposes
+    let test_contract = declare('HelloStarknet');
+    let test_address = test_contract.deploy(@array![]).unwrap();
+
+    // get token owner
+    let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };  
+    let token_owner = token_dispatcher.owner_of(u256_from_felt252(1));
+
+    // start prank
+    start_prank(CheatTarget::One(contract_address), token_owner);
+
+    // confirm call to execute fails
+    let mut calldata = array![100];
+    let call = Call {
+        to: test_address, 
+        selector: 1530486729947006463063166157847785599120665941190480211966374137237989315360,
+        calldata: calldata
+    };
+    let mut calls = array![call];
+
+    match dispatcher.__execute__(calls) {
+        Result::Ok(_) => panic_with_felt252('should have panicked!'),
+        Result::Err(panic_data) => {
+            stop_prank(CheatTarget::One(contract_address));
+            panic_data.print();
+            return();
+        }
+    }
+}
+
+#[test]
+fn test_should_not_upgrade_when_locked() {
+    let (contract_address, erc721_contract_address) = __setup__();
+    let dispatcher = IAccountSafeDispatcher { contract_address };
+    let lock_duration = 3000_u64;
+
+    // lock account
+    start_warp(CheatTarget::One(contract_address), 1000);
+    dispatcher.lock(lock_duration);
+    stop_warp(CheatTarget::One(contract_address));
+
+    let new_class_hash = declare('UpgradedAccount').class_hash;
+
+    // get token owner
+    let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };  
+    let token_owner = token_dispatcher.owner_of(u256_from_felt252(1));
+
+    // call the upgrade function
+    start_prank(CheatTarget::One(contract_address), token_owner);
+    match dispatcher.upgrade(new_class_hash) {
+        Result::Ok(_) => panic_with_felt252('should have panicked'),
+        Result::Err(panic_data) => {
+            stop_prank(CheatTarget::One(contract_address));
+            panic_data.print();
+            return();
+        }
+    }
+}
+
+#[test]
+fn test_should_unlock_once_duration_ends() {
+    let (contract_address, erc721_contract_address) = __setup__();
+    let dispatcher = IAccountDispatcher { contract_address };
+    let lock_duration = 3000_u64;
+
+    // lock account
+    start_warp(CheatTarget::One(contract_address), 1000);
+    dispatcher.lock(lock_duration);
+    stop_warp(CheatTarget::One(contract_address));
+
+    // check account is unlocked if duration is exceeded
+    start_warp(CheatTarget::One(contract_address), 6000);
+    let (status, time_left) = dispatcher.is_locked();
+    stop_warp(CheatTarget::One(contract_address));
+
+    assert(status == false, 'account is meant to be unlocked');
+    assert(time_left == 0, 'incorrect time left');
 }

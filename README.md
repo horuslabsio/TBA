@@ -1,11 +1,11 @@
-# ERC-6551 Reference Implementation on Starknet
+# SRC-6551 Reference Implementation on Starknet
 
 This repository contains the reference implementation of ERC-6551.
 
-**NB:** This project is under active development and may undergo changes until the ERC-6551 SNIP is finalized. 
+**NB:** This project is under active development and may undergo changes until the SRC-6551 SNIP is finalized. 
 
-## The ERC-6551 Standard
-This proposal defines a system which assigns contract accounts to Non-fungible tokens (ERC-721).
+## The SRC-6551 Standard
+This proposal defines a system which assigns contract accounts to Non-fungible tokens (SRC-721).
 
 These accounts are referred to as token bound accounts and they allow NFTs to own assets and interact with applications, without requiring changes to existing smart contracts or infrastructure.
 
@@ -53,7 +53,7 @@ scarb build
 ### Running Tests
 To run the tests contained within the `tests` folder, run the command:
 ```
-snforge
+snforge test
 ```
 
 For more information on writing and running tests, refer to the [Starknet-Foundry documentation](https://foundry-rs.github.io/starknet-foundry/index.html)
