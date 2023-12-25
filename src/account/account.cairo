@@ -13,7 +13,7 @@ mod Account {
     use token_bound_accounts::interfaces::IAccount::IAccount;
 
     // SRC5 interface for token bound accounts
-    const TBA_INTERFACE_ID: felt252 = 0x251ab656ee78eb2a3a3df25badcc6668c653f674b09c18d940d73936da0e5b8;
+    const TBA_INTERFACE_ID: felt252 = 0x539036932a2ab9c4734fbfd9872a1f7791a3f577e45477336ae0fd0a00c9ff;
 
     #[storage]
     struct Storage{
@@ -128,6 +128,8 @@ mod Account {
         /// @param implementation the new class_hash
         fn upgrade(ref self: ContractState, implementation: ClassHash) {
             self._assert_only_owner();
+            let (lock_status, _) = self._is_locked();
+            assert(!lock_status, 'Account: account is locked!');
             assert(!implementation.is_zero(), 'Invalid class hash');
             replace_class_syscall(implementation).unwrap_syscall();
             self.emit(Upgraded{
@@ -144,6 +146,11 @@ mod Account {
             let unlock_time = current_timestamp + duration;
             self._unlock_timestamp.write(unlock_time);
         } 
+
+        // @notice returns account lock status and time left until account unlocks
+        fn is_locked(self: @ContractState) -> (bool, u64) {
+            return self._is_locked();
+        }
 
         // @notice check that account supports TBA interface
         // @param interface_id interface to be checked against
@@ -183,8 +190,8 @@ mod Account {
         fn _is_locked(self: @ContractState) -> (bool, u64) {
             let unlock_timestamp = self._unlock_timestamp.read();
             let current_time = get_block_timestamp();
-            let time_until_unlocks = unlock_timestamp - current_time;
-            if(time_until_unlocks > 0) {
+            if(current_time < unlock_timestamp) {
+                let time_until_unlocks = unlock_timestamp - current_time;
                 return (true, time_until_unlocks);
             } else {
                 return (false, 0_u64);

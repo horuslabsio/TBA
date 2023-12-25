@@ -4,7 +4,7 @@ use array::{ArrayTrait, SpanTrait};
 use result::ResultTrait;
 use option::OptionTrait;
 use integer::u256_from_felt252;
-use snforge_std::{declare, start_prank, stop_prank, ContractClassTrait, ContractClass, PrintTrait, CheatTarget};
+use snforge_std::{declare, start_prank, stop_prank, start_warp, stop_warp, ContractClassTrait, ContractClass, PrintTrait, CheatTarget};
 
 use token_bound_accounts::interfaces::IAccount::IAccountDispatcher;
 use token_bound_accounts::interfaces::IAccount::IAccountDispatcherTrait;
@@ -103,7 +103,6 @@ fn test_is_valid_signature() {
 fn test_execute() {
     let (contract_address, erc721_contract_address) = __setup__();
     let dispatcher = IAccountDispatcher { contract_address };
-    let data = SIGNED_TX_DATA();
 
     // deploy `HelloStarknet` contract for testing
     let test_contract = declare('HelloStarknet');
@@ -140,7 +139,6 @@ fn test_execute() {
 fn test_execute_multicall() {
     let (contract_address, erc721_contract_address) = __setup__();
     let dispatcher = IAccountDispatcher { contract_address };
-    let data = SIGNED_TX_DATA();
 
     // deploy `HelloStarknet` contract for testing
     let test_contract = declare('HelloStarknet');
@@ -228,7 +226,118 @@ fn test_upgrade() {
         Result::Ok(_) => panic_with_felt252('expected to panic'),
         Result::Err(panic_data) => {
             stop_prank(CheatTarget::One(contract_address));
+            panic_data.print();
             return();
         }
     }  
+}
+
+#[test]
+fn test_locking() {
+    let (contract_address, erc721_contract_address) = __setup__();
+    let dispatcher = IAccountDispatcher { contract_address };
+    let lock_duration = 3000_u64;
+
+    // lock account
+    start_warp(CheatTarget::One(contract_address), 1000);
+    dispatcher.lock(lock_duration);
+    stop_warp(CheatTarget::One(contract_address));
+
+    // check locking works
+    start_warp(CheatTarget::One(contract_address), 2000);
+    let (status, time_left) = dispatcher.is_locked();
+    stop_warp(CheatTarget::One(contract_address));
+
+    assert(status == true, 'account is meant to be locked');
+    assert(time_left == 2000, 'incorrect time left');
+}
+
+#[test]
+fn test_should_not_execute_when_locked() {
+    let (contract_address, erc721_contract_address) = __setup__();
+    let dispatcher = IAccountSafeDispatcher { contract_address };
+    let lock_duration = 3000_u64;
+
+    // lock account
+    start_warp(CheatTarget::One(contract_address), 1000);
+    dispatcher.lock(lock_duration);
+    stop_warp(CheatTarget::One(contract_address));
+
+    // deploy `HelloStarknet` contract for testing purposes
+    let test_contract = declare('HelloStarknet');
+    let test_address = test_contract.deploy(@array![]).unwrap();
+
+    // get token owner
+    let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };  
+    let token_owner = token_dispatcher.owner_of(u256_from_felt252(1));
+
+    // start prank
+    start_prank(CheatTarget::One(contract_address), token_owner);
+
+    // confirm call to execute fails
+    let mut calldata = array![100];
+    let call = Call {
+        to: test_address, 
+        selector: 1530486729947006463063166157847785599120665941190480211966374137237989315360,
+        calldata: calldata
+    };
+    let mut calls = array![call];
+
+    match dispatcher.__execute__(calls) {
+        Result::Ok(_) => panic_with_felt252('should have panicked!'),
+        Result::Err(panic_data) => {
+            stop_prank(CheatTarget::One(contract_address));
+            panic_data.print();
+            return();
+        }
+    }
+}
+
+#[test]
+fn test_should_not_upgrade_when_locked() {
+    let (contract_address, erc721_contract_address) = __setup__();
+    let dispatcher = IAccountSafeDispatcher { contract_address };
+    let lock_duration = 3000_u64;
+
+    // lock account
+    start_warp(CheatTarget::One(contract_address), 1000);
+    dispatcher.lock(lock_duration);
+    stop_warp(CheatTarget::One(contract_address));
+
+    let new_class_hash = declare('UpgradedAccount').class_hash;
+
+    // get token owner
+    let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };  
+    let token_owner = token_dispatcher.owner_of(u256_from_felt252(1));
+
+    // call the upgrade function
+    start_prank(CheatTarget::One(contract_address), token_owner);
+    match dispatcher.upgrade(new_class_hash) {
+        Result::Ok(_) => panic_with_felt252('should have panicked'),
+        Result::Err(panic_data) => {
+            stop_prank(CheatTarget::One(contract_address));
+            panic_data.print();
+            return();
+        }
+    }
+}
+
+#[test]
+fn test_should_unlock_once_duration_ends() {
+    let (contract_address, erc721_contract_address) = __setup__();
+    let dispatcher = IAccountDispatcher { contract_address };
+    let lock_duration = 3000_u64;
+
+    // lock account
+    start_warp(CheatTarget::One(contract_address), 1000);
+    dispatcher.lock(lock_duration);
+    stop_warp(CheatTarget::One(contract_address));
+
+    // check account is unlocked if duration is exceeded
+    start_warp(CheatTarget::One(contract_address), 6000);
+    let (status, time_left) = dispatcher.is_locked();
+    stop_warp(CheatTarget::One(contract_address));
+
+    assert(status == false, 'account is meant to be unlocked');
+    assert(time_left == 0, 'incorrect time left');
 }
