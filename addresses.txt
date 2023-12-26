@@ -1,3 +1,5 @@
+TESTNET:
+
 Registry:
     - ClassHash: 0x7e616bcaaaaf4d22f756e0cabe0e312b6b8d753451ce0f4f6fc44936aae5ec7
     - Contract: 0x57cf5b3ac51e9ab1735f0720425d3889ac500fc8deac6567ad8163fd210aa92
@@ -12,3 +14,13 @@ Sample NFT:
 Sample TBA: 
     - Contract: 0x01d6e561Eb81D2E91c626048e9e324526AD6c63034c8Ef7D605faF082A9673a3
     - salt: 2030
+-----------------------------------------------------------------------------------------------
+
+MAINNET:
+
+Registry;
+    - ClassHash: 0x26346ce7aa51dcd287ecc0ba3c11ef5436ac84284baa16e4862a684cd1b2830
+    - Contract: 0x117719138a374fc5a9ad8d189fa5daaf089872eb6a2def6472531ac08399c77
+
+Account:
+    - ClassHash: 0x3b8608dd5be6315eb4eeae62154604ddaccbaa0ad212f6dd088076409baae06
