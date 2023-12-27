@@ -175,8 +175,16 @@ mod Account {
         /// @notice internal function for getting NFT owner
         /// @param token_contract contract address of NFT
         // @param token_id token ID of NFT
+        // NB: This function aims for compatibility with all contracts (snake or camel case) but do not work as expected on mainnet as low level calls do not return err at the moment. Should work for contracts which implements CamelCase but not snake_case until starknet v0.15.
         fn _get_owner(self: @ContractState, token_contract: ContractAddress, token_id: u256) -> ContractAddress {
-             IERC721Dispatcher { contract_address: token_contract }.owner_of(token_id)
+            let mut calldata: Array<felt252> = ArrayTrait::new();
+            Serde::serialize(@token_id, ref calldata);
+            let mut res = call_contract_syscall(token_contract, selector!("ownerOf"), calldata.span());
+            if(res.is_err()) {
+                res = call_contract_syscall(token_contract, selector!("owner_of"), calldata.span());
+            }
+            let mut address = res.unwrap();
+            Serde::<ContractAddress>::deserialize(ref address).unwrap()
         }
 
         /// @notice internal transaction for returning the contract address and token ID of the NFT

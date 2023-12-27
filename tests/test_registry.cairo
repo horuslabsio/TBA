@@ -45,7 +45,7 @@ fn test_create_account() {
 
     // prank contract as token owner
     let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };  
-    let token_owner = token_dispatcher.owner_of(u256_from_felt252(1));
+    let token_owner = token_dispatcher.ownerOf(u256_from_felt252(1));
     start_prank(CheatTarget::One(registry_contract_address), token_owner);
 
     // create account
@@ -69,7 +69,7 @@ fn test_getting_total_deployed_accounts() {
 
     // prank contract as token owner
     let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };  
-    let token_owner = token_dispatcher.owner_of(u256_from_felt252(1));
+    let token_owner = token_dispatcher.ownerOf(u256_from_felt252(1));
     start_prank(CheatTarget::One(registry_contract_address), token_owner);
 
     let acct_class_hash = declare('Account').class_hash;
@@ -90,7 +90,7 @@ fn test_get_account() {
 
     // prank contract as token owner
     let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };  
-    let token_owner = token_dispatcher.owner_of(u256_from_felt252(1));
+    let token_owner = token_dispatcher.ownerOf(u256_from_felt252(1));
     start_prank(CheatTarget::One(registry_contract_address), token_owner);
 
     // deploy account

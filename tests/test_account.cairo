@@ -84,7 +84,7 @@ fn test_is_valid_signature() {
     let hash = data.transaction_hash;
 
     let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };  
-    let token_owner = token_dispatcher.owner_of(u256_from_felt252(1));
+    let token_owner = token_dispatcher.ownerOf(u256_from_felt252(1));
 
     start_prank(CheatTarget::One(contract_address), token_owner);
     let mut good_signature = array![data.r, data.s];
@@ -121,7 +121,7 @@ fn test_execute() {
     
     // get token owner
     let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };  
-    let token_owner = token_dispatcher.owner_of(u256_from_felt252(1));
+    let token_owner = token_dispatcher.ownerOf(u256_from_felt252(1));
 
     // start prank
     start_prank(CheatTarget::One(contract_address), token_owner);
@@ -163,7 +163,7 @@ fn test_execute_multicall() {
 
     // get token owner
     let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };  
-    let token_owner = token_dispatcher.owner_of(u256_from_felt252(1));
+    let token_owner = token_dispatcher.ownerOf(u256_from_felt252(1));
 
     // start prank
     start_prank(CheatTarget::One(contract_address), token_owner);
@@ -194,7 +194,7 @@ fn test_owner() {
     let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };   
 
     let owner = acct_dispatcher.owner(erc721_contract_address, u256_from_felt252(1));
-    let token_owner = token_dispatcher.owner_of(u256_from_felt252(1));
+    let token_owner = token_dispatcher.ownerOf(u256_from_felt252(1));
     assert(owner == token_owner, 'invalid owner');
 }
 
@@ -207,7 +207,7 @@ fn test_upgrade() {
 
     // get token owner
     let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };  
-    let token_owner = token_dispatcher.owner_of(u256_from_felt252(1));
+    let token_owner = token_dispatcher.ownerOf(u256_from_felt252(1));
 
     // call the upgrade function
     start_prank(CheatTarget::One(contract_address), token_owner);
@@ -269,7 +269,7 @@ fn test_should_not_execute_when_locked() {
 
     // get token owner
     let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };  
-    let token_owner = token_dispatcher.owner_of(u256_from_felt252(1));
+    let token_owner = token_dispatcher.ownerOf(u256_from_felt252(1));
 
     // start prank
     start_prank(CheatTarget::One(contract_address), token_owner);
@@ -308,7 +308,7 @@ fn test_should_not_upgrade_when_locked() {
 
     // get token owner
     let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };  
-    let token_owner = token_dispatcher.owner_of(u256_from_felt252(1));
+    let token_owner = token_dispatcher.ownerOf(u256_from_felt252(1));
 
     // call the upgrade function
     start_prank(CheatTarget::One(contract_address), token_owner);

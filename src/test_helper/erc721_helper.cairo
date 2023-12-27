@@ -3,6 +3,7 @@ use starknet::ContractAddress;
 #[starknet::interface]
 trait IERC721<TContractState> {
     fn balance_of(self: @TContractState, account: ContractAddress) -> u256;
+    fn ownerOf(self: @TContractState, token_id: u256) -> ContractAddress;
     fn owner_of(self: @TContractState, token_id: u256) -> ContractAddress;
     fn transfer_from(ref self: TContractState, from: ContractAddress, to: ContractAddress, token_id: u256);
     fn approve(ref self: TContractState, to: ContractAddress, token_id: u256);
@@ -83,6 +84,12 @@ mod ERC721 {
             self.symbol.read()
         }
 
+        fn ownerOf(self: @ContractState, token_id: u256) -> ContractAddress {
+            let owner = self.owners.read(token_id);
+            assert(owner.is_non_zero(), 'ERC721: invalid token ID');
+            owner
+        }
+
         fn owner_of(self: @ContractState, token_id: u256) -> ContractAddress {
             let owner = self.owners.read(token_id);
             assert(owner.is_non_zero(), 'ERC721: invalid token ID');
@@ -108,12 +115,12 @@ mod ERC721 {
         }
 
         fn approve(ref self: ContractState, to: ContractAddress, token_id: u256) {
-            let owner = self.owner_of(token_id);
+            let owner = self.ownerOf(token_id);
             assert(to != owner, 'Approval to current owner');
             assert(get_caller_address() == owner || self.is_approved_for_all(owner, get_caller_address()), 'Not token owner');
             self.token_approvals.write(token_id, to);
             self.emit(
-                Approval{ owner: self.owner_of(token_id), to: to, token_id: token_id }
+                Approval{ owner: self.ownerOf(token_id), to: to, token_id: token_id }
             );
         }
 
@@ -147,7 +154,7 @@ mod ERC721 {
     #[generate_trait]
     impl ERC721HelperImpl of ERC721HelperTrait {
         fn _exists(self: @ContractState, token_id: u256) -> bool {
-            self.owner_of(token_id).is_non_zero()
+            self.ownerOf(token_id).is_non_zero()
         }
 
         fn _is_approved_or_owner(self: @ContractState, spender: ContractAddress, token_id: u256) -> bool {
@@ -163,7 +170,7 @@ mod ERC721 {
         }
 
         fn _transfer(ref self: ContractState, from: ContractAddress, to: ContractAddress, token_id: u256) {
-            assert(from == self.owner_of(token_id), 'ERC721: Caller is not owner');
+            assert(from == self.ownerOf(token_id), 'ERC721: Caller is not owner');
             assert(to.is_non_zero(), 'ERC721: transfer to 0 address');
 
             self.token_approvals.write(token_id, Zeroable::zero());
