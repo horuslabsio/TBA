@@ -9,3 +9,11 @@ Account:
     - ClassHash: 0x11bc9fabead984d714cf82ec46ffa23f4558f27ae73561542fed9fa8fb510ae
 
 ------------------------------------------------------------------------------------------------
+MAINNET v2:
+
+Registry;
+    - ClassHash: 0x2fee320389750aef9d6fe7d95754a75a68d4448c019cee2a34cb6b698972db9
+    - Contract: 0x1b0ef7a47d9db8652f8a9010ecaf3e6537442bfab3afed13449b571fa1da37a
+
+Account:
+    - ClassHash: 0x499ef439944ff0a477c4ecc14785ad31f4c12300993e1ce6568f9c1f2c24c09
