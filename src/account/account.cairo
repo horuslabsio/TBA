@@ -142,6 +142,9 @@ mod Account {
         // @notice protection mechanism for selling token bound accounts. can't execute when account is locked
         // @param duration for which to lock account
         fn lock(ref self: ContractState, duration: u64) {
+            self._assert_only_owner();
+            let (lock_status, _) = self._is_locked();
+            assert(!lock_status, 'Account: account already locked');
             let current_timestamp = get_block_timestamp();
             let unlock_time = current_timestamp + duration;
             self._unlock_timestamp.write(unlock_time);

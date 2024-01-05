@@ -238,7 +238,12 @@ fn test_locking() {
     let dispatcher = IAccountDispatcher { contract_address };
     let lock_duration = 3000_u64;
 
+    // get token owner
+    let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };  
+    let token_owner = token_dispatcher.ownerOf(u256_from_felt252(1));
+
     // lock account
+    start_prank(CheatTarget::One(contract_address), token_owner);
     start_warp(CheatTarget::One(contract_address), 1000);
     dispatcher.lock(lock_duration);
     stop_warp(CheatTarget::One(contract_address));
@@ -258,7 +263,12 @@ fn test_should_not_execute_when_locked() {
     let dispatcher = IAccountSafeDispatcher { contract_address };
     let lock_duration = 3000_u64;
 
+    // get token owner
+    let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };  
+    let token_owner = token_dispatcher.ownerOf(u256_from_felt252(1));
+
     // lock account
+    start_prank(CheatTarget::One(contract_address), token_owner);
     start_warp(CheatTarget::One(contract_address), 1000);
     dispatcher.lock(lock_duration);
     stop_warp(CheatTarget::One(contract_address));
@@ -266,13 +276,6 @@ fn test_should_not_execute_when_locked() {
     // deploy `HelloStarknet` contract for testing purposes
     let test_contract = declare('HelloStarknet');
     let test_address = test_contract.deploy(@array![]).unwrap();
-
-    // get token owner
-    let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };  
-    let token_owner = token_dispatcher.ownerOf(u256_from_felt252(1));
-
-    // start prank
-    start_prank(CheatTarget::One(contract_address), token_owner);
 
     // confirm call to execute fails
     let mut calldata = array![100];
@@ -299,23 +302,72 @@ fn test_should_not_upgrade_when_locked() {
     let dispatcher = IAccountSafeDispatcher { contract_address };
     let lock_duration = 3000_u64;
 
+    // get token owner
+    let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };  
+    let token_owner = token_dispatcher.ownerOf(u256_from_felt252(1));
+
     // lock account
+    start_prank(CheatTarget::One(contract_address), token_owner);
     start_warp(CheatTarget::One(contract_address), 1000);
     dispatcher.lock(lock_duration);
     stop_warp(CheatTarget::One(contract_address));
 
     let new_class_hash = declare('UpgradedAccount').class_hash;
 
-    // get token owner
-    let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };  
-    let token_owner = token_dispatcher.ownerOf(u256_from_felt252(1));
-
     // call the upgrade function
-    start_prank(CheatTarget::One(contract_address), token_owner);
     match dispatcher.upgrade(new_class_hash) {
         Result::Ok(_) => panic_with_felt252('should have panicked'),
         Result::Err(panic_data) => {
             stop_prank(CheatTarget::One(contract_address));
+            panic_data.print();
+            return();
+        }
+    }
+}
+
+#[test]
+fn test_should_not_lock_if_not_owner() {
+    let (contract_address, erc721_contract_address) = __setup__();
+    let dispatcher = IAccountSafeDispatcher { contract_address };
+    let lock_duration = 3000_u64;
+
+    // call the lock function
+    start_prank(CheatTarget::One(contract_address), ACCOUNT2.try_into().unwrap());
+    start_warp(CheatTarget::One(contract_address), 1000);
+    match dispatcher.lock(lock_duration) {
+        Result::Ok(_) => panic_with_felt252('should have panicked'),
+        Result::Err(panic_data) => {
+            stop_prank(CheatTarget::One(contract_address));
+            stop_warp(CheatTarget::One(contract_address));
+            panic_data.print();
+            return();
+        }
+    }
+}
+
+#[test]
+fn test_should_not_lock_if_already_locked() {
+    let (contract_address, erc721_contract_address) = __setup__();
+    let dispatcher = IAccountSafeDispatcher { contract_address };
+    let lock_duration = 3000_u64;
+
+    // get token owner
+    let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };  
+    let token_owner = token_dispatcher.ownerOf(u256_from_felt252(1));
+    
+    // lock account
+    start_prank(CheatTarget::One(contract_address), token_owner);
+    start_warp(CheatTarget::One(contract_address), 1000);
+    dispatcher.lock(lock_duration);
+    stop_warp(CheatTarget::One(contract_address));
+
+    // call the lock function again
+    start_warp(CheatTarget::One(contract_address), 1000);
+    match dispatcher.lock(lock_duration) {
+        Result::Ok(_) => panic_with_felt252('should have panicked'),
+        Result::Err(panic_data) => {
+            stop_prank(CheatTarget::One(contract_address));
+            stop_warp(CheatTarget::One(contract_address));
             panic_data.print();
             return();
         }
@@ -328,7 +380,12 @@ fn test_should_unlock_once_duration_ends() {
     let dispatcher = IAccountDispatcher { contract_address };
     let lock_duration = 3000_u64;
 
+    // get token owner
+    let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };  
+    let token_owner = token_dispatcher.ownerOf(u256_from_felt252(1));
+
     // lock account
+    start_prank(CheatTarget::One(contract_address), token_owner);
     start_warp(CheatTarget::One(contract_address), 1000);
     dispatcher.lock(lock_duration);
     stop_warp(CheatTarget::One(contract_address));
