@@ -4,7 +4,9 @@ use array::{ArrayTrait, SpanTrait};
 use result::ResultTrait;
 use option::OptionTrait;
 use integer::u256_from_felt252;
-use snforge_std::{declare, start_prank, stop_prank, ContractClassTrait, ContractClass, PrintTrait, CheatTarget};
+use snforge_std::{
+    declare, start_prank, stop_prank, ContractClassTrait, ContractClass, PrintTrait, CheatTarget
+};
 
 use token_bound_accounts::interfaces::IRegistry::IRegistryDispatcherTrait;
 use token_bound_accounts::interfaces::IRegistry::IRegistryDispatcher;
@@ -41,19 +43,26 @@ fn __setup__() -> (ContractAddress, ContractAddress) {
 #[test]
 fn test_create_account() {
     let (registry_contract_address, erc721_contract_address) = __setup__();
-    let registry_dispatcher =  IRegistryDispatcher { contract_address: registry_contract_address };
+    let registry_dispatcher = IRegistryDispatcher { contract_address: registry_contract_address };
 
     // prank contract as token owner
-    let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };  
+    let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };
     let token_owner = token_dispatcher.ownerOf(u256_from_felt252(1));
     start_prank(CheatTarget::One(registry_contract_address), token_owner);
 
     // create account
     let acct_class_hash = declare('Account').class_hash;
-    let account_address = registry_dispatcher.create_account(class_hash_to_felt252(acct_class_hash), erc721_contract_address, u256_from_felt252(1), 245828);
-    
+    let account_address = registry_dispatcher
+        .create_account(
+            class_hash_to_felt252(acct_class_hash),
+            erc721_contract_address,
+            u256_from_felt252(1),
+            245828
+        );
+
     // check total_deployed_accounts
-    let total_deployed_accounts = registry_dispatcher.total_deployed_accounts(erc721_contract_address, u256_from_felt252(1));
+    let total_deployed_accounts = registry_dispatcher
+        .total_deployed_accounts(erc721_contract_address, u256_from_felt252(1));
     assert(total_deployed_accounts == 1_u8, 'invalid deployed TBA count');
 
     // confirm account deployment by checking the account owner
@@ -65,40 +74,71 @@ fn test_create_account() {
 #[test]
 fn test_getting_total_deployed_accounts() {
     let (registry_contract_address, erc721_contract_address) = __setup__();
-    let registry_dispatcher =  IRegistryDispatcher { contract_address: registry_contract_address };
+    let registry_dispatcher = IRegistryDispatcher { contract_address: registry_contract_address };
 
     // prank contract as token owner
-    let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };  
+    let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };
     let token_owner = token_dispatcher.ownerOf(u256_from_felt252(1));
     start_prank(CheatTarget::One(registry_contract_address), token_owner);
 
     let acct_class_hash = declare('Account').class_hash;
     // create multiple accounts for same NFT
-    let account_address1 = registry_dispatcher.create_account(class_hash_to_felt252(acct_class_hash), erc721_contract_address, u256_from_felt252(1), 3554633);
-    let account_address2 = registry_dispatcher.create_account(class_hash_to_felt252(acct_class_hash), erc721_contract_address, u256_from_felt252(1), 363256);
-    let account_address3 = registry_dispatcher.create_account(class_hash_to_felt252(acct_class_hash), erc721_contract_address, u256_from_felt252(1), 484734);
+    let account_address1 = registry_dispatcher
+        .create_account(
+            class_hash_to_felt252(acct_class_hash),
+            erc721_contract_address,
+            u256_from_felt252(1),
+            3554633
+        );
+    let account_address2 = registry_dispatcher
+        .create_account(
+            class_hash_to_felt252(acct_class_hash),
+            erc721_contract_address,
+            u256_from_felt252(1),
+            363256
+        );
+    let account_address3 = registry_dispatcher
+        .create_account(
+            class_hash_to_felt252(acct_class_hash),
+            erc721_contract_address,
+            u256_from_felt252(1),
+            484734
+        );
 
     // check total_deployed_accounts
-    let total_deployed_accounts = registry_dispatcher.total_deployed_accounts(erc721_contract_address, u256_from_felt252(1));
+    let total_deployed_accounts = registry_dispatcher
+        .total_deployed_accounts(erc721_contract_address, u256_from_felt252(1));
     assert(total_deployed_accounts == 3_u8, 'invalid deployed TBA count');
 }
 
 #[test]
 fn test_get_account() {
     let (registry_contract_address, erc721_contract_address) = __setup__();
-    let registry_dispatcher =  IRegistryDispatcher { contract_address: registry_contract_address };
+    let registry_dispatcher = IRegistryDispatcher { contract_address: registry_contract_address };
 
     // prank contract as token owner
-    let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };  
+    let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };
     let token_owner = token_dispatcher.ownerOf(u256_from_felt252(1));
     start_prank(CheatTarget::One(registry_contract_address), token_owner);
 
     // deploy account
     let acct_class_hash = declare('Account').class_hash;
-    let account_address = registry_dispatcher.create_account(class_hash_to_felt252(acct_class_hash), erc721_contract_address, u256_from_felt252(1), 252520);
+    let account_address = registry_dispatcher
+        .create_account(
+            class_hash_to_felt252(acct_class_hash),
+            erc721_contract_address,
+            u256_from_felt252(1),
+            252520
+        );
 
     // get account
-    let account = registry_dispatcher.get_account(class_hash_to_felt252(acct_class_hash), erc721_contract_address, u256_from_felt252(1), 252520);
+    let account = registry_dispatcher
+        .get_account(
+            class_hash_to_felt252(acct_class_hash),
+            erc721_contract_address,
+            u256_from_felt252(1),
+            252520
+        );
 
     // compare both addresses
     assert(account == account_address, 'get_account computes wrongly');
