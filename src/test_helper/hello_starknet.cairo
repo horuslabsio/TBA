@@ -9,7 +9,7 @@ trait IHelloStarknet<TContractState> {
 mod HelloStarknet {
     #[storage]
     struct Storage {
-        balance: felt252, 
+        balance: felt252,
     }
 
     #[external(v0)]
@@ -21,7 +21,7 @@ mod HelloStarknet {
 
         fn multiply_balance(ref self: ContractState, amount: felt252) {
             assert(amount != 0, 'Amount cannot be 0');
-            self.balance.write(self.balance.read() + amount*2);
+            self.balance.write(self.balance.read() + amount * 2);
         }
 
         fn get_balance(self: @ContractState) -> felt252 {
