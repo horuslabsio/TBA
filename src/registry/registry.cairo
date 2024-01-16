@@ -4,7 +4,7 @@
 #[starknet::contract]
 mod Registry {
     use core::result::ResultTrait;
-use core::hash::HashStateTrait;
+    use core::hash::HashStateTrait;
     use starknet::{ContractAddress, get_caller_address, syscalls::call_contract_syscall, class_hash::ClassHash, class_hash::Felt252TryIntoClassHash, syscalls::deploy_syscall, SyscallResultTrait};
     use zeroable::Zeroable;
     use traits::{Into, TryInto};

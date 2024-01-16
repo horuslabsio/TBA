@@ -1,4 +1,4 @@
-# SRC-6551 Reference Implementation on Starknet
+# ERC-6551 Reference Implementation on Starknet
 
 This repository contains the reference implementation of ERC-6551 on Starknet.
 
