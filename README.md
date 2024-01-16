@@ -1,11 +1,11 @@
 # SRC-6551 Reference Implementation on Starknet
 
-This repository contains the reference implementation of ERC-6551.
+This repository contains the reference implementation of ERC-6551 on Starknet.
 
-**NB:** This project is under active development and may undergo changes until the SRC-6551 SNIP is finalized. 
+**NB:** This project is under active development and may undergo changes until SNIP-72 is finalized. 
 
-## The SRC-6551 Standard
-This proposal defines a system which assigns contract accounts to Non-fungible tokens (SRC-721).
+## The Tokenbound Standard
+This proposal defines a system which assigns contract accounts to Non-fungible tokens (ERC-721s).
 
 These accounts are referred to as token bound accounts and they allow NFTs to own assets and interact with applications, without requiring changes to existing smart contracts or infrastructure.
 
