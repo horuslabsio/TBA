@@ -17,40 +17,19 @@ mod Registry {
 
     use token_bound_accounts::interfaces::IERC721::{IERC721DispatcherTrait, IERC721Dispatcher};
     use token_bound_accounts::interfaces::IRegistry::IRegistry;
-    use openzeppelin::{
-        access::ownable::OwnableComponent, upgrades::{UpgradeableComponent, interface::IUpgradeable}
-    };
 
-    component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
-    component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
-
-    // add an owner
-    #[abi(embed_v0)]
-    impl OwnableImpl = OwnableComponent::OwnableImpl<ContractState>;
-    impl OwnableInternalImpl = OwnableComponent::InternalImpl<ContractState>;
-    // make it upgradable
-    impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
 
     #[storage]
     struct Storage {
-        admin: ContractAddress,
         registry_deployed_accounts: LegacyMap<
             (ContractAddress, u256), u8
         >, // tracks no. of deployed accounts by registry for an NFT
-        #[substorage(v0)]
-        ownable: OwnableComponent::Storage,
-        #[substorage(v0)]
-        upgradeable: UpgradeableComponent::Storage,
     }
 
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
         AccountCreated: AccountCreated,
-        #[flat]
-        OwnableEvent: OwnableComponent::Event,
-        #[flat]
-        UpgradeableEvent: UpgradeableComponent::Event,
     }
 
     /// @notice Emitted when a new tokenbound account is deployed/created
@@ -64,18 +43,6 @@ mod Registry {
         token_id: u256,
     }
 
-    #[constructor]
-    fn constructor(ref self: ContractState, admin: ContractAddress) {
-        self.admin.write(admin)
-    }
-
-    #[abi(embed_v0)]
-    impl UpgradeableImpl of IUpgradeable<ContractState> {
-        fn upgrade(ref self: ContractState, new_class_hash: ClassHash) {
-            self.ownable.assert_only_owner();
-            self.upgradeable._upgrade(new_class_hash);
-        }
-    }
 
     #[abi(embed_v0)]
     impl IRegistryImpl of IRegistry<ContractState> {

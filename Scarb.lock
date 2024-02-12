@@ -8,8 +8,8 @@ source = "git+https://github.com/OpenZeppelin/cairo-contracts.git?tag=v0.9.0#861
 
 [[package]]
 name = "snforge_std"
-version = "0.17.0"
-source = "git+https://github.com/foundry-rs/starknet-foundry.git?tag=v0.17.0#63f7f0b533a3d852e2b60214e0f40b99c9dcbb26"
+version = "0.17.1"
+source = "git+https://github.com/foundry-rs/starknet-foundry.git?tag=v0.17.1#f3237f2325d5fd31fb066cbc18f279839521090c"
 
 [[package]]
 name = "token_bound_accounts"
