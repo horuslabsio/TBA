@@ -2,6 +2,9 @@ use starknet::ContractAddress;
 use starknet::ClassHash;
 use starknet::account::Call;
 
+// SRC5 interface for token bound accounts
+const TBA_INTERFACE_ID: felt252 = 0x539036932a2ab9c4734fbfd9872a1f7791a3f577e45477336ae0fd0a00c9ff;
+
 #[starknet::interface]
 trait IAccount<TContractState> {
     fn is_valid_signature(

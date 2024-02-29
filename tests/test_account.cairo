@@ -13,7 +13,7 @@ use token_bound_accounts::interfaces::IAccount::IAccountDispatcher;
 use token_bound_accounts::interfaces::IAccount::IAccountDispatcherTrait;
 use token_bound_accounts::interfaces::IAccount::IAccountSafeDispatcher;
 use token_bound_accounts::interfaces::IAccount::IAccountSafeDispatcherTrait;
-use token_bound_accounts::account::account::Account;
+use token_bound_accounts::presets::account::Account;
 
 use token_bound_accounts::test_helper::hello_starknet::IHelloStarknetDispatcher;
 use token_bound_accounts::test_helper::hello_starknet::IHelloStarknetDispatcherTrait;

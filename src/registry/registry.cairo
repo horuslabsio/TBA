@@ -20,7 +20,7 @@ mod Registry {
 
     #[storage]
     struct Storage {
-        registry_deployed_accounts: LegacyMap<
+        Registry_deployed_accounts: LegacyMap<
             (ContractAddress, u256), u8
         >, // tracks no. of deployed accounts by registry for an NFT
     }
@@ -68,10 +68,10 @@ mod Registry {
             let (account_address, _) = result.unwrap_syscall();
 
             let new_deployment_index: u8 = self
-                .registry_deployed_accounts
+                .Registry_deployed_accounts
                 .read((token_contract, token_id))
                 + 1_u8;
-            self.registry_deployed_accounts.write((token_contract, token_id), new_deployment_index);
+            self.Registry_deployed_accounts.write((token_contract, token_id), new_deployment_index);
 
             self.emit(AccountCreated { account_address, token_contract, token_id, });
 
@@ -116,7 +116,7 @@ mod Registry {
         fn total_deployed_accounts(
             self: @ContractState, token_contract: ContractAddress, token_id: u256
         ) -> u8 {
-            self.registry_deployed_accounts.read((token_contract, token_id))
+            self.Registry_deployed_accounts.read((token_contract, token_id))
         }
     }
 

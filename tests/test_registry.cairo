@@ -14,7 +14,7 @@ use token_bound_accounts::registry::registry::Registry;
 
 use token_bound_accounts::interfaces::IAccount::IAccountDispatcher;
 use token_bound_accounts::interfaces::IAccount::IAccountDispatcherTrait;
-use token_bound_accounts::account::account::Account;
+use token_bound_accounts::presets::account::Account;
 
 use token_bound_accounts::test_helper::erc721_helper::IERC721Dispatcher;
 use token_bound_accounts::test_helper::erc721_helper::IERC721DispatcherTrait;
