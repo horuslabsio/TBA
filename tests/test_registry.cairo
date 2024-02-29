@@ -10,7 +10,7 @@ use snforge_std::{
 
 use token_bound_accounts::interfaces::IRegistry::IRegistryDispatcherTrait;
 use token_bound_accounts::interfaces::IRegistry::IRegistryDispatcher;
-use token_bound_accounts::registry::registry::Registry;
+use token_bound_accounts::presets::registry::Registry;
 
 use token_bound_accounts::interfaces::IAccount::IAccountDispatcher;
 use token_bound_accounts::interfaces::IAccount::IAccountDispatcherTrait;
