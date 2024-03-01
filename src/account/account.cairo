@@ -1,5 +1,5 @@
 ////////////////////////////////
-// Account contract
+// Account Component
 ////////////////////////////////
 #[starknet::component]
 mod AccountComponent {
@@ -27,7 +27,6 @@ mod AccountComponent {
     #[derive(Drop, starknet::Event)]
     enum Event {
         AccountCreated: AccountCreated,
-        AccountUpgraded: AccountUpgraded,
         AccountLocked: AccountLocked,
         TransactionExecuted: TransactionExecuted
     }
@@ -50,15 +49,6 @@ mod AccountComponent {
         response: Span<Span<felt252>>
     }
 
-    /// @notice Emitted when the account upgrades to a new implementation
-    /// @param account tokenbound account to be upgraded
-    /// @param implementation the upgraded account class hash
-    #[derive(Drop, starknet::Event)]
-    struct AccountUpgraded {
-        account: ContractAddress,
-        implementation: ClassHash
-    }
-
     /// @notice Emitted when the account is locked
     /// @param account tokenbound account who's lock function was triggered
     /// @param locked_at timestamp at which the lock function was triggered
@@ -69,6 +59,14 @@ mod AccountComponent {
         account: ContractAddress,
         locked_at: u64,
         duration: u64,
+    }
+
+    mod Errors {
+        const LOCKED_ACCOUNT: felt252 = 'Account: account is locked!';
+        const INV_TX_VERSION:  felt252 = 'Account: invalid tx version';
+        const UNAUTHORIZED: felt252 = 'Account: unauthorized';
+        const INV_SIG_LEN: felt252 = 'Account: invalid sig length';
+        const INV_SIGNATURE: felt252 = 'Account: invalid signature';
     }
 
     #[embeddable_as(AccountImpl)]
@@ -107,10 +105,10 @@ mod AccountComponent {
         fn __execute__(ref self: ComponentState<TContractState>, mut calls: Array<Call>) -> Array<Span<felt252>> {
             self._assert_only_owner();
             let (lock_status, _) = self._is_locked();
-            assert(!lock_status, 'Account: account is locked!');
+            assert(!lock_status, Errors::LOCKED_ACCOUNT);
 
             let tx_info = get_tx_info().unbox();
-            assert(tx_info.version != 0, 'invalid tx version');
+            assert(tx_info.version != 0, Errors::INV_TX_VERSION);
 
             let retdata = self._execute_calls(calls.span());
             let hash = tx_info.transaction_hash;
@@ -133,23 +131,12 @@ mod AccountComponent {
             self._get_token()
         }
 
-        /// @notice ugprades an account implementation
-        /// @param implementation the new class_hash
-        fn upgrade(ref self: ComponentState<TContractState>, implementation: ClassHash) {
-            self._assert_only_owner();
-            let (lock_status, _) = self._is_locked();
-            assert(!lock_status, 'Account: account is locked!');
-            assert(!implementation.is_zero(), 'Invalid class hash');
-            replace_class_syscall(implementation).unwrap_syscall();
-            self.emit(AccountUpgraded { account: get_contract_address(), implementation, });
-        }
-
         // @notice protection mechanism for selling token bound accounts. can't execute when account is locked
         // @param duration for which to lock account
         fn lock(ref self: ComponentState<TContractState>, duration: u64) {
             self._assert_only_owner();
             let (lock_status, _) = self._is_locked();
-            assert(!lock_status, 'Account: account already locked');
+            assert(!lock_status, Errors::LOCKED_ACCOUNT);
             let current_timestamp = get_block_timestamp();
             let unlock_time = current_timestamp + duration;
             self.Account_unlock_timestamp.write(unlock_time);
@@ -198,7 +185,7 @@ mod AccountComponent {
         fn _assert_only_owner(ref self: ComponentState<TContractState>) {
             let caller = get_caller_address();
             let owner = self._get_owner(self.Account_token_contract.read(), self.Account_token_id.read());
-            assert(caller == owner, 'Account: unathorized');
+            assert(caller == owner, Errors::UNAUTHORIZED);
         }
 
         /// @notice internal function for getting NFT owner
@@ -246,7 +233,7 @@ mod AccountComponent {
             let signature = tx_info.signature;
             assert(
                 self._is_valid_signature(tx_hash, signature) == starknet::VALIDATED,
-                'Account: invalid signature'
+                Errors::INV_SIGNATURE
             );
             starknet::VALIDATED
         }
@@ -256,7 +243,7 @@ mod AccountComponent {
             self: @ComponentState<TContractState>, hash: felt252, signature: Span<felt252>
         ) -> felt252 {
             let signature_length = signature.len();
-            assert(signature_length == 2_u32, 'Account: invalid sig length');
+            assert(signature_length == 2_u32, Errors::INV_SIG_LEN);
 
             let caller = get_caller_address();
             let owner = self._get_owner(self.Account_token_contract.read(), self.Account_token_id.read());

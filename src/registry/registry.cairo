@@ -1,5 +1,5 @@
 ////////////////////////////////
-// Registry contract
+// Registry Component
 ////////////////////////////////
 #[starknet::component]
 mod RegistryComponent {

@@ -15,6 +15,10 @@ use token_bound_accounts::interfaces::IAccount::IAccountSafeDispatcher;
 use token_bound_accounts::interfaces::IAccount::IAccountSafeDispatcherTrait;
 use token_bound_accounts::presets::account::Account;
 
+use token_bound_accounts::interfaces::IUpgradeable::IUpgradeableDispatcher;
+use token_bound_accounts::interfaces::IUpgradeable::IUpgradeableDispatcherTrait;
+
+
 use token_bound_accounts::test_helper::hello_starknet::IHelloStarknetDispatcher;
 use token_bound_accounts::test_helper::hello_starknet::IHelloStarknetDispatcherTrait;
 use token_bound_accounts::test_helper::hello_starknet::HelloStarknet;
@@ -206,7 +210,7 @@ fn test_owner() {
 #[test]
 fn test_upgrade() {
     let (contract_address, erc721_contract_address) = __setup__();
-    let dispatcher = IAccountDispatcher { contract_address };
+    // let dispatcher = IAccountDispatcher { contract_address };
 
     let new_class_hash = declare('UpgradedAccount').class_hash;
 
@@ -215,6 +219,7 @@ fn test_upgrade() {
     let token_owner = token_dispatcher.ownerOf(u256_from_felt252(1));
 
     // call the upgrade function
+    let dispatcher = IUpgradeableDispatcher { contract_address };
     start_prank(CheatTarget::One(contract_address), token_owner);
     dispatcher.upgrade(new_class_hash);
 
@@ -223,18 +228,20 @@ fn test_upgrade() {
     let version = upgraded_dispatcher.version();
     assert(version == 1_u8, 'upgrade unsuccessful');
     stop_prank(CheatTarget::One(contract_address));
+}
+
+#[test]
+#[should_panic(expected: ( 'Account: unauthorized',))]
+fn test_upgrade_with_unauthorized() {
+    let (contract_address, erc721_contract_address) = __setup__();
+
+    let new_class_hash = declare('UpgradedAccount').class_hash;
 
     // call upgrade function with an unauthorized address
     start_prank(CheatTarget::One(contract_address), ACCOUNT2.try_into().unwrap());
-    let safe_upgrade_dispatcher = IAccountSafeDispatcher { contract_address };
-    match safe_upgrade_dispatcher.upgrade(new_class_hash) {
-        Result::Ok(_) => panic_with_felt252('expected to panic'),
-        Result::Err(panic_data) => {
-            stop_prank(CheatTarget::One(contract_address));
-            panic_data.print();
-            return ();
-        }
-    }
+    // let safe_upgrade_dispatcher = IAccountSafeDispatcher { contract_address };
+    let safe_upgrade_dispatcher = IUpgradeableDispatcher { contract_address };
+    safe_upgrade_dispatcher.upgrade(new_class_hash);
 }
 
 #[test]
@@ -302,6 +309,7 @@ fn test_should_not_execute_when_locked() {
 }
 
 #[test]
+#[should_panic(expected: ('Account: account is locked!',))]
 fn test_should_not_upgrade_when_locked() {
     let (contract_address, erc721_contract_address) = __setup__();
     let dispatcher = IAccountSafeDispatcher { contract_address };
@@ -320,14 +328,8 @@ fn test_should_not_upgrade_when_locked() {
     let new_class_hash = declare('UpgradedAccount').class_hash;
 
     // call the upgrade function
-    match dispatcher.upgrade(new_class_hash) {
-        Result::Ok(_) => panic_with_felt252('should have panicked'),
-        Result::Err(panic_data) => {
-            stop_prank(CheatTarget::One(contract_address));
-            panic_data.print();
-            return ();
-        }
-    }
+    let dispatcher_upgradable = IUpgradeableDispatcher { contract_address };
+    dispatcher_upgradable.upgrade(new_class_hash);
 }
 
 #[test]
