@@ -1,8 +1,8 @@
 ////////////////////////////////
 // Registry Component
 ////////////////////////////////
-#[starknet::component]
-mod RegistryComponent {
+#[starknet::contract]
+mod Registry {
     use core::result::ResultTrait;
     use core::hash::HashStateTrait;
     use starknet::{
@@ -46,19 +46,15 @@ mod RegistryComponent {
         const CALLER_IS_NOT_OWNER: felt252 = 'Registry: caller is not onwer';
     }
 
-    #[embeddable_as(RegistryImpl)]
-    impl Registry<
-        TContractState,
-        +HasComponent<TContractState>,
-        +Drop<TContractState>
-        > of IRegistry<ComponentState<TContractState>> {
+    #[external(v0)]
+    impl IRegistryImpl of IRegistry<ContractState> {
         /// @notice deploys a new tokenbound account for an NFT
         /// @param implementation_hash the class hash of the reference account
         /// @param token_contract the contract address of the NFT
         /// @param token_id the ID of the NFT
         /// @param salt random salt for deployment
         fn create_account(
-            ref self: ComponentState<TContractState>,
+            ref self: ContractState,
             implementation_hash: felt252,
             token_contract: ContractAddress,
             token_id: u256,
@@ -92,7 +88,7 @@ mod RegistryComponent {
         /// @param token_id the ID of the NFT
         /// @param salt random salt for deployment
         fn get_account(
-            self: @ComponentState<TContractState>,
+            self: @ContractState,
             implementation_hash: felt252,
             token_contract: ContractAddress,
             token_id: u256,
@@ -122,24 +118,20 @@ mod RegistryComponent {
         /// @param token_contract the contract address of the NFT 
         /// @param token_id the ID of the NFT
         fn total_deployed_accounts(
-            self: @ComponentState<TContractState>, token_contract: ContractAddress, token_id: u256
+            self: @ContractState, token_contract: ContractAddress, token_id: u256
         ) -> u8 {
             self.Registry_deployed_accounts.read((token_contract, token_id))
         }
     }
 
     #[generate_trait]
-    impl InternalImpl<
-        TContractState,
-        +HasComponent<TContractState>,
-        +Drop<TContractState>
-    > of InternalTrait<TContractState> {
+    impl internalImpl of InternalTrait {
         /// @notice internal function for getting NFT owner
         /// @param token_contract contract address of NFT
         // @param token_id token ID of NFT
         // NB: This function aims for compatibility with all contracts (snake or camel case) but do not work as expected on mainnet as low level calls do not return err at the moment. Should work for contracts which implements CamelCase but not snake_case until starknet v0.15.
         fn _get_owner(
-            self: @ComponentState<TContractState>, token_contract: ContractAddress, token_id: u256
+            self: @ContractState, token_contract: ContractAddress, token_id: u256
         ) -> ContractAddress {
             let mut calldata: Array<felt252> = ArrayTrait::new();
             Serde::serialize(@token_id, ref calldata);
