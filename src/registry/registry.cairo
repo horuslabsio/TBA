@@ -42,6 +42,10 @@ mod RegistryComponent {
         token_id: u256,
     }
 
+    mod Errors {
+        const CALLER_IS_NOT_OWNER: felt252 = 'Registry: caller is not onwer';
+    }
+
     #[embeddable_as(RegistryImpl)]
     impl Registry<
         TContractState,
@@ -61,7 +65,7 @@ mod RegistryComponent {
             salt: felt252
         ) -> ContractAddress {
             let owner = self._get_owner(token_contract, token_id);
-            assert(owner == get_caller_address(), 'CALLER_IS_NOT_OWNER');
+            assert(owner == get_caller_address(), Errors::CALLER_IS_NOT_OWNER);
 
             let mut constructor_calldata: Array<felt252> = array![
                 token_contract.into(), token_id.low.into(), token_id.high.into()
