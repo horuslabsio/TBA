@@ -28,9 +28,7 @@ mod UpgradeableComponent {
 
     #[generate_trait]
     impl InternalImpl<
-        TContractState,
-        +HasComponent<TContractState>,
-        +Drop<TContractState>
+        TContractState, +HasComponent<TContractState>, +Drop<TContractState>
     > of InternalTrait<TContractState> {
         /// @notice eplaces the contract's class hash with `new_class_hash`.
         /// Emits an `Upgraded` event.

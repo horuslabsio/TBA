@@ -4,17 +4,11 @@ use array::{ArrayTrait, SpanTrait};
 use result::ResultTrait;
 use option::OptionTrait;
 use integer::u256_from_felt252;
-use snforge_std::{
-    declare, start_prank, stop_prank, ContractClassTrait, ContractClass, PrintTrait, CheatTarget
-};
+use snforge_std::{declare, start_prank, stop_prank, ContractClassTrait, ContractClass, CheatTarget};
 
 use token_bound_accounts::interfaces::IRegistry::IRegistryDispatcherTrait;
 use token_bound_accounts::interfaces::IRegistry::IRegistryDispatcher;
 use token_bound_accounts::registry::registry::Registry;
-
-use token_bound_accounts::test_helper::registry_upgrade::IUpgradedRegistryDispatcher;
-use token_bound_accounts::test_helper::registry_upgrade::IUpgradedRegistryDispatcherTrait;
-use token_bound_accounts::test_helper::registry_upgrade::UpgradedRegistry;
 
 use token_bound_accounts::interfaces::IUpgradeable::IUpgradeableDispatcher;
 use token_bound_accounts::interfaces::IUpgradeable::IUpgradeableDispatcherTrait;
@@ -90,21 +84,21 @@ fn test_getting_total_deployed_accounts() {
 
     let acct_class_hash = declare('Account').class_hash;
     // create multiple accounts for same NFT
-    let account_address1 = registry_dispatcher
+    registry_dispatcher
         .create_account(
             class_hash_to_felt252(acct_class_hash),
             erc721_contract_address,
             u256_from_felt252(1),
             3554633
         );
-    let account_address2 = registry_dispatcher
+    registry_dispatcher
         .create_account(
             class_hash_to_felt252(acct_class_hash),
             erc721_contract_address,
             u256_from_felt252(1),
             363256
         );
-    let account_address3 = registry_dispatcher
+    registry_dispatcher
         .create_account(
             class_hash_to_felt252(acct_class_hash),
             erc721_contract_address,

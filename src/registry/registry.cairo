@@ -46,7 +46,7 @@ mod Registry {
         const CALLER_IS_NOT_OWNER: felt252 = 'Registry: caller is not onwer';
     }
 
-    #[external(v0)]
+    #[abi(embed_v0)]
     impl IRegistryImpl of IRegistry<ContractState> {
         /// @notice deploys a new tokenbound account for an NFT
         /// @param implementation_hash the class hash of the reference account

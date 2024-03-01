@@ -6,7 +6,7 @@ use option::OptionTrait;
 use integer::u256_from_felt252;
 use snforge_std::{
     declare, start_prank, stop_prank, start_warp, stop_warp, ContractClassTrait, ContractClass,
-    PrintTrait, CheatTarget
+    CheatTarget
 };
 
 use token_bound_accounts::interfaces::IAccount::IAccountDispatcher;
@@ -118,7 +118,7 @@ fn test_execute() {
     let test_address = test_contract.deploy(@array![]).unwrap();
 
     // craft calldata for call array
-    let mut calldata = array![100];
+    let mut calldata = array![100].span();
     let call = Call {
         to: test_address,
         selector: 1530486729947006463063166157847785599120665941190480211966374137237989315360,
@@ -158,13 +158,13 @@ fn test_execute_multicall() {
     let call1 = Call {
         to: test_address,
         selector: 1530486729947006463063166157847785599120665941190480211966374137237989315360,
-        calldata: calldata
+        calldata: calldata.span()
     };
     let mut calldata2 = array![200];
     let call2 = Call {
         to: test_address,
         selector: 1157683809588496510300162709548024577765603117833695133799390448986300456129,
-        calldata: calldata2
+        calldata: calldata2.span()
     };
 
     // construct call array
@@ -230,15 +230,14 @@ fn test_upgrade() {
 }
 
 #[test]
-#[should_panic(expected: ( 'Account: unauthorized',))]
+#[should_panic(expected: ('Account: unauthorized',))]
 fn test_upgrade_with_unauthorized() {
-    let (contract_address, erc721_contract_address) = __setup__();
+    let (contract_address, _) = __setup__();
 
     let new_class_hash = declare('UpgradedAccount').class_hash;
 
     // call upgrade function with an unauthorized address
     start_prank(CheatTarget::One(contract_address), ACCOUNT2.try_into().unwrap());
-    // let safe_upgrade_dispatcher = IAccountSafeDispatcher { contract_address };
     let safe_upgrade_dispatcher = IUpgradeableDispatcher { contract_address };
     safe_upgrade_dispatcher.upgrade(new_class_hash);
 }
@@ -269,9 +268,11 @@ fn test_locking() {
 }
 
 #[test]
+#[feature("safe_dispatcher")]
 fn test_should_not_execute_when_locked() {
     let (contract_address, erc721_contract_address) = __setup__();
-    let dispatcher = IAccountSafeDispatcher { contract_address };
+    let safe_dispatcher = IAccountSafeDispatcher { contract_address };
+    let dispatcher = IAccountDispatcher { contract_address };
     let lock_duration = 3000_u64;
 
     // get token owner
@@ -293,15 +294,15 @@ fn test_should_not_execute_when_locked() {
     let call = Call {
         to: test_address,
         selector: 1530486729947006463063166157847785599120665941190480211966374137237989315360,
-        calldata: calldata
+        calldata: calldata.span()
     };
     let mut calls = array![call];
 
-    match dispatcher.__execute__(calls) {
+    match safe_dispatcher.__execute__(calls) {
         Result::Ok(_) => panic_with_felt252('should have panicked!'),
         Result::Err(panic_data) => {
             stop_prank(CheatTarget::One(contract_address));
-            panic_data.print();
+            println!("panic_data: {:?}", panic_data);
             return ();
         }
     }
@@ -311,7 +312,8 @@ fn test_should_not_execute_when_locked() {
 #[should_panic(expected: ('Account: account is locked!',))]
 fn test_should_not_upgrade_when_locked() {
     let (contract_address, erc721_contract_address) = __setup__();
-    let dispatcher = IAccountSafeDispatcher { contract_address };
+    let dispatcher = IAccountDispatcher { contract_address };
+
     let lock_duration = 3000_u64;
 
     // get token owner
@@ -332,8 +334,9 @@ fn test_should_not_upgrade_when_locked() {
 }
 
 #[test]
+#[feature("safe_dispatcher")]
 fn test_should_not_lock_if_not_owner() {
-    let (contract_address, erc721_contract_address) = __setup__();
+    let (contract_address, _) = __setup__();
     let dispatcher = IAccountSafeDispatcher { contract_address };
     let lock_duration = 3000_u64;
 
@@ -345,16 +348,18 @@ fn test_should_not_lock_if_not_owner() {
         Result::Err(panic_data) => {
             stop_prank(CheatTarget::One(contract_address));
             stop_warp(CheatTarget::One(contract_address));
-            panic_data.print();
+            println!("panic_data: {:?}", panic_data);
             return ();
         }
     }
 }
 
 #[test]
+#[feature("safe_dispatcher")]
 fn test_should_not_lock_if_already_locked() {
     let (contract_address, erc721_contract_address) = __setup__();
-    let dispatcher = IAccountSafeDispatcher { contract_address };
+    let safe_dispatcher = IAccountSafeDispatcher { contract_address };
+    let dispatcher = IAccountDispatcher { contract_address };
     let lock_duration = 3000_u64;
 
     // get token owner
@@ -369,12 +374,12 @@ fn test_should_not_lock_if_already_locked() {
 
     // call the lock function again
     start_warp(CheatTarget::One(contract_address), 1000);
-    match dispatcher.lock(lock_duration) {
+    match safe_dispatcher.lock(lock_duration) {
         Result::Ok(_) => panic_with_felt252('should have panicked'),
         Result::Err(panic_data) => {
             stop_prank(CheatTarget::One(contract_address));
             stop_warp(CheatTarget::One(contract_address));
-            panic_data.print();
+            println!("panic_data: {:?}", panic_data);
             return ();
         }
     }

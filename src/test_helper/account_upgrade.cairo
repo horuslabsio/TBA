@@ -49,7 +49,7 @@ trait IERC721<TContractState> {
     fn token_uri(self: @TContractState, token_id: u256) -> felt252;
 }
 
-#[starknet::contract]
+#[starknet::contract(account)]
 mod UpgradedAccount {
     use starknet::{
         get_tx_info, get_caller_address, get_contract_address, ContractAddress, account::Call,
@@ -95,7 +95,7 @@ mod UpgradedAccount {
     }
 
 
-    #[external(v0)]
+    #[abi(embed_v0)]
     impl IAccountImpl of super::IUpgradedAccount<ContractState> {
         fn get_public_key(self: @ContractState) -> felt252 {
             self._public_key.read()
@@ -134,7 +134,7 @@ mod UpgradedAccount {
             let tx_info = get_tx_info().unbox();
             assert(tx_info.version != 0, 'invalid tx version');
 
-            self._execute_calls(calls.span())
+            self._execute_calls(calls)
         }
 
         fn owner(
@@ -202,20 +202,16 @@ mod UpgradedAccount {
             }
         }
 
-        fn _execute_calls(ref self: ContractState, mut calls: Span<Call>) -> Array<Span<felt252>> {
+        fn _execute_calls(ref self: ContractState, mut calls: Array<Call>) -> Array<Span<felt252>> {
             let mut result: Array<Span<felt252>> = ArrayTrait::new();
             let mut calls = calls;
 
             loop {
                 match calls.pop_front() {
                     Option::Some(call) => {
-                        match call_contract_syscall(
-                            *call.to, *call.selector, call.calldata.span()
-                        ) {
+                        match call_contract_syscall(call.to, call.selector, call.calldata) {
                             Result::Ok(mut retdata) => { result.append(retdata); },
-                            Result::Err(revert_reason) => {
-                                panic_with_felt252('multicall_failed');
-                            }
+                            Result::Err(_) => { panic_with_felt252('multicall_failed'); }
                         }
                     },
                     Option::None(_) => { break (); }
