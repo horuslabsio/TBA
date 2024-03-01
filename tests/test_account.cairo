@@ -210,7 +210,6 @@ fn test_owner() {
 #[test]
 fn test_upgrade() {
     let (contract_address, erc721_contract_address) = __setup__();
-    // let dispatcher = IAccountDispatcher { contract_address };
 
     let new_class_hash = declare('UpgradedAccount').class_hash;
 

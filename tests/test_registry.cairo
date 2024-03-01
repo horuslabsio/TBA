@@ -12,6 +12,13 @@ use token_bound_accounts::interfaces::IRegistry::IRegistryDispatcherTrait;
 use token_bound_accounts::interfaces::IRegistry::IRegistryDispatcher;
 use token_bound_accounts::presets::registry::Registry;
 
+use token_bound_accounts::test_helper::registry_upgrade::IUpgradedRegistryDispatcher;
+use token_bound_accounts::test_helper::registry_upgrade::IUpgradedRegistryDispatcherTrait;
+use token_bound_accounts::test_helper::registry_upgrade::UpgradedRegistry;
+
+use token_bound_accounts::interfaces::IUpgradeable::IUpgradeableDispatcher;
+use token_bound_accounts::interfaces::IUpgradeable::IUpgradeableDispatcherTrait;
+
 use token_bound_accounts::interfaces::IAccount::IAccountDispatcher;
 use token_bound_accounts::interfaces::IAccount::IAccountDispatcherTrait;
 use token_bound_accounts::presets::account::Account;
@@ -142,4 +149,56 @@ fn test_get_account() {
 
     // compare both addresses
     assert(account == account_address, 'get_account computes wrongly');
+}
+
+// Upgradeable test cases
+
+#[test]
+fn test_upgrade() {
+    let (registry_contract_address, erc721_contract_address) = __setup__();
+    let registry_dispatcher = IRegistryDispatcher { contract_address: registry_contract_address };
+
+    // prank contract as token owner
+    let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };
+    let token_owner = token_dispatcher.ownerOf(u256_from_felt252(1));
+    start_prank(CheatTarget::One(registry_contract_address), token_owner);
+
+    // create account
+    let acct_class_hash = declare('Account').class_hash;
+    let account_address = registry_dispatcher
+        .create_account(
+            class_hash_to_felt252(acct_class_hash),
+            erc721_contract_address,
+            u256_from_felt252(1),
+            245828
+        );
+
+    // check total_deployed_accounts
+    let total_deployed_accounts = registry_dispatcher
+        .total_deployed_accounts(erc721_contract_address, u256_from_felt252(1));
+    assert(total_deployed_accounts == 1_u8, 'invalid deployed TBA count');
+
+    // confirm account deployment by checking the account owner
+    let acct_dispatcher = IAccountDispatcher { contract_address: account_address };
+    let TBA_owner = acct_dispatcher.owner(erc721_contract_address, u256_from_felt252(1));
+    assert(TBA_owner == token_owner, 'acct deployed wrongly');
+
+    /////////////////////////// upgrade account ///////////////////////////
+
+    let new_class_hash = declare('UpgradedRegistry').class_hash;
+
+    // get token owner
+    let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };
+    let token_owner = token_dispatcher.ownerOf(u256_from_felt252(1));
+
+    // call the upgrade function
+    let dispatcher = IUpgradeableDispatcher { contract_address: registry_contract_address };
+    start_prank(CheatTarget::One(registry_contract_address), token_owner);
+    dispatcher.upgrade(new_class_hash);
+
+    // try to call the version function
+    let upgraded_dispatcher = IUpgradedRegistryDispatcher { contract_address: registry_contract_address };
+    let version = upgraded_dispatcher.version();
+    assert(version == 1_u8, 'upgrade unsuccessful');
+    stop_prank(CheatTarget::One(registry_contract_address));
 }
