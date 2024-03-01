@@ -1,5 +1,5 @@
 ////////////////////////////////
-// Registry contract
+// Registry Component
 ////////////////////////////////
 #[starknet::contract]
 mod Registry {
@@ -20,7 +20,7 @@ mod Registry {
 
     #[storage]
     struct Storage {
-        registry_deployed_accounts: LegacyMap<
+        Registry_deployed_accounts: LegacyMap<
             (ContractAddress, u256), u8
         >, // tracks no. of deployed accounts by registry for an NFT
     }
@@ -42,6 +42,10 @@ mod Registry {
         token_id: u256,
     }
 
+    mod Errors {
+        const CALLER_IS_NOT_OWNER: felt252 = 'Registry: caller is not onwer';
+    }
+
     #[external(v0)]
     impl IRegistryImpl of IRegistry<ContractState> {
         /// @notice deploys a new tokenbound account for an NFT
@@ -57,7 +61,7 @@ mod Registry {
             salt: felt252
         ) -> ContractAddress {
             let owner = self._get_owner(token_contract, token_id);
-            assert(owner == get_caller_address(), 'CALLER_IS_NOT_OWNER');
+            assert(owner == get_caller_address(), Errors::CALLER_IS_NOT_OWNER);
 
             let mut constructor_calldata: Array<felt252> = array![
                 token_contract.into(), token_id.low.into(), token_id.high.into()
@@ -68,10 +72,10 @@ mod Registry {
             let (account_address, _) = result.unwrap_syscall();
 
             let new_deployment_index: u8 = self
-                .registry_deployed_accounts
+                .Registry_deployed_accounts
                 .read((token_contract, token_id))
                 + 1_u8;
-            self.registry_deployed_accounts.write((token_contract, token_id), new_deployment_index);
+            self.Registry_deployed_accounts.write((token_contract, token_id), new_deployment_index);
 
             self.emit(AccountCreated { account_address, token_contract, token_id, });
 
@@ -116,7 +120,7 @@ mod Registry {
         fn total_deployed_accounts(
             self: @ContractState, token_contract: ContractAddress, token_id: u256
         ) -> u8 {
-            self.registry_deployed_accounts.read((token_contract, token_id))
+            self.Registry_deployed_accounts.read((token_contract, token_id))
         }
     }
 
