@@ -63,7 +63,7 @@ mod AccountComponent {
 
     mod Errors {
         const LOCKED_ACCOUNT: felt252 = 'Account: account is locked!';
-        const INV_TX_VERSION:  felt252 = 'Account: invalid tx version';
+        const INV_TX_VERSION: felt252 = 'Account: invalid tx version';
         const UNAUTHORIZED: felt252 = 'Account: unauthorized';
         const INV_SIG_LEN: felt252 = 'Account: invalid sig length';
         const INV_SIGNATURE: felt252 = 'Account: invalid signature';
@@ -71,10 +71,8 @@ mod AccountComponent {
 
     #[embeddable_as(AccountImpl)]
     impl Account<
-        TContractState,
-        +HasComponent<TContractState>,
-        +Drop<TContractState>
-        > of IAccount<ComponentState<TContractState>> {
+        TContractState, +HasComponent<TContractState>, +Drop<TContractState>
+    > of IAccount<ComponentState<TContractState>> {
         /// @notice used for signature validation
         /// @param hash The message hash 
         /// @param signature The signature to be validated
@@ -85,24 +83,32 @@ mod AccountComponent {
         }
 
         fn __validate_deploy__(
-            self: @ComponentState<TContractState>, class_hash: felt252, contract_address_salt: felt252,
+            self: @ComponentState<TContractState>,
+            class_hash: felt252,
+            contract_address_salt: felt252,
         ) -> felt252 {
             self._validate_transaction()
         }
 
-        fn __validate_declare__(self: @ComponentState<TContractState>, class_hash: felt252) -> felt252 {
+        fn __validate_declare__(
+            self: @ComponentState<TContractState>, class_hash: felt252
+        ) -> felt252 {
             self._validate_transaction()
         }
 
         /// @notice validate an account transaction
         /// @param calls an array of transactions to be executed
-        fn __validate__(ref self: ComponentState<TContractState>, mut calls: Array<Call>) -> felt252 {
+        fn __validate__(
+            ref self: ComponentState<TContractState>, mut calls: Array<Call>
+        ) -> felt252 {
             self._validate_transaction()
         }
 
         /// @notice executes a transaction
         /// @param calls an array of transactions to be executed
-        fn __execute__(ref self: ComponentState<TContractState>, mut calls: Array<Call>) -> Array<Span<felt252>> {
+        fn __execute__(
+            ref self: ComponentState<TContractState>, mut calls: Array<Call>
+        ) -> Array<Span<felt252>> {
             self._assert_only_owner();
             let (lock_status, _) = self._is_locked();
             assert(!lock_status, Errors::LOCKED_ACCOUNT);
@@ -110,7 +116,7 @@ mod AccountComponent {
             let tx_info = get_tx_info().unbox();
             assert(tx_info.version != 0, Errors::INV_TX_VERSION);
 
-            let retdata = self._execute_calls(calls.span());
+            let retdata = self._execute_calls(calls);
             let hash = tx_info.transaction_hash;
             let response = retdata.span();
             self.emit(TransactionExecuted { hash, response });
@@ -155,7 +161,9 @@ mod AccountComponent {
 
         // @notice check that account supports TBA interface
         // @param interface_id interface to be checked against
-        fn supports_interface(self: @ComponentState<TContractState>, interface_id: felt252) -> bool {
+        fn supports_interface(
+            self: @ComponentState<TContractState>, interface_id: felt252
+        ) -> bool {
             if (interface_id == TBA_INTERFACE_ID) {
                 return true;
             } else {
@@ -166,25 +174,26 @@ mod AccountComponent {
 
     #[generate_trait]
     impl InternalImpl<
-        TContractState,
-        +HasComponent<TContractState>,
-        +Drop<TContractState>
+        TContractState, +HasComponent<TContractState>, +Drop<TContractState>
     > of InternalTrait<TContractState> {
-
         /// @notice initializes the account by setting the initial token conrtact and token id
-        fn initializer(ref self: ComponentState<TContractState>, token_contract: ContractAddress, token_id: u256) {
+        fn initializer(
+            ref self: ComponentState<TContractState>,
+            token_contract: ContractAddress,
+            token_id: u256
+        ) {
+            self.Account_token_contract.write(token_contract);
+            self.Account_token_id.write(token_id);
 
-        self.Account_token_contract.write(token_contract);
-        self.Account_token_id.write(token_id);
-
-        let owner = self._get_owner(token_contract, token_id);
-        self.emit(AccountCreated { owner });
-    }
+            let owner = self._get_owner(token_contract, token_id);
+            self.emit(AccountCreated { owner });
+        }
 
         /// @notice check that caller is the token bound account
         fn _assert_only_owner(ref self: ComponentState<TContractState>) {
             let caller = get_caller_address();
-            let owner = self._get_owner(self.Account_token_contract.read(), self.Account_token_id.read());
+            let owner = self
+                ._get_owner(self.Account_token_contract.read(), self.Account_token_id.read());
             assert(caller == owner, Errors::UNAUTHORIZED);
         }
 
@@ -246,7 +255,8 @@ mod AccountComponent {
             assert(signature_length == 2_u32, Errors::INV_SIG_LEN);
 
             let caller = get_caller_address();
-            let owner = self._get_owner(self.Account_token_contract.read(), self.Account_token_id.read());
+            let owner = self
+                ._get_owner(self.Account_token_contract.read(), self.Account_token_id.read());
             if (caller == owner) {
                 return starknet::VALIDATED;
             } else {
@@ -256,20 +266,18 @@ mod AccountComponent {
 
         /// @notice internal function for executing transactions
         /// @param calls An array of transactions to be executed
-        fn _execute_calls(ref self: ComponentState<TContractState>, mut calls: Span<Call>) -> Array<Span<felt252>> {
+        fn _execute_calls(
+            ref self: ComponentState<TContractState>, mut calls: Array<Call>
+        ) -> Array<Span<felt252>> {
             let mut result: Array<Span<felt252>> = ArrayTrait::new();
             let mut calls = calls;
 
             loop {
                 match calls.pop_front() {
                     Option::Some(call) => {
-                        match call_contract_syscall(
-                            *call.to, *call.selector, call.calldata.span()
-                        ) {
+                        match call_contract_syscall(call.to, call.selector, call.calldata) {
                             Result::Ok(mut retdata) => { result.append(retdata); },
-                            Result::Err(revert_reason) => {
-                                panic_with_felt252('multicall_failed');
-                            }
+                            Result::Err(_) => { panic_with_felt252('multicall_failed'); }
                         }
                     },
                     Option::None(_) => { break (); }

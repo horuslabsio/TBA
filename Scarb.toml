@@ -1,6 +1,6 @@
 [package]
 name = "token_bound_accounts"
-version = "0.1.0"
+version = "0.3.0"
 
 # See more keys and their definitions at https://docs.swmansion.com/scarb/docs/reference/manifest
 
@@ -9,8 +9,8 @@ sierra = true
 casm = true
 
 [dependencies]
-starknet = "2.4.3"
-snforge_std = { git = "https://github.com/foundry-rs/starknet-foundry.git", tag = "v0.14.0" }
+starknet = "2.5.4"
+snforge_std = { git = "https://github.com/foundry-rs/starknet-foundry.git", tag = "v0.18.0" }
 
 [tool.snforge]
 # exit_first = true

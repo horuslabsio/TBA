@@ -78,7 +78,7 @@ mod ERC721 {
         self.symbol.write(_symbol);
     }
 
-    #[external(v0)]
+    #[abi(embed_v0)]
     impl ERC721Impl of super::IERC721<ContractState> {
         fn name(self: @ContractState) -> felt252 {
             self.name.read()

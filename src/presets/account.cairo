@@ -1,7 +1,7 @@
 ////////////////////////////////
 // Account contract
 ////////////////////////////////
-#[starknet::contract]
+#[starknet::contract(account)]
 mod Account {
     use starknet::ContractAddress;
     use starknet::ClassHash;
@@ -42,7 +42,7 @@ mod Account {
         self.account.initializer(token_contract, token_id);
     }
 
-    #[external(v0)]
+    #[abi(embed_v0)]
     impl UpgradeableImpl of IUpgradeable<ContractState> {
         fn upgrade(ref self: ContractState, new_class_hash: ClassHash) {
             self.account._assert_only_owner();
@@ -50,5 +50,5 @@ mod Account {
             assert(!lock_status, AccountComponent::Errors::LOCKED_ACCOUNT);
             self.upgradeable._upgrade(new_class_hash);
         }
-    }   
+    }
 }
