@@ -25,7 +25,7 @@ const ACCOUNT: felt252 = 1234;
 
 fn __setup__() -> (ContractAddress, ContractAddress) {
     // deploy erc721 helper contract
-    let erc721_contract = declare('ERC721');
+    let erc721_contract = declare("ERC721");
     let mut erc721_constructor_calldata = array!['tokenbound', 'TBA'];
     let erc721_contract_address = erc721_contract.deploy(@erc721_constructor_calldata).unwrap();
 
@@ -35,7 +35,7 @@ fn __setup__() -> (ContractAddress, ContractAddress) {
     dispatcher.mint(recipient, u256_from_felt252(1));
 
     // deploy registry contract
-    let registry_contract = declare('Registry');
+    let registry_contract = declare("Registry");
     let registry_contract_address = registry_contract.deploy(@array![]).unwrap();
 
     (registry_contract_address, erc721_contract_address)
@@ -52,7 +52,7 @@ fn test_create_account() {
     start_prank(CheatTarget::One(registry_contract_address), token_owner);
 
     // create account
-    let acct_class_hash = declare('Account').class_hash;
+    let acct_class_hash = declare("Account").class_hash;
     let account_address = registry_dispatcher
         .create_account(
             class_hash_to_felt252(acct_class_hash),
@@ -82,7 +82,7 @@ fn test_getting_total_deployed_accounts() {
     let token_owner = token_dispatcher.ownerOf(u256_from_felt252(1));
     start_prank(CheatTarget::One(registry_contract_address), token_owner);
 
-    let acct_class_hash = declare('Account').class_hash;
+    let acct_class_hash = declare("Account").class_hash;
     // create multiple accounts for same NFT
     registry_dispatcher
         .create_account(
@@ -123,7 +123,7 @@ fn test_get_account() {
     start_prank(CheatTarget::One(registry_contract_address), token_owner);
 
     // deploy account
-    let acct_class_hash = declare('Account').class_hash;
+    let acct_class_hash = declare("Account").class_hash;
     let account_address = registry_dispatcher
         .create_account(
             class_hash_to_felt252(acct_class_hash),
