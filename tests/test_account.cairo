@@ -56,7 +56,7 @@ fn SIGNED_TX_DATA() -> SignedTransactionData {
 
 fn __setup__() -> (ContractAddress, ContractAddress) {
     // deploy erc721 helper contract
-    let erc721_contract = declare('ERC721');
+    let erc721_contract = declare("ERC721");
     let mut erc721_constructor_calldata = array!['tokenbound', 'TBA'];
     let erc721_contract_address = erc721_contract.deploy(@erc721_constructor_calldata).unwrap();
 
@@ -66,7 +66,7 @@ fn __setup__() -> (ContractAddress, ContractAddress) {
     dispatcher.mint(recipient, u256_from_felt252(1));
 
     // deploy account contract
-    let account_contract = declare('Account');
+    let account_contract = declare("Account");
     let mut acct_constructor_calldata = array![
         contract_address_to_felt252(erc721_contract_address), 1, 0
     ];
@@ -114,7 +114,7 @@ fn test_execute() {
     let dispatcher = IAccountDispatcher { contract_address };
 
     // deploy `HelloStarknet` contract for testing
-    let test_contract = declare('HelloStarknet');
+    let test_contract = declare("HelloStarknet");
     let test_address = test_contract.deploy(@array![]).unwrap();
 
     // craft calldata for call array
@@ -150,7 +150,7 @@ fn test_execute_multicall() {
     let dispatcher = IAccountDispatcher { contract_address };
 
     // deploy `HelloStarknet` contract for testing
-    let test_contract = declare('HelloStarknet');
+    let test_contract = declare("HelloStarknet");
     let test_address = test_contract.deploy(@array![]).unwrap();
 
     // craft calldata and create call array
@@ -211,7 +211,7 @@ fn test_owner() {
 fn test_upgrade() {
     let (contract_address, erc721_contract_address) = __setup__();
 
-    let new_class_hash = declare('UpgradedAccount').class_hash;
+    let new_class_hash = declare("UpgradedAccount").class_hash;
 
     // get token owner
     let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };
@@ -234,7 +234,7 @@ fn test_upgrade() {
 fn test_upgrade_with_unauthorized() {
     let (contract_address, _) = __setup__();
 
-    let new_class_hash = declare('UpgradedAccount').class_hash;
+    let new_class_hash = declare("UpgradedAccount").class_hash;
 
     // call upgrade function with an unauthorized address
     start_prank(CheatTarget::One(contract_address), ACCOUNT2.try_into().unwrap());
@@ -286,7 +286,7 @@ fn test_should_not_execute_when_locked() {
     stop_warp(CheatTarget::One(contract_address));
 
     // deploy `HelloStarknet` contract for testing purposes
-    let test_contract = declare('HelloStarknet');
+    let test_contract = declare("HelloStarknet");
     let test_address = test_contract.deploy(@array![]).unwrap();
 
     // confirm call to execute fails
@@ -326,7 +326,7 @@ fn test_should_not_upgrade_when_locked() {
     dispatcher.lock(lock_duration);
     stop_warp(CheatTarget::One(contract_address));
 
-    let new_class_hash = declare('UpgradedAccount').class_hash;
+    let new_class_hash = declare("UpgradedAccount").class_hash;
 
     // call the upgrade function
     let dispatcher_upgradable = IUpgradeableDispatcher { contract_address };
