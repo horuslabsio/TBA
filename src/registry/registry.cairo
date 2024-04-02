@@ -5,22 +5,17 @@
 mod Registry {
     use core::result::ResultTrait;
     use core::hash::HashStateTrait;
+    use core::pedersen::PedersenTrait;
     use starknet::{
         ContractAddress, get_caller_address, syscalls::call_contract_syscall, class_hash::ClassHash,
         class_hash::Felt252TryIntoClassHash, syscalls::deploy_syscall, SyscallResultTrait
     };
-    use zeroable::Zeroable;
-    use traits::{Into, TryInto};
-    use option::OptionTrait;
-    use array::{ArrayTrait, SpanTrait};
-    use pedersen::PedersenTrait;
-
     use token_bound_accounts::interfaces::IERC721::{IERC721DispatcherTrait, IERC721Dispatcher};
     use token_bound_accounts::interfaces::IRegistry::IRegistry;
 
     #[storage]
     struct Storage {
-        Registry_deployed_accounts: LegacyMap<
+        registry_deployed_accounts: LegacyMap<
             (ContractAddress, u256), u8
         >, // tracks no. of deployed accounts by registry for an NFT
     }
@@ -72,10 +67,10 @@ mod Registry {
             let (account_address, _) = result.unwrap_syscall();
 
             let new_deployment_index: u8 = self
-                .Registry_deployed_accounts
+                .registry_deployed_accounts
                 .read((token_contract, token_id))
                 + 1_u8;
-            self.Registry_deployed_accounts.write((token_contract, token_id), new_deployment_index);
+            self.registry_deployed_accounts.write((token_contract, token_id), new_deployment_index);
 
             self.emit(AccountCreated { account_address, token_contract, token_id, });
 
@@ -120,7 +115,7 @@ mod Registry {
         fn total_deployed_accounts(
             self: @ContractState, token_contract: ContractAddress, token_id: u256
         ) -> u8 {
-            self.Registry_deployed_accounts.read((token_contract, token_id))
+            self.registry_deployed_accounts.read((token_contract, token_id))
         }
     }
 

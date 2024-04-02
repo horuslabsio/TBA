@@ -3,24 +3,19 @@
 ////////////////////////////////
 #[starknet::component]
 mod AccountComponent {
+    use core::num::traits::zero::Zero;
     use starknet::{
         get_tx_info, get_caller_address, get_contract_address, get_block_timestamp, ContractAddress,
         account::Call, call_contract_syscall, replace_class_syscall, ClassHash, SyscallResultTrait
     };
-    use ecdsa::check_ecdsa_signature;
-    use array::{SpanTrait, ArrayTrait};
-    use box::BoxTrait;
-    use option::OptionTrait;
-    use zeroable::Zeroable;
     use token_bound_accounts::interfaces::IERC721::{IERC721DispatcherTrait, IERC721Dispatcher};
-    use token_bound_accounts::interfaces::IAccount::IAccount;
-    use token_bound_accounts::interfaces::IAccount::{TBA_INTERFACE_ID};
+    use token_bound_accounts::interfaces::IAccount::{IAccount, IAccountDispatcherTrait, IAccountDispatcher, TBA_INTERFACE_ID};
 
     #[storage]
     struct Storage {
-        Account_token_contract: ContractAddress, // contract address of NFT
-        Account_token_id: u256, // token ID of NFT
-        Account_unlock_timestamp: u64, // time to unlock account when locked
+        account_token_contract: ContractAddress, // contract address of NFT
+        account_token_id: u256, // token ID of NFT
+        account_unlock_timestamp: u64, // time to unlock account when locked
     }
 
     #[event]
@@ -82,6 +77,19 @@ mod AccountComponent {
             self._is_valid_signature(hash, signature)
         }
 
+        /// @notice used to validate signer
+        /// @param signer address to be validated
+        fn is_valid_signer(
+            self: @ComponentState<TContractState>, signer: ContractAddress
+        ) -> felt252 {
+            if self._is_valid_signer(signer) {
+                return starknet::VALIDATED;
+            }
+            else {
+                return 0;
+            }
+        }
+
         fn __validate_deploy__(
             self: @ComponentState<TContractState>,
             class_hash: felt252,
@@ -109,7 +117,9 @@ mod AccountComponent {
         fn __execute__(
             ref self: ComponentState<TContractState>, mut calls: Array<Call>
         ) -> Array<Span<felt252>> {
-            self._assert_only_owner();
+            let caller = get_caller_address();
+            assert(self._is_valid_signer(caller), Errors::UNAUTHORIZED);
+
             let (lock_status, _) = self._is_locked();
             assert(!lock_status, Errors::LOCKED_ACCOUNT);
 
@@ -123,16 +133,18 @@ mod AccountComponent {
             retdata
         }
 
-        /// @notice gets the token bound NFT owner
+        /// @notice gets the NFT owner
         /// @param token_contract the contract address of the NFT
         /// @param token_id the token ID of the NFT
         fn owner(
-            self: @ComponentState<TContractState>, token_contract: ContractAddress, token_id: u256
+            self: @ComponentState<TContractState>
         ) -> ContractAddress {
+            let token_contract = self.account_token_contract.read();
+            let token_id = self.account_token_id.read();
             self._get_owner(token_contract, token_id)
         }
 
-        /// @notice returns the contract address and token ID of the NFT
+        /// @notice returns the contract address and token ID of the associated NFT
         fn token(self: @ComponentState<TContractState>) -> (ContractAddress, u256) {
             self._get_token()
         }
@@ -140,12 +152,15 @@ mod AccountComponent {
         // @notice protection mechanism for selling token bound accounts. can't execute when account is locked
         // @param duration for which to lock account
         fn lock(ref self: ComponentState<TContractState>, duration: u64) {
-            self._assert_only_owner();
+            let caller = get_caller_address();
+            assert(self._is_valid_signer(caller), Errors::UNAUTHORIZED);
+
             let (lock_status, _) = self._is_locked();
             assert(!lock_status, Errors::LOCKED_ACCOUNT);
+            
             let current_timestamp = get_block_timestamp();
             let unlock_time = current_timestamp + duration;
-            self.Account_unlock_timestamp.write(unlock_time);
+            self.account_unlock_timestamp.write(unlock_time);
             self
                 .emit(
                     AccountLocked {
@@ -176,25 +191,18 @@ mod AccountComponent {
     impl InternalImpl<
         TContractState, +HasComponent<TContractState>, +Drop<TContractState>
     > of InternalTrait<TContractState> {
-        /// @notice initializes the account by setting the initial token conrtact and token id
+        /// @notice initializes the account by setting the initial token contract and token id
         fn initializer(
             ref self: ComponentState<TContractState>,
             token_contract: ContractAddress,
             token_id: u256
         ) {
-            self.Account_token_contract.write(token_contract);
-            self.Account_token_id.write(token_id);
-
             let owner = self._get_owner(token_contract, token_id);
+            assert(owner.is_non_zero(), Errors::UNAUTHORIZED);
+            // initialize account
+            self.account_token_contract.write(token_contract);
+            self.account_token_id.write(token_id);
             self.emit(AccountCreated { owner });
-        }
-
-        /// @notice check that caller is the token bound account
-        fn _assert_only_owner(ref self: ComponentState<TContractState>) {
-            let caller = get_caller_address();
-            let owner = self
-                ._get_owner(self.Account_token_contract.read(), self.Account_token_id.read());
-            assert(caller == owner, Errors::UNAUTHORIZED);
         }
 
         /// @notice internal function for getting NFT owner
@@ -218,20 +226,53 @@ mod AccountComponent {
 
         /// @notice internal transaction for returning the contract address and token ID of the NFT
         fn _get_token(self: @ComponentState<TContractState>) -> (ContractAddress, u256) {
-            let contract = self.Account_token_contract.read();
-            let tokenId = self.Account_token_id.read();
+            let contract = self.account_token_contract.read();
+            let tokenId = self.account_token_id.read();
             (contract, tokenId)
         }
 
         // @notice protection mechanism for TBA trading. Returns the lock-status (true or false), and the remaning time till account unlocks.
         fn _is_locked(self: @ComponentState<TContractState>) -> (bool, u64) {
-            let unlock_timestamp = self.Account_unlock_timestamp.read();
+            let unlock_timestamp = self.account_unlock_timestamp.read();
             let current_time = get_block_timestamp();
             if (current_time < unlock_timestamp) {
                 let time_until_unlocks = unlock_timestamp - current_time;
                 return (true, time_until_unlocks);
             } else {
                 return (false, 0_u64);
+            }
+        }
+
+        // @notice internal function for validating signer
+        fn _is_valid_signer(
+            self: @ComponentState<TContractState>, signer: ContractAddress
+        ) -> bool {
+            let owner = self
+                ._get_owner(self.account_token_contract.read(), self.account_token_id.read());
+            if (signer == owner) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        /// @notice internal function for signature validation
+        fn _is_valid_signature(
+            self: @ComponentState<TContractState>, hash: felt252, signature: Span<felt252>
+        ) -> felt252 {
+            let signature_length = signature.len();
+            assert(signature_length == 2_u32, Errors::INV_SIG_LEN);
+
+            let owner = self
+                ._get_owner(self.account_token_contract.read(), self.account_token_id.read());
+            let account = IAccountDispatcher {
+                contract_address: owner
+            };
+            if (account.is_valid_signature(hash, signature) == starknet::VALIDATED) {
+                return starknet::VALIDATED;
+            }
+            else {
+                return 0;
             }
         }
 
@@ -247,23 +288,6 @@ mod AccountComponent {
             starknet::VALIDATED
         }
 
-        /// @notice internal function for signature validation
-        fn _is_valid_signature(
-            self: @ComponentState<TContractState>, hash: felt252, signature: Span<felt252>
-        ) -> felt252 {
-            let signature_length = signature.len();
-            assert(signature_length == 2_u32, Errors::INV_SIG_LEN);
-
-            let caller = get_caller_address();
-            let owner = self
-                ._get_owner(self.Account_token_contract.read(), self.Account_token_id.read());
-            if (caller == owner) {
-                return starknet::VALIDATED;
-            } else {
-                return 0;
-            }
-        }
-
         /// @notice internal function for executing transactions
         /// @param calls An array of transactions to be executed
         fn _execute_calls(
@@ -277,7 +301,7 @@ mod AccountComponent {
                     Option::Some(call) => {
                         match call_contract_syscall(call.to, call.selector, call.calldata) {
                             Result::Ok(mut retdata) => { result.append(retdata); },
-                            Result::Err(_) => { panic_with_felt252('multicall_failed'); }
+                            Result::Err(_) => { panic(array!['multicall_failed']); }
                         }
                     },
                     Option::None(_) => { break (); }

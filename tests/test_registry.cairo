@@ -1,9 +1,5 @@
 use starknet::{ContractAddress, contract_address_to_felt252, class_hash_to_felt252};
-use traits::TryInto;
-use array::{ArrayTrait, SpanTrait};
-use result::ResultTrait;
-use option::OptionTrait;
-use integer::u256_from_felt252;
+use core::integer::u256_from_felt252;
 use snforge_std::{declare, start_prank, stop_prank, ContractClassTrait, ContractClass, CheatTarget};
 
 use token_bound_accounts::interfaces::IRegistry::IRegistryDispatcherTrait;
@@ -68,7 +64,7 @@ fn test_create_account() {
 
     // confirm account deployment by checking the account owner
     let acct_dispatcher = IAccountDispatcher { contract_address: account_address };
-    let TBA_owner = acct_dispatcher.owner(erc721_contract_address, u256_from_felt252(1));
+    let TBA_owner = acct_dispatcher.owner();
     assert(TBA_owner == token_owner, 'acct deployed wrongly');
 }
 

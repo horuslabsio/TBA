@@ -1,9 +1,5 @@
 use starknet::{ContractAddress, contract_address_to_felt252, account::Call};
-use traits::TryInto;
-use array::{ArrayTrait, SpanTrait};
-use result::ResultTrait;
-use option::OptionTrait;
-use integer::u256_from_felt252;
+use core::integer::u256_from_felt252;
 use snforge_std::{
     declare, start_prank, stop_prank, start_warp, stop_warp, ContractClassTrait, ContractClass,
     CheatTarget
@@ -202,7 +198,7 @@ fn test_owner() {
     let acct_dispatcher = IAccountDispatcher { contract_address: contract_address };
     let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };
 
-    let owner = acct_dispatcher.owner(erc721_contract_address, u256_from_felt252(1));
+    let owner = acct_dispatcher.owner();
     let token_owner = token_dispatcher.ownerOf(u256_from_felt252(1));
     assert(owner == token_owner, 'invalid owner');
 }
@@ -299,7 +295,7 @@ fn test_should_not_execute_when_locked() {
     let mut calls = array![call];
 
     match safe_dispatcher.__execute__(calls) {
-        Result::Ok(_) => panic_with_felt252('should have panicked!'),
+        Result::Ok(_) => panic(array!['should have panicked!']),
         Result::Err(panic_data) => {
             stop_prank(CheatTarget::One(contract_address));
             println!("panic_data: {:?}", panic_data);
@@ -344,7 +340,7 @@ fn test_should_not_lock_if_not_owner() {
     start_prank(CheatTarget::One(contract_address), ACCOUNT2.try_into().unwrap());
     start_warp(CheatTarget::One(contract_address), 1000);
     match dispatcher.lock(lock_duration) {
-        Result::Ok(_) => panic_with_felt252('should have panicked'),
+        Result::Ok(_) => panic(array!['should have panicked!']),
         Result::Err(panic_data) => {
             stop_prank(CheatTarget::One(contract_address));
             stop_warp(CheatTarget::One(contract_address));
@@ -375,7 +371,7 @@ fn test_should_not_lock_if_already_locked() {
     // call the lock function again
     start_warp(CheatTarget::One(contract_address), 1000);
     match safe_dispatcher.lock(lock_duration) {
-        Result::Ok(_) => panic_with_felt252('should have panicked'),
+        Result::Ok(_) => panic(array!['should have panicked!']),
         Result::Err(panic_data) => {
             stop_prank(CheatTarget::One(contract_address));
             stop_warp(CheatTarget::One(contract_address));

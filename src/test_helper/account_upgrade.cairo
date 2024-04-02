@@ -1,4 +1,3 @@
-use array::{ArrayTrait, SpanTrait};
 use starknet::{account::Call, ContractAddress, ClassHash};
 
 #[starknet::interface]
@@ -55,11 +54,8 @@ mod UpgradedAccount {
         get_tx_info, get_caller_address, get_contract_address, ContractAddress, account::Call,
         call_contract_syscall, replace_class_syscall, ClassHash, SyscallResultTrait
     };
-    use ecdsa::check_ecdsa_signature;
-    use array::{SpanTrait, ArrayTrait};
-    use box::BoxTrait;
-    use option::OptionTrait;
-    use zeroable::Zeroable;
+    use core::ecdsa::check_ecdsa_signature;
+    use core::zeroable::Zeroable;
     use super::{IERC721DispatcherTrait, IERC721Dispatcher};
 
     #[storage]
@@ -211,7 +207,7 @@ mod UpgradedAccount {
                     Option::Some(call) => {
                         match call_contract_syscall(call.to, call.selector, call.calldata) {
                             Result::Ok(mut retdata) => { result.append(retdata); },
-                            Result::Err(_) => { panic_with_felt252('multicall_failed'); }
+                            Result::Err(_) => { panic(array!['multicall_failed']); }
                         }
                     },
                     Option::None(_) => { break (); }
