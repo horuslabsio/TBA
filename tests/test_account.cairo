@@ -46,7 +46,7 @@ fn __setup__() -> (ContractAddress, ContractAddress) {
     let erc721_contract_address = erc721_contract.deploy(@erc721_constructor_calldata).unwrap();
 
     // deploy recipient contract
-    let account_contract = declare('SimpleAccount');
+    let account_contract = declare("SimpleAccount");
     let mut recipient = account_contract.deploy(@array![883045738439352841478194533192765345509759306772397516907181243450667673002]).unwrap();
 
     // mint a new token
