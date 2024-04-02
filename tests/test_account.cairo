@@ -5,27 +5,16 @@ use snforge_std::{
     CheatTarget
 };
 
-use token_bound_accounts::interfaces::IAccount::IAccountDispatcher;
-use token_bound_accounts::interfaces::IAccount::IAccountDispatcherTrait;
-use token_bound_accounts::interfaces::IAccount::IAccountSafeDispatcher;
-use token_bound_accounts::interfaces::IAccount::IAccountSafeDispatcherTrait;
+use token_bound_accounts::interfaces::IAccount::{IAccountDispatcher, IAccountDispatcherTrait, IAccountSafeDispatcher, IAccountSafeDispatcherTrait};
 use token_bound_accounts::presets::account::Account;
+use token_bound_accounts::interfaces::IUpgradeable::{IUpgradeableDispatcher, IUpgradeableDispatcherTrait};
 
-use token_bound_accounts::interfaces::IUpgradeable::IUpgradeableDispatcher;
-use token_bound_accounts::interfaces::IUpgradeable::IUpgradeableDispatcherTrait;
-
-
-use token_bound_accounts::test_helper::hello_starknet::IHelloStarknetDispatcher;
-use token_bound_accounts::test_helper::hello_starknet::IHelloStarknetDispatcherTrait;
-use token_bound_accounts::test_helper::hello_starknet::HelloStarknet;
-
-use token_bound_accounts::test_helper::account_upgrade::IUpgradedAccountDispatcher;
-use token_bound_accounts::test_helper::account_upgrade::IUpgradedAccountDispatcherTrait;
-use token_bound_accounts::test_helper::account_upgrade::UpgradedAccount;
-
-use token_bound_accounts::test_helper::erc721_helper::IERC721Dispatcher;
-use token_bound_accounts::test_helper::erc721_helper::IERC721DispatcherTrait;
-use token_bound_accounts::test_helper::erc721_helper::ERC721;
+use token_bound_accounts::test_helper::{
+    hello_starknet::{IHelloStarknetDispatcher, IHelloStarknetDispatcherTrait, HelloStarknet},
+    account_upgrade::{IUpgradedAccountDispatcher, IUpgradedAccountDispatcherTrait, UpgradedAccount},
+    erc721_helper::{IERC721Dispatcher, IERC721DispatcherTrait, ERC721},
+    simple_account::{ISimpleAccountDispatcher, ISimpleAccountDispatcherTrait, SimpleAccount}
+};
 
 const ACCOUNT: felt252 = 1234;
 const ACCOUNT2: felt252 = 5729;
@@ -56,9 +45,12 @@ fn __setup__() -> (ContractAddress, ContractAddress) {
     let mut erc721_constructor_calldata = array!['tokenbound', 'TBA'];
     let erc721_contract_address = erc721_contract.deploy(@erc721_constructor_calldata).unwrap();
 
+    // deploy recipient contract
+    let account_contract = declare('SimpleAccount');
+    let mut recipient = account_contract.deploy(@array![883045738439352841478194533192765345509759306772397516907181243450667673002]).unwrap();
+
     // mint a new token
     let dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };
-    let recipient: ContractAddress = ACCOUNT.try_into().unwrap();
     dispatcher.mint(recipient, u256_from_felt252(1));
 
     // deploy account contract

@@ -45,7 +45,8 @@ mod Account {
     #[abi(embed_v0)]
     impl UpgradeableImpl of IUpgradeable<ContractState> {
         fn upgrade(ref self: ContractState, new_class_hash: ClassHash) {
-            self.account._is_valid_signer(get_caller_address());
+            let caller = get_caller_address();
+            assert(self.account._is_valid_signer(caller), AccountComponent::Errors::UNAUTHORIZED);
             let (lock_status, _) = self.account._is_locked();
             assert(!lock_status, AccountComponent::Errors::LOCKED_ACCOUNT);
             self.upgradeable._upgrade(new_class_hash);

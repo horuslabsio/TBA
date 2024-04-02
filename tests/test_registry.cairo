@@ -2,20 +2,15 @@ use starknet::{ContractAddress, contract_address_to_felt252, class_hash_to_felt2
 use core::integer::u256_from_felt252;
 use snforge_std::{declare, start_prank, stop_prank, ContractClassTrait, ContractClass, CheatTarget};
 
-use token_bound_accounts::interfaces::IRegistry::IRegistryDispatcherTrait;
-use token_bound_accounts::interfaces::IRegistry::IRegistryDispatcher;
+use token_bound_accounts::interfaces::IRegistry::{IRegistryDispatcherTrait, IRegistryDispatcher};
 use token_bound_accounts::registry::registry::Registry;
 
-use token_bound_accounts::interfaces::IUpgradeable::IUpgradeableDispatcher;
-use token_bound_accounts::interfaces::IUpgradeable::IUpgradeableDispatcherTrait;
+use token_bound_accounts::interfaces::IUpgradeable::{IUpgradeableDispatcher, IUpgradeableDispatcherTrait};
 
-use token_bound_accounts::interfaces::IAccount::IAccountDispatcher;
-use token_bound_accounts::interfaces::IAccount::IAccountDispatcherTrait;
+use token_bound_accounts::interfaces::IAccount::{IAccountDispatcher, IAccountDispatcherTrait};
 use token_bound_accounts::presets::account::Account;
 
-use token_bound_accounts::test_helper::erc721_helper::IERC721Dispatcher;
-use token_bound_accounts::test_helper::erc721_helper::IERC721DispatcherTrait;
-use token_bound_accounts::test_helper::erc721_helper::ERC721;
+use token_bound_accounts::test_helper::erc721_helper::{IERC721Dispatcher, IERC721DispatcherTrait, ERC721};
 
 const ACCOUNT: felt252 = 1234;
 
