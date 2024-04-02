@@ -4,7 +4,9 @@ use starknet::{account::Call, ContractAddress, ClassHash};
 trait ISimpleAccount<TContractState> {
     fn get_public_key(self: @TContractState) -> felt252;
     fn set_public_key(ref self: TContractState, new_public_key: felt252);
-    fn is_valid_signature(self: @TContractState, hash: felt252, signature: Span<felt252>) -> felt252;
+    fn is_valid_signature(
+        self: @TContractState, hash: felt252, signature: Span<felt252>
+    ) -> felt252;
     fn __validate__(ref self: TContractState, calls: Array<Call>) -> felt252;
     fn __validate_declare__(self: @TContractState, class_hash: felt252) -> felt252;
     fn __validate_deploy__(
@@ -31,10 +33,7 @@ mod SimpleAccount {
     }
 
     #[constructor]
-    fn constructor(
-        ref self: ContractState,
-        _public_key: felt252
-    ) {
+    fn constructor(ref self: ContractState, _public_key: felt252) {
         self._public_key.write(_public_key);
     }
 
@@ -49,7 +48,9 @@ mod SimpleAccount {
             self._public_key.write(new_public_key);
         }
 
-        fn is_valid_signature(self: @ContractState, hash: felt252, signature: Span<felt252>) -> felt252 {
+        fn is_valid_signature(
+            self: @ContractState, hash: felt252, signature: Span<felt252>
+        ) -> felt252 {
             self._is_valid_signature(hash, signature)
         }
 
@@ -93,7 +94,10 @@ mod SimpleAccount {
             let tx_info = get_tx_info().unbox();
             let tx_hash = tx_info.transaction_hash;
             let signature = tx_info.signature;
-            assert(self._is_valid_signature(tx_hash, signature) == starknet::VALIDATED, 'Account: invalid signature');
+            assert(
+                self._is_valid_signature(tx_hash, signature) == starknet::VALIDATED,
+                'Account: invalid signature'
+            );
             starknet::VALIDATED
         }
 
@@ -110,8 +114,7 @@ mod SimpleAccount {
                 signature_s: *signature[1_u32],
             ) {
                 return starknet::VALIDATED;
-            }
-            else {
+            } else {
                 return 0;
             }
         }

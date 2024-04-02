@@ -9,7 +9,9 @@ mod AccountComponent {
         account::Call, call_contract_syscall, replace_class_syscall, ClassHash, SyscallResultTrait
     };
     use token_bound_accounts::interfaces::IERC721::{IERC721DispatcherTrait, IERC721Dispatcher};
-    use token_bound_accounts::interfaces::IAccount::{IAccount, IAccountDispatcherTrait, IAccountDispatcher, TBA_INTERFACE_ID};
+    use token_bound_accounts::interfaces::IAccount::{
+        IAccount, IAccountDispatcherTrait, IAccountDispatcher, TBA_INTERFACE_ID
+    };
 
     #[storage]
     struct Storage {
@@ -84,8 +86,7 @@ mod AccountComponent {
         ) -> felt252 {
             if self._is_valid_signer(signer) {
                 return starknet::VALIDATED;
-            }
-            else {
+            } else {
                 return 0;
             }
         }
@@ -136,9 +137,7 @@ mod AccountComponent {
         /// @notice gets the NFT owner
         /// @param token_contract the contract address of the NFT
         /// @param token_id the token ID of the NFT
-        fn owner(
-            self: @ComponentState<TContractState>
-        ) -> ContractAddress {
+        fn owner(self: @ComponentState<TContractState>) -> ContractAddress {
             let token_contract = self.account_token_contract.read();
             let token_id = self.account_token_id.read();
             self._get_owner(token_contract, token_id)
@@ -157,7 +156,7 @@ mod AccountComponent {
 
             let (lock_status, _) = self._is_locked();
             assert(!lock_status, Errors::LOCKED_ACCOUNT);
-            
+
             let current_timestamp = get_block_timestamp();
             let unlock_time = current_timestamp + duration;
             self.account_unlock_timestamp.write(unlock_time);
@@ -265,13 +264,10 @@ mod AccountComponent {
 
             let owner = self
                 ._get_owner(self.account_token_contract.read(), self.account_token_id.read());
-            let account = IAccountDispatcher {
-                contract_address: owner
-            };
+            let account = IAccountDispatcher { contract_address: owner };
             if (account.is_valid_signature(hash, signature) == starknet::VALIDATED) {
                 return starknet::VALIDATED;
-            }
-            else {
+            } else {
                 return 0;
             }
         }

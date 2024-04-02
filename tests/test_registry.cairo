@@ -5,12 +5,16 @@ use snforge_std::{declare, start_prank, stop_prank, ContractClassTrait, Contract
 use token_bound_accounts::interfaces::IRegistry::{IRegistryDispatcherTrait, IRegistryDispatcher};
 use token_bound_accounts::registry::registry::Registry;
 
-use token_bound_accounts::interfaces::IUpgradeable::{IUpgradeableDispatcher, IUpgradeableDispatcherTrait};
+use token_bound_accounts::interfaces::IUpgradeable::{
+    IUpgradeableDispatcher, IUpgradeableDispatcherTrait
+};
 
 use token_bound_accounts::interfaces::IAccount::{IAccountDispatcher, IAccountDispatcherTrait};
 use token_bound_accounts::presets::account::Account;
 
-use token_bound_accounts::test_helper::erc721_helper::{IERC721Dispatcher, IERC721DispatcherTrait, ERC721};
+use token_bound_accounts::test_helper::erc721_helper::{
+    IERC721Dispatcher, IERC721DispatcherTrait, ERC721
+};
 
 const ACCOUNT: felt252 = 1234;
 

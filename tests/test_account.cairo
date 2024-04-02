@@ -5,9 +5,13 @@ use snforge_std::{
     CheatTarget
 };
 
-use token_bound_accounts::interfaces::IAccount::{IAccountDispatcher, IAccountDispatcherTrait, IAccountSafeDispatcher, IAccountSafeDispatcherTrait};
+use token_bound_accounts::interfaces::IAccount::{
+    IAccountDispatcher, IAccountDispatcherTrait, IAccountSafeDispatcher, IAccountSafeDispatcherTrait
+};
 use token_bound_accounts::presets::account::Account;
-use token_bound_accounts::interfaces::IUpgradeable::{IUpgradeableDispatcher, IUpgradeableDispatcherTrait};
+use token_bound_accounts::interfaces::IUpgradeable::{
+    IUpgradeableDispatcher, IUpgradeableDispatcherTrait
+};
 
 use token_bound_accounts::test_helper::{
     hello_starknet::{IHelloStarknetDispatcher, IHelloStarknetDispatcherTrait, HelloStarknet},
@@ -47,7 +51,11 @@ fn __setup__() -> (ContractAddress, ContractAddress) {
 
     // deploy recipient contract
     let account_contract = declare("SimpleAccount");
-    let mut recipient = account_contract.deploy(@array![883045738439352841478194533192765345509759306772397516907181243450667673002]).unwrap();
+    let mut recipient = account_contract
+        .deploy(
+            @array![883045738439352841478194533192765345509759306772397516907181243450667673002]
+        )
+        .unwrap();
 
     // mint a new token
     let dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };
