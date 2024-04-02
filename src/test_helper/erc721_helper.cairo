@@ -26,11 +26,8 @@ trait IERC721<TContractState> {
 mod ERC721 {
     use starknet::ContractAddress;
     use starknet::get_caller_address;
-    use zeroable::Zeroable;
+    use core::zeroable::Zeroable;
     use starknet::contract_address_to_felt252;
-    use traits::Into;
-    use traits::TryInto;
-    use option::OptionTrait;
 
     #[storage]
     struct Storage {

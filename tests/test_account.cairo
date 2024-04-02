@@ -1,35 +1,24 @@
 use starknet::{ContractAddress, contract_address_to_felt252, account::Call};
-use traits::TryInto;
-use array::{ArrayTrait, SpanTrait};
-use result::ResultTrait;
-use option::OptionTrait;
-use integer::u256_from_felt252;
+use core::integer::u256_from_felt252;
 use snforge_std::{
     declare, start_prank, stop_prank, start_warp, stop_warp, ContractClassTrait, ContractClass,
     CheatTarget
 };
 
-use token_bound_accounts::interfaces::IAccount::IAccountDispatcher;
-use token_bound_accounts::interfaces::IAccount::IAccountDispatcherTrait;
-use token_bound_accounts::interfaces::IAccount::IAccountSafeDispatcher;
-use token_bound_accounts::interfaces::IAccount::IAccountSafeDispatcherTrait;
+use token_bound_accounts::interfaces::IAccount::{
+    IAccountDispatcher, IAccountDispatcherTrait, IAccountSafeDispatcher, IAccountSafeDispatcherTrait
+};
 use token_bound_accounts::presets::account::Account;
+use token_bound_accounts::interfaces::IUpgradeable::{
+    IUpgradeableDispatcher, IUpgradeableDispatcherTrait
+};
 
-use token_bound_accounts::interfaces::IUpgradeable::IUpgradeableDispatcher;
-use token_bound_accounts::interfaces::IUpgradeable::IUpgradeableDispatcherTrait;
-
-
-use token_bound_accounts::test_helper::hello_starknet::IHelloStarknetDispatcher;
-use token_bound_accounts::test_helper::hello_starknet::IHelloStarknetDispatcherTrait;
-use token_bound_accounts::test_helper::hello_starknet::HelloStarknet;
-
-use token_bound_accounts::test_helper::account_upgrade::IUpgradedAccountDispatcher;
-use token_bound_accounts::test_helper::account_upgrade::IUpgradedAccountDispatcherTrait;
-use token_bound_accounts::test_helper::account_upgrade::UpgradedAccount;
-
-use token_bound_accounts::test_helper::erc721_helper::IERC721Dispatcher;
-use token_bound_accounts::test_helper::erc721_helper::IERC721DispatcherTrait;
-use token_bound_accounts::test_helper::erc721_helper::ERC721;
+use token_bound_accounts::test_helper::{
+    hello_starknet::{IHelloStarknetDispatcher, IHelloStarknetDispatcherTrait, HelloStarknet},
+    account_upgrade::{IUpgradedAccountDispatcher, IUpgradedAccountDispatcherTrait, UpgradedAccount},
+    erc721_helper::{IERC721Dispatcher, IERC721DispatcherTrait, ERC721},
+    simple_account::{ISimpleAccountDispatcher, ISimpleAccountDispatcherTrait, SimpleAccount}
+};
 
 const ACCOUNT: felt252 = 1234;
 const ACCOUNT2: felt252 = 5729;
@@ -60,9 +49,16 @@ fn __setup__() -> (ContractAddress, ContractAddress) {
     let mut erc721_constructor_calldata = array!['tokenbound', 'TBA'];
     let erc721_contract_address = erc721_contract.deploy(@erc721_constructor_calldata).unwrap();
 
+    // deploy recipient contract
+    let account_contract = declare("SimpleAccount");
+    let mut recipient = account_contract
+        .deploy(
+            @array![883045738439352841478194533192765345509759306772397516907181243450667673002]
+        )
+        .unwrap();
+
     // mint a new token
     let dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };
-    let recipient: ContractAddress = ACCOUNT.try_into().unwrap();
     dispatcher.mint(recipient, u256_from_felt252(1));
 
     // deploy account contract
@@ -202,7 +198,7 @@ fn test_owner() {
     let acct_dispatcher = IAccountDispatcher { contract_address: contract_address };
     let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };
 
-    let owner = acct_dispatcher.owner(erc721_contract_address, u256_from_felt252(1));
+    let owner = acct_dispatcher.owner();
     let token_owner = token_dispatcher.ownerOf(u256_from_felt252(1));
     assert(owner == token_owner, 'invalid owner');
 }
@@ -299,7 +295,7 @@ fn test_should_not_execute_when_locked() {
     let mut calls = array![call];
 
     match safe_dispatcher.__execute__(calls) {
-        Result::Ok(_) => panic_with_felt252('should have panicked!'),
+        Result::Ok(_) => panic(array!['should have panicked!']),
         Result::Err(panic_data) => {
             stop_prank(CheatTarget::One(contract_address));
             println!("panic_data: {:?}", panic_data);
@@ -344,7 +340,7 @@ fn test_should_not_lock_if_not_owner() {
     start_prank(CheatTarget::One(contract_address), ACCOUNT2.try_into().unwrap());
     start_warp(CheatTarget::One(contract_address), 1000);
     match dispatcher.lock(lock_duration) {
-        Result::Ok(_) => panic_with_felt252('should have panicked'),
+        Result::Ok(_) => panic(array!['should have panicked!']),
         Result::Err(panic_data) => {
             stop_prank(CheatTarget::One(contract_address));
             stop_warp(CheatTarget::One(contract_address));
@@ -375,7 +371,7 @@ fn test_should_not_lock_if_already_locked() {
     // call the lock function again
     start_warp(CheatTarget::One(contract_address), 1000);
     match safe_dispatcher.lock(lock_duration) {
-        Result::Ok(_) => panic_with_felt252('should have panicked'),
+        Result::Ok(_) => panic(array!['should have panicked!']),
         Result::Err(panic_data) => {
             stop_prank(CheatTarget::One(contract_address));
             stop_warp(CheatTarget::One(contract_address));

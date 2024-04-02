@@ -3,7 +3,7 @@
 ////////////////////////////////
 #[starknet::contract(account)]
 mod Account {
-    use starknet::ContractAddress;
+    use starknet::{ContractAddress, get_caller_address};
     use starknet::ClassHash;
     use token_bound_accounts::account::AccountComponent;
     use token_bound_accounts::upgradeable::UpgradeableComponent;
@@ -45,7 +45,8 @@ mod Account {
     #[abi(embed_v0)]
     impl UpgradeableImpl of IUpgradeable<ContractState> {
         fn upgrade(ref self: ContractState, new_class_hash: ClassHash) {
-            self.account._assert_only_owner();
+            let caller = get_caller_address();
+            assert(self.account._is_valid_signer(caller), AccountComponent::Errors::UNAUTHORIZED);
             let (lock_status, _) = self.account._is_locked();
             assert(!lock_status, AccountComponent::Errors::LOCKED_ACCOUNT);
             self.upgradeable._upgrade(new_class_hash);

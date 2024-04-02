@@ -5,6 +5,8 @@
 mod UpgradeableComponent {
     use starknet::ClassHash;
     use starknet::SyscallResultTrait;
+    use core::zeroable::Zeroable;
+
     use token_bound_accounts::interfaces::IUpgradeable;
 
     #[storage]
@@ -30,7 +32,7 @@ mod UpgradeableComponent {
     impl InternalImpl<
         TContractState, +HasComponent<TContractState>, +Drop<TContractState>
     > of InternalTrait<TContractState> {
-        /// @notice eplaces the contract's class hash with `new_class_hash`.
+        /// @notice replaces the contract's class hash with `new_class_hash`.
         /// Emits an `Upgraded` event.
         fn _upgrade(ref self: ComponentState<TContractState>, new_class_hash: ClassHash) {
             assert(!new_class_hash.is_zero(), Errors::INVALID_CLASS);
