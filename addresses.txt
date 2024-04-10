@@ -17,3 +17,23 @@ Registry;
 
 Account:
     - ClassHash: 0x499ef439944ff0a477c4ecc14785ad31f4c12300993e1ce6568f9c1f2c24c09
+
+--------------------------------------------------------------------------------------------------
+MAINNET v3 (Audited contract):
+
+Registry:
+    - ClassHash: 0x46163525551f5a50ed027548e86e1ad023c44e0eeb0733f0dab2fb1fdc31ed0
+    - Contract: 0x7f63abcad960f980c12d650b2cc4c27a8f63ee1f6eb36ea8286a946a2330c1b
+
+Account:
+    - ClassHash: 0x45d67b8590561c9b54e14dd309c9f38c4e2c554dd59414021f9d079811621bd
+
+---------------------------------------------------------------------------------------------------
+SEPOLIA V3 (Audited contract):
+
+Registry:
+    - ClassHash: 0x46163525551f5a50ed027548e86e1ad023c44e0eeb0733f0dab2fb1fdc31ed0
+    - Contract: 0x4101d3fa033024654083dd982273a300cb019b8cb96dd829267a4daf59f7b7e
+
+Account:
+    - ClassHash: 0x45d67b8590561c9b54e14dd309c9f38c4e2c554dd59414021f9d079811621bd
