@@ -2,12 +2,19 @@
 name = "token_bound_accounts"
 version = "0.3.0"
 edition = "2023_10"
+authors = ["Starknet Africa Community <starknetafrica@gmail.com>"]
+description = "A port of ERC6551 to Starknet"
+repository = "https://github.com/Starknet-Africa-Edu/TBA/blob/main/Scarb.toml"
+license-file = "LICENSE"
+keywords = ["ERC6551", "tokenbound", "cairo", "contracts", "starknet", "standards"]
 
 # See more keys and their definitions at https://docs.swmansion.com/scarb/docs/reference/manifest
 
 [[target.starknet-contract]]
 sierra = true
 casm = true
+
+[lib]
 
 [dependencies]
 starknet = "2.6.0"
