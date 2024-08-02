@@ -7,6 +7,11 @@ description = "A port of ERC6551 to Starknet"
 repository = "https://github.com/horuslabsio/TBA/blob/main/Scarb.toml"
 license-file = "LICENSE"
 keywords = ["ERC6551", "tokenbound", "cairo", "contracts", "starknet", "standards"]
+readme = "README.md"
+cairo_version = "2.6.0"
+homepage = "https://www.tbaexplorer.com/"
+documentation = "https://github.com/horuslabsio/TBA-SDK"
+
 
 # See more keys and their definitions at https://docs.swmansion.com/scarb/docs/reference/manifest
 
