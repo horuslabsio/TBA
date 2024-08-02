@@ -1,10 +1,10 @@
 [package]
 name = "token_bound_accounts"
-version = "0.3.0"
+version = "0.2.1"
 edition = "2023_10"
-authors = ["Starknet Africa Community <starknetafrica@gmail.com>"]
+authors = ["Horus Labs <horuslabsio@gmail.com>"]
 description = "A port of ERC6551 to Starknet"
-repository = "https://github.com/Starknet-Africa-Edu/TBA/blob/main/Scarb.toml"
+repository = "https://github.com/horuslabsio/TBA/blob/main/Scarb.toml"
 license-file = "LICENSE"
 keywords = ["ERC6551", "tokenbound", "cairo", "contracts", "starknet", "standards"]
 
