@@ -169,13 +169,15 @@ mod AccountComponent {
             // initialize account
             self.account_token_contract.write(token_contract);
             self.account_token_id.write(token_id);
-            self.emit(
-                TBACreated { 
-                    account_address: get_contract_address(),
-                    parent_account: owner,
-                    token_contract,
-                    token_id 
-                });
+            self
+                .emit(
+                    TBACreated {
+                        account_address: get_contract_address(),
+                        parent_account: owner,
+                        token_contract,
+                        token_id
+                    }
+                );
         }
 
         /// @notice internal function for getting NFT owner

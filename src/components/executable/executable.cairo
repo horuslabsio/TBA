@@ -3,7 +3,10 @@
 // *************************************************************************
 #[starknet::component]
 mod ExecutableComponent {
-    use starknet::{ ContractAddress, get_caller_address, get_contract_address, call_contract_syscall, get_tx_info, SyscallResultTrait, account::Call };
+    use starknet::{
+        ContractAddress, get_caller_address, get_contract_address, call_contract_syscall,
+        get_tx_info, SyscallResultTrait, account::Call
+    };
 
     use token_bound_accounts::interfaces::IExecutable::IExecutable;
 
@@ -50,7 +53,8 @@ mod ExecutableComponent {
         TContractState, +HasComponent<TContractState>, +Drop<TContractState>
     > of IExecutable<ComponentState<TContractState>> {
         /// @notice executes a transaction
-        /// @notice whilst implementing this method, ensure to validate the signer by calling `is_valid_signer`.
+        /// @notice whilst implementing this method, ensure to validate the signer by calling
+        /// `is_valid_signer`.
         /// @param calls an array of transactions to be executed
         fn _execute(
             ref self: ComponentState<TContractState>, mut calls: Array<Call>
@@ -61,12 +65,10 @@ mod ExecutableComponent {
             let retdata = self._execute_calls(calls);
             let hash = tx_info.transaction_hash;
             let response = retdata.span();
-            self.emit(
-                TransactionExecuted { 
-                    hash, 
-                    account_address: get_contract_address(), 
-                    response 
-                });
+            self
+                .emit(
+                    TransactionExecuted { hash, account_address: get_contract_address(), response }
+                );
             retdata
         }
     }
