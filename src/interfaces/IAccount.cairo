@@ -16,10 +16,8 @@ trait IAccount<TContractState> {
     fn __validate_deploy__(
         ref self: TContractState, token_contract: ContractAddress, token_id: u256
     ) -> felt252;
-    fn __execute__(ref self: TContractState, calls: Array<Call>) -> Array<Span<felt252>>;
-    fn token(self: @TContractState) -> (ContractAddress, u256);
+    fn token(self: @TContractState) -> (ContractAddress, u256, felt252);
     fn owner(self: @TContractState) -> ContractAddress;
-    fn lock(ref self: TContractState, duration: u64);
-    fn is_locked(self: @TContractState) -> (bool, u64);
+    fn state(self: @TContractState) -> u256;
     fn supports_interface(self: @TContractState, interface_id: felt252) -> bool;
 }

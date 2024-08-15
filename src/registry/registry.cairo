@@ -43,6 +43,9 @@ mod Registry {
         token_id: u256,
     }
 
+    // *************************************************************************
+    //                              ERRORS
+    // *************************************************************************
     mod Errors {
         const CALLER_IS_NOT_OWNER: felt252 = 'Registry: caller is not onwer';
     }

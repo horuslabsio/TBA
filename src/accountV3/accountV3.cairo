@@ -47,8 +47,7 @@ mod Account {
         fn upgrade(ref self: ContractState, new_class_hash: ClassHash) {
             let caller = get_caller_address();
             assert(self.account._is_valid_signer(caller), AccountComponent::Errors::UNAUTHORIZED);
-            let (lock_status, _) = self.account._is_locked();
-            assert(!lock_status, AccountComponent::Errors::LOCKED_ACCOUNT);
+            // TODO: check account is locked
             self.upgradeable._upgrade(new_class_hash);
         }
     }

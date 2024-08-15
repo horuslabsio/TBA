@@ -7,8 +7,6 @@ mod UpgradeableComponent {
     use starknet::SyscallResultTrait;
     use core::zeroable::Zeroable;
 
-    use token_bound_accounts::interfaces::IUpgradeable;
-
     #[storage]
     struct Storage {}
 
