@@ -1,25 +1,35 @@
-////////////////////////////////
-// Registry Component
-////////////////////////////////
+// *************************************************************************
+//                              REGISTRY
+// *************************************************************************
 #[starknet::contract]
 mod Registry {
+    // *************************************************************************
+    //                              IMPORTS
+    // *************************************************************************
     use core::result::ResultTrait;
     use core::hash::HashStateTrait;
     use core::pedersen::PedersenTrait;
     use starknet::{
-        ContractAddress, get_caller_address, syscalls::call_contract_syscall, class_hash::ClassHash,
-        class_hash::Felt252TryIntoClassHash, syscalls::deploy_syscall, SyscallResultTrait, storage::Map
+        ContractAddress, 
+        get_caller_address, 
+        syscalls::{call_contract_syscall, deploy_syscall},
+        class_hash::{ClassHash, Felt252TryIntoClassHash}, 
+        SyscallResultTrait, 
+        storage::Map
     };
-    use token_bound_accounts::interfaces::IERC721::{IERC721DispatcherTrait, IERC721Dispatcher};
+
+    use token_bound_accounts::interfaces::IERC721::{ IERC721DispatcherTrait, IERC721Dispatcher };
     use token_bound_accounts::interfaces::IRegistry::IRegistry;
 
+    // *************************************************************************
+    //                              STORAGE
+    // *************************************************************************
     #[storage]
-    struct Storage {
-        registry_deployed_accounts: Map<
-            (ContractAddress, u256), u8
-        >, // tracks no. of deployed accounts by registry for an NFT
-    }
+    struct Storage {}
 
+    // *************************************************************************
+    //                              EVENTS
+    // *************************************************************************
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
@@ -41,6 +51,9 @@ mod Registry {
         const CALLER_IS_NOT_OWNER: felt252 = 'Registry: caller is not onwer';
     }
 
+    // *************************************************************************
+    //                              EXTERNAL FUNCTIONS
+    // *************************************************************************
     #[abi(embed_v0)]
     impl IRegistryImpl of IRegistry<ContractState> {
         /// @notice deploys a new tokenbound account for an NFT
@@ -53,7 +66,8 @@ mod Registry {
             implementation_hash: felt252,
             token_contract: ContractAddress,
             token_id: u256,
-            salt: felt252
+            salt: felt252,
+            chain_id: felt252
         ) -> ContractAddress {
             let owner = self._get_owner(token_contract, token_id);
             assert(owner == get_caller_address(), Errors::CALLER_IS_NOT_OWNER);
@@ -66,14 +80,7 @@ mod Registry {
             let result = deploy_syscall(class_hash, salt, constructor_calldata.span(), true);
             let (account_address, _) = result.unwrap_syscall();
 
-            let new_deployment_index: u8 = self
-                .registry_deployed_accounts
-                .read((token_contract, token_id))
-                + 1_u8;
-            self.registry_deployed_accounts.write((token_contract, token_id), new_deployment_index);
-
             self.emit(AccountCreated { account_address, token_contract, token_id, });
-
             account_address
         }
 
@@ -87,7 +94,8 @@ mod Registry {
             implementation_hash: felt252,
             token_contract: ContractAddress,
             token_id: u256,
-            salt: felt252
+            salt: felt252,
+            chain_id: felt252
         ) -> ContractAddress {
             let constructor_calldata_hash = PedersenTrait::new(0)
                 .update(token_contract.into())
@@ -108,17 +116,11 @@ mod Registry {
 
             account_address.try_into().unwrap()
         }
-
-        /// @notice returns the total no. of deployed tokenbound accounts for an NFT by the registry
-        /// @param token_contract the contract address of the NFT 
-        /// @param token_id the ID of the NFT
-        fn total_deployed_accounts(
-            self: @ContractState, token_contract: ContractAddress, token_id: u256
-        ) -> u8 {
-            self.registry_deployed_accounts.read((token_contract, token_id))
-        }
     }
 
+    // *************************************************************************
+    //                              PRIVATE FUNCTIONS
+    // *************************************************************************
     #[generate_trait]
     impl internalImpl of InternalTrait {
         /// @notice internal function for getting NFT owner
