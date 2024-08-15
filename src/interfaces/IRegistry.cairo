@@ -10,7 +10,7 @@ trait IRegistry<TContractState> {
         salt: felt252,
         chain_id: felt252
     ) -> ContractAddress;
-    
+
     fn get_account(
         self: @TContractState,
         implementation_hash: felt252,

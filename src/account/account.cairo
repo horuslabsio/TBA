@@ -71,7 +71,7 @@ mod AccountComponent {
         TContractState, +HasComponent<TContractState>, +Drop<TContractState>
     > of IAccount<ComponentState<TContractState>> {
         /// @notice used for signature validation
-        /// @param hash The message hash 
+        /// @param hash The message hash
         /// @param signature The signature to be validated
         fn is_valid_signature(
             self: @ComponentState<TContractState>, hash: felt252, signature: Span<felt252>
@@ -92,7 +92,9 @@ mod AccountComponent {
         }
 
         fn __validate_deploy__(
-            ref self: ComponentState<TContractState>, token_contract: ContractAddress, token_id: u256
+            ref self: ComponentState<TContractState>,
+            token_contract: ContractAddress,
+            token_id: u256
         ) -> felt252 {
             self._validate_transaction()
         }
@@ -146,8 +148,8 @@ mod AccountComponent {
             self._get_token()
         }
 
-        // @notice protection mechanism for selling token bound accounts. can't execute when account is locked
-        // @param duration for which to lock account
+        // @notice protection mechanism for selling token bound accounts. can't execute when account
+        // is locked @param duration for which to lock account
         fn lock(ref self: ComponentState<TContractState>, duration: u64) {
             let caller = get_caller_address();
             assert(self._is_valid_signer(caller), Errors::UNAUTHORIZED);
@@ -205,7 +207,10 @@ mod AccountComponent {
         /// @notice internal function for getting NFT owner
         /// @param token_contract contract address of NFT
         // @param token_id token ID of NFT
-        // NB: This function aims for compatibility with all contracts (snake or camel case) but do not work as expected on mainnet as low level calls do not return err at the moment. Should work for contracts which implements CamelCase but not snake_case until starknet v0.15.
+        // NB: This function aims for compatibility with all contracts (snake or camel case) but do
+        // not work as expected on mainnet as low level calls do not return err at the moment.
+        // Should work for contracts which implements CamelCase but not snake_case until starknet
+        // v0.15.
         fn _get_owner(
             self: @ComponentState<TContractState>, token_contract: ContractAddress, token_id: u256
         ) -> ContractAddress {
@@ -228,7 +233,8 @@ mod AccountComponent {
             (contract, tokenId)
         }
 
-        // @notice protection mechanism for TBA trading. Returns the lock-status (true or false), and the remaning time till account unlocks.
+        // @notice protection mechanism for TBA trading. Returns the lock-status (true or false),
+        // and the remaning time till account unlocks.
         fn _is_locked(self: @ComponentState<TContractState>) -> (bool, u64) {
             let unlock_timestamp = self.account_unlock_timestamp.read();
             let current_time = get_block_timestamp();

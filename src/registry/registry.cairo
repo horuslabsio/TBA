@@ -10,15 +10,11 @@ mod Registry {
     use core::hash::HashStateTrait;
     use core::pedersen::PedersenTrait;
     use starknet::{
-        ContractAddress, 
-        get_caller_address, 
-        syscalls::{call_contract_syscall, deploy_syscall},
-        class_hash::{ClassHash, Felt252TryIntoClassHash}, 
-        SyscallResultTrait, 
-        storage::Map
+        ContractAddress, get_caller_address, syscalls::{call_contract_syscall, deploy_syscall},
+        class_hash::{ClassHash, Felt252TryIntoClassHash}, SyscallResultTrait, storage::Map
     };
 
-    use token_bound_accounts::interfaces::IERC721::{ IERC721DispatcherTrait, IERC721Dispatcher };
+    use token_bound_accounts::interfaces::IERC721::{IERC721DispatcherTrait, IERC721Dispatcher};
     use token_bound_accounts::interfaces::IRegistry::IRegistry;
 
     // *************************************************************************
@@ -126,7 +122,10 @@ mod Registry {
         /// @notice internal function for getting NFT owner
         /// @param token_contract contract address of NFT
         // @param token_id token ID of NFT
-        // NB: This function aims for compatibility with all contracts (snake or camel case) but do not work as expected on mainnet as low level calls do not return err at the moment. Should work for contracts which implements CamelCase but not snake_case until starknet v0.15.
+        // NB: This function aims for compatibility with all contracts (snake or camel case) but do
+        // not work as expected on mainnet as low level calls do not return err at the moment.
+        // Should work for contracts which implements CamelCase but not snake_case until starknet
+        // v0.15.
         fn _get_owner(
             self: @ContractState, token_contract: ContractAddress, token_id: u256
         ) -> ContractAddress {
