@@ -6,6 +6,9 @@ mod AccountComponent {
     // *************************************************************************
     //                              IMPORTS
     // *************************************************************************
+    use core::result::ResultTrait;
+    use core::hash::HashStateTrait;
+    use core::pedersen::PedersenTrait;
     use core::num::traits::zero::Zero;
     use starknet::{
         get_tx_info, get_caller_address, get_contract_address, get_block_timestamp, ContractAddress,
@@ -50,7 +53,6 @@ mod AccountComponent {
     //                              ERRORS
     // *************************************************************************
     mod Errors {
-        const INV_TX_VERSION: felt252 = 'Account: invalid tx version';
         const UNAUTHORIZED: felt252 = 'Account: unauthorized';
         const INV_SIG_LEN: felt252 = 'Account: invalid sig length';
         const INV_SIGNATURE: felt252 = 'Account: invalid signature';
@@ -120,9 +122,20 @@ mod AccountComponent {
             self._get_token()
         }
 
-        /// @notice returns the current state of the contract
+        /// @notice returns the current state of the account
         fn state(self: @ComponentState<TContractState>) -> u256 {
             self.state.read()
+        }
+
+        // @notice updates the state of the account
+        fn update_state(ref self: ComponentState<TContractState>) {
+            let tx_info = get_tx_info().unbox();
+            let nonce = tx_info.nonce;
+            let old_state = self.state.read();
+            let new_state = PedersenTrait::new(old_state.try_into().unwrap())
+                .update(nonce)
+                .finalize();
+            self.state.write(new_state.try_into().unwrap());
         }
 
         // @notice check that account supports TBA interface

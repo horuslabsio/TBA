@@ -2,10 +2,10 @@
 //                              EXECUTABLE COMPONENT
 // *************************************************************************
 #[starknet::component]
-mod UpgradeableComponent {
-    use starknet::SyscallResultTrait;
+mod ExecutableComponent {
+    use starknet::{ ContractAddress, get_caller_address, get_contract_address, call_contract_syscall, get_tx_info, SyscallResultTrait, account::Call };
 
-    use token_bound_accounts::interfaces::IExecutable;
+    use token_bound_accounts::interfaces::IExecutable::IExecutable;
 
     // *************************************************************************
     //                              STORAGE
@@ -39,23 +39,22 @@ mod UpgradeableComponent {
     // *************************************************************************
     mod Errors {
         const UNAUTHORIZED: felt252 = 'Account: unauthorized';
+        const INV_TX_VERSION: felt252 = 'Account: invalid tx version';
     }
 
     // *************************************************************************
     //                              EXTERNAL FUNCTIONS
     // *************************************************************************
     #[embeddable_as(AccountExecutable)]
-    impl Account<
+    impl Executable<
         TContractState, +HasComponent<TContractState>, +Drop<TContractState>
     > of IExecutable<ComponentState<TContractState>> {
         /// @notice executes a transaction
+        /// @notice whilst implementing this method, ensure to validate the signer by calling `is_valid_signer`.
         /// @param calls an array of transactions to be executed
         fn _execute(
             ref self: ComponentState<TContractState>, mut calls: Array<Call>
         ) -> Array<Span<felt252>> {
-            let caller = get_caller_address();
-            assert(self._is_valid_signer(caller), Errors::UNAUTHORIZED);
-
             let tx_info = get_tx_info().unbox();
             assert(tx_info.version != 0, Errors::INV_TX_VERSION);
 

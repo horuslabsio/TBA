@@ -19,5 +19,6 @@ trait IAccount<TContractState> {
     fn token(self: @TContractState) -> (ContractAddress, u256, felt252);
     fn owner(self: @TContractState) -> ContractAddress;
     fn state(self: @TContractState) -> u256;
+    fn update_state(ref self: TContractState);
     fn supports_interface(self: @TContractState, interface_id: felt252) -> bool;
 }
