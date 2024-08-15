@@ -6,7 +6,7 @@ mod Account {
     use starknet::{ContractAddress, get_caller_address};
     use starknet::ClassHash;
     use token_bound_accounts::account::AccountComponent;
-    use token_bound_accounts::upgradeable::UpgradeableComponent;
+    use token_bound_accounts::components::upgradeable::upgradeable::UpgradeableComponent;
     use token_bound_accounts::interfaces::IUpgradeable::IUpgradeable;
 
     component!(path: AccountComponent, storage: account, event: AccountEvent);

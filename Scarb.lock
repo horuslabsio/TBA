@@ -3,12 +3,12 @@ version = 1
 
 [[package]]
 name = "snforge_std"
-version = "0.20.1"
-source = "git+https://github.com/foundry-rs/starknet-foundry.git?tag=v0.20.1#fea2db8f2b20148cc15ee34b08de12028eb42942"
+version = "0.27.0"
+source = "git+https://github.com/foundry-rs/starknet-foundry.git?tag=v0.27.0#2d99b7c00678ef0363881ee0273550c44a9263de"
 
 [[package]]
 name = "token_bound_accounts"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "snforge_std",
 ]

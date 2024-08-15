@@ -9,12 +9,7 @@ trait ISimpleAccount<TContractState> {
     ) -> felt252;
     fn __validate__(ref self: TContractState, calls: Array<Call>) -> felt252;
     fn __validate_declare__(self: @TContractState, class_hash: felt252) -> felt252;
-    fn __validate_deploy__(
-        self: @TContractState,
-        class_hash: felt252,
-        contract_address_salt: felt252,
-        public_key: felt252
-    ) -> felt252;
+    fn __validate_deploy__(ref self: TContractState, public_key: felt252) -> felt252;
     fn __execute__(ref self: TContractState, calls: Array<Call>) -> Array<Span<felt252>>;
 }
 
@@ -33,8 +28,8 @@ mod SimpleAccount {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, _public_key: felt252) {
-        self._public_key.write(_public_key);
+    fn constructor(ref self: ContractState, public_key: felt252) {
+        self._public_key.write(public_key);
     }
 
     #[abi(embed_v0)]
@@ -54,12 +49,7 @@ mod SimpleAccount {
             self._is_valid_signature(hash, signature)
         }
 
-        fn __validate_deploy__(
-            self: @ContractState,
-            class_hash: felt252,
-            contract_address_salt: felt252,
-            public_key: felt252
-        ) -> felt252 {
+        fn __validate_deploy__(ref self: ContractState, public_key: felt252) -> felt252 {
             self.validate_transaction()
         }
 

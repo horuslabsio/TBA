@@ -92,9 +92,7 @@ mod AccountComponent {
         }
 
         fn __validate_deploy__(
-            self: @ComponentState<TContractState>,
-            class_hash: felt252,
-            contract_address_salt: felt252,
+            ref self: ComponentState<TContractState>, token_contract: ContractAddress, token_id: u256
         ) -> felt252 {
             self._validate_transaction()
         }

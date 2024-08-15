@@ -8,10 +8,10 @@ trait IUpgradedAccount<TContractState> {
     fn __validate__(ref self: TContractState, calls: Array<Call>) -> felt252;
     fn __validate_declare__(self: @TContractState, class_hash: felt252) -> felt252;
     fn __validate_deploy__(
-        self: @TContractState,
-        class_hash: felt252,
-        contract_address_salt: felt252,
-        public_key: felt252
+        ref self: TContractState,
+        _public_key: felt252,
+        token_contract: ContractAddress,
+        token_id: u256
     ) -> felt252;
     fn __execute__(ref self: TContractState, calls: Array<Call>) -> Array<Span<felt252>>;
     fn token(self: @TContractState) -> (ContractAddress, u256);
@@ -107,10 +107,10 @@ mod UpgradedAccount {
         }
 
         fn __validate_deploy__(
-            self: @ContractState,
-            class_hash: felt252,
-            contract_address_salt: felt252,
-            public_key: felt252
+            ref self: ContractState,
+            _public_key: felt252,
+            token_contract: ContractAddress,
+            token_id: u256
         ) -> felt252 {
             self.validate_transaction()
         }
