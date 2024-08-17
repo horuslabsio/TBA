@@ -2,17 +2,19 @@
 //                              ACCOUNT COMPONENT
 // *************************************************************************
 #[starknet::component]
-mod AccountComponent {
+pub mod AccountComponent {
     // *************************************************************************
     //                              IMPORTS
     // *************************************************************************
-    use core::result::ResultTrait;
+    use starknet::storage::StoragePointerWriteAccess;
+use starknet::storage::StoragePointerReadAccess;
+use core::result::ResultTrait;
     use core::hash::HashStateTrait;
     use core::pedersen::PedersenTrait;
     use core::num::traits::zero::Zero;
     use starknet::{
         get_tx_info, get_caller_address, get_contract_address, get_block_timestamp, ContractAddress,
-        account::Call, call_contract_syscall, replace_class_syscall, ClassHash, SyscallResultTrait
+        account::Call, syscalls::call_contract_syscall, syscalls::replace_class_syscall, ClassHash, SyscallResultTrait
     };
     use token_bound_accounts::interfaces::IERC721::{IERC721DispatcherTrait, IERC721Dispatcher};
     use token_bound_accounts::interfaces::IAccount::{
@@ -52,10 +54,10 @@ mod AccountComponent {
     // *************************************************************************
     //                              ERRORS
     // *************************************************************************
-    mod Errors {
-        const UNAUTHORIZED: felt252 = 'Account: unauthorized';
-        const INV_SIG_LEN: felt252 = 'Account: invalid sig length';
-        const INV_SIGNATURE: felt252 = 'Account: invalid signature';
+    pub mod Errors {
+        pub const UNAUTHORIZED: felt252 = 'Account: unauthorized';
+        pub const INV_SIG_LEN: felt252 = 'Account: invalid sig length';
+        pub const INV_SIGNATURE: felt252 = 'Account: invalid signature';
     }
 
     // *************************************************************************

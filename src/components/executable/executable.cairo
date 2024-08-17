@@ -4,7 +4,7 @@
 #[starknet::component]
 mod ExecutableComponent {
     use starknet::{
-        ContractAddress, get_caller_address, get_contract_address, call_contract_syscall,
+        ContractAddress, get_caller_address, get_contract_address, syscalls::call_contract_syscall,
         get_tx_info, SyscallResultTrait, account::Call
     };
 
@@ -40,9 +40,9 @@ mod ExecutableComponent {
     // *************************************************************************
     //                              ERRORS
     // *************************************************************************
-    mod Errors {
-        const UNAUTHORIZED: felt252 = 'Account: unauthorized';
-        const INV_TX_VERSION: felt252 = 'Account: invalid tx version';
+    pub mod Errors {
+        pub const UNAUTHORIZED: felt252 = 'Account: unauthorized';
+        pub const INV_TX_VERSION: felt252 = 'Account: invalid tx version';
     }
 
     // *************************************************************************

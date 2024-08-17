@@ -15,12 +15,14 @@ trait ISimpleAccount<TContractState> {
 
 #[starknet::contract(account)]
 mod SimpleAccount {
-    use starknet::{
+    use starknet::storage::StoragePointerWriteAccess;
+use starknet::storage::StoragePointerReadAccess;
+use starknet::{
         get_tx_info, get_caller_address, get_contract_address, ContractAddress, account::Call,
-        call_contract_syscall, replace_class_syscall, ClassHash, SyscallResultTrait
+        syscalls::call_contract_syscall, syscalls::replace_class_syscall, ClassHash, SyscallResultTrait
     };
     use core::ecdsa::check_ecdsa_signature;
-    use core::zeroable::Zeroable;
+    use core::num::traits::zero::Zero;
 
     #[storage]
     struct Storage {

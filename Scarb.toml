@@ -1,7 +1,7 @@
 [package]
 name = "token_bound_accounts"
 version = "0.3.0"
-edition = "2023_10"
+edition = "2024_07"
 authors = ["Horus Labs <horuslabsio@gmail.com>"]
 description = "A port of ERC6551 to Starknet"
 repository = "https://github.com/horuslabsio/TBA/blob/main/Scarb.toml"

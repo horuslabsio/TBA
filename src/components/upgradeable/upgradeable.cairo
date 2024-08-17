@@ -4,7 +4,7 @@
 #[starknet::component]
 mod UpgradeableComponent {
     use starknet::{ClassHash, SyscallResultTrait};
-    use core::zeroable::Zeroable;
+    use core::num::traits::zero::Zero;
 
     use token_bound_accounts::interfaces::IUpgradeable::IUpgradeable;
 
@@ -33,8 +33,8 @@ mod UpgradeableComponent {
     // *************************************************************************
     //                              ERRORS
     // *************************************************************************
-    mod Errors {
-        const INVALID_CLASS: felt252 = 'Class hash cannot be zero';
+    pub mod Errors {
+        pub const INVALID_CLASS: felt252 = 'Class hash cannot be zero';
     }
 
     // *************************************************************************
@@ -50,7 +50,7 @@ mod UpgradeableComponent {
         /// Emits an `Upgraded` event.
         fn _upgrade(ref self: ComponentState<TContractState>, new_class_hash: ClassHash) {
             assert(!new_class_hash.is_zero(), Errors::INVALID_CLASS);
-            starknet::replace_class_syscall(new_class_hash).unwrap_syscall();
+            starknet::syscalls::replace_class_syscall(new_class_hash).unwrap_syscall();
             self.emit(Upgraded { class_hash: new_class_hash });
         }
     }

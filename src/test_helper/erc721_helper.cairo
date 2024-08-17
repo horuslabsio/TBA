@@ -24,10 +24,14 @@ trait IERC721<TContractState> {
 
 #[starknet::contract]
 mod ERC721 {
-    use starknet::ContractAddress;
+    use starknet::storage::StorageMapWriteAccess;
+use starknet::storage::StorageMapReadAccess;
+use starknet::storage::StoragePointerReadAccess;
+use starknet::storage::StoragePointerWriteAccess;
+use starknet::ContractAddress;
     use starknet::get_caller_address;
-    use core::zeroable::Zeroable;
-    use starknet::{contract_address_to_felt252, storage::Map};
+    use core::num::traits::zero::Zero;
+    use starknet::{storage::Map};
 
     #[storage]
     struct Storage {
@@ -155,7 +159,7 @@ mod ERC721 {
             self.balances.write(to, receiver_balance + 1.into());
             self.owners.write(token_id, to);
 
-            self.emit(Transfer { from: Zeroable::zero(), to: to, token_id: token_id });
+            self.emit(Transfer { from: Zero::zero(), to: to, token_id: token_id });
         }
     }
 
@@ -185,7 +189,7 @@ mod ERC721 {
             assert(from == self.ownerOf(token_id), 'ERC721: Caller is not owner');
             assert(to.is_non_zero(), 'ERC721: transfer to 0 address');
 
-            self.token_approvals.write(token_id, Zeroable::zero());
+            self.token_approvals.write(token_id, Zero::zero());
             self.balances.write(from, self.balances.read(from) - 1.into());
             self.balances.write(to, self.balances.read(to) + 1.into());
             self.owners.write(token_id, to);

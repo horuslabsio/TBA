@@ -11,7 +11,7 @@ mod Registry {
     use core::pedersen::PedersenTrait;
     use starknet::{
         ContractAddress, get_caller_address, syscalls::{call_contract_syscall, deploy_syscall},
-        class_hash::{ClassHash, Felt252TryIntoClassHash}, SyscallResultTrait, storage::Map
+        class_hash::ClassHash, SyscallResultTrait, storage::Map
     };
 
     use token_bound_accounts::interfaces::IERC721::{IERC721DispatcherTrait, IERC721Dispatcher};
@@ -46,8 +46,8 @@ mod Registry {
     // *************************************************************************
     //                              ERRORS
     // *************************************************************************
-    mod Errors {
-        const CALLER_IS_NOT_OWNER: felt252 = 'Registry: caller is not onwer';
+    pub mod Errors {
+        pub const CALLER_IS_NOT_OWNER: felt252 = 'Registry: caller is not onwer';
     }
 
     // *************************************************************************

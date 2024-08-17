@@ -7,7 +7,9 @@ trait IHelloStarknet<TContractState> {
 
 #[starknet::contract]
 mod HelloStarknet {
-    #[storage]
+    use starknet::storage::StoragePointerReadAccess;
+use starknet::storage::StoragePointerWriteAccess;
+#[storage]
     struct Storage {
         balance: felt252,
     }
