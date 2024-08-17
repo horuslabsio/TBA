@@ -56,6 +56,7 @@ pub mod ExecutableComponent {
         +Drop<TContractState>,
         impl Account: AccountComponent::HasComponent<TContractState>
     > of IExecutable<ComponentState<TContractState>> {
+        // TODO: add status updating
         /// @notice executes a transaction
         /// @notice whilst implementing this method, ensure to validate the signer by calling
         /// `is_valid_signer`.

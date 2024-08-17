@@ -43,12 +43,12 @@ pub mod AccountComponent {
     /// @notice Emitted exactly once when the account is initialized
     /// @param owner The owner address
     #[derive(Drop, starknet::Event)]
-    struct TBACreated {
+    pub struct TBACreated {
         #[key]
-        account_address: ContractAddress,
-        parent_account: ContractAddress,
-        token_contract: ContractAddress,
-        token_id: u256
+        pub account_address: ContractAddress,
+        pub parent_account: ContractAddress,
+        pub token_contract: ContractAddress,
+        pub token_id: u256
     }
 
     // *************************************************************************
@@ -80,12 +80,8 @@ pub mod AccountComponent {
         /// @param signer address to be validated
         fn is_valid_signer(
             self: @ComponentState<TContractState>, signer: ContractAddress
-        ) -> felt252 {
-            if self._is_valid_signer(signer) {
-                return starknet::VALIDATED;
-            } else {
-                return 0;
-            }
+        ) -> bool {
+           self._is_valid_signer(signer)
         }
 
         fn __validate_deploy__(
@@ -129,17 +125,6 @@ pub mod AccountComponent {
             self.state.read()
         }
 
-        // @notice updates the state of the account
-        fn update_state(ref self: ComponentState<TContractState>) {
-            let tx_info = get_tx_info().unbox();
-            let nonce = tx_info.nonce;
-            let old_state = self.state.read();
-            let new_state = PedersenTrait::new(old_state.try_into().unwrap())
-                .update(nonce)
-                .finalize();
-            self.state.write(new_state.try_into().unwrap());
-        }
-
         // @notice check that account supports TBA interface
         // @param interface_id interface to be checked against
         fn supports_interface(
@@ -180,6 +165,17 @@ pub mod AccountComponent {
                         token_id
                     }
                 );
+        }
+
+        // @notice updates the state of the account
+        fn _update_state(ref self: ComponentState<TContractState>) {
+            let tx_info = get_tx_info().unbox();
+            let nonce = tx_info.nonce;
+            let old_state = self.state.read();
+            let new_state = PedersenTrait::new(old_state.try_into().unwrap())
+                .update(nonce)
+                .finalize();
+            self.state.write(new_state.try_into().unwrap());
         }
 
         /// @notice internal function for getting NFT owner

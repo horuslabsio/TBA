@@ -1,7 +1,7 @@
 use starknet::{account::Call, ContractAddress, ClassHash};
 
 #[starknet::interface]
-trait ISimpleAccount<TContractState> {
+pub trait ISimpleAccount<TContractState> {
     fn get_public_key(self: @TContractState) -> felt252;
     fn set_public_key(ref self: TContractState, new_public_key: felt252);
     fn is_valid_signature(
@@ -14,7 +14,7 @@ trait ISimpleAccount<TContractState> {
 }
 
 #[starknet::contract(account)]
-mod SimpleAccount {
+pub mod SimpleAccount {
     use starknet::storage::StoragePointerWriteAccess;
 use starknet::storage::StoragePointerReadAccess;
 use starknet::{

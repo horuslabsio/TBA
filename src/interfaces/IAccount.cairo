@@ -10,7 +10,7 @@ pub trait IAccount<TContractState> {
     fn is_valid_signature(
         self: @TContractState, hash: felt252, signature: Span<felt252>
     ) -> felt252;
-    fn is_valid_signer(self: @TContractState, signer: ContractAddress) -> felt252;
+    fn is_valid_signer(self: @TContractState, signer: ContractAddress) -> bool;
     fn __validate__(ref self: TContractState, calls: Array<Call>) -> felt252;
     fn __validate_declare__(self: @TContractState, class_hash: felt252) -> felt252;
     fn __validate_deploy__(
@@ -19,6 +19,5 @@ pub trait IAccount<TContractState> {
     fn token(self: @TContractState) -> (ContractAddress, u256, felt252);
     fn owner(self: @TContractState) -> ContractAddress;
     fn state(self: @TContractState) -> u256;
-    fn update_state(ref self: TContractState);
     fn supports_interface(self: @TContractState, interface_id: felt252) -> bool;
 }
