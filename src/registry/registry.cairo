@@ -2,7 +2,7 @@
 //                              REGISTRY
 // *************************************************************************
 #[starknet::contract]
-mod Registry {
+pub mod Registry {
     // *************************************************************************
     //                              IMPORTS
     // *************************************************************************
@@ -21,14 +21,14 @@ mod Registry {
     //                              STORAGE
     // *************************************************************************
     #[storage]
-    struct Storage {}
+    pub struct Storage {}
 
     // *************************************************************************
     //                              EVENTS
     // *************************************************************************
     #[event]
     #[derive(Drop, starknet::Event)]
-    enum Event {
+    pub enum Event {
         AccountCreated: AccountCreated
     }
 
@@ -37,17 +37,17 @@ mod Registry {
     /// @param token_contract the contract address of the NFT
     /// @param token_id the ID of the NFT
     #[derive(Drop, starknet::Event)]
-    struct AccountCreated {
-        account_address: ContractAddress,
-        token_contract: ContractAddress,
-        token_id: u256,
+    pub struct AccountCreated {
+        pub account_address: ContractAddress,
+        pub token_contract: ContractAddress,
+        pub token_id: u256,
     }
 
     // *************************************************************************
     //                              ERRORS
     // *************************************************************************
     pub mod Errors {
-        pub const CALLER_IS_NOT_OWNER: felt252 = 'Registry: caller is not onwer';
+        pub const CALLER_IS_NOT_OWNER: felt252 = 'Registry: caller is not owner';
     }
 
     // *************************************************************************

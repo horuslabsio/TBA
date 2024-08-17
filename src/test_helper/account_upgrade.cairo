@@ -49,7 +49,7 @@ trait IERC721<TContractState> {
 }
 
 #[starknet::contract(account)]
-mod UpgradedAccount {
+pub mod UpgradedAccount {
     use starknet::storage::StoragePointerWriteAccess;
 use starknet::storage::StoragePointerReadAccess;
 use starknet::{

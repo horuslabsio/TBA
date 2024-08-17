@@ -6,7 +6,7 @@ trait IHelloStarknet<TContractState> {
 }
 
 #[starknet::contract]
-mod HelloStarknet {
+pub mod HelloStarknet {
     use starknet::storage::StoragePointerReadAccess;
 use starknet::storage::StoragePointerWriteAccess;
 #[storage]

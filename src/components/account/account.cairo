@@ -7,8 +7,8 @@ pub mod AccountComponent {
     //                              IMPORTS
     // *************************************************************************
     use starknet::storage::StoragePointerWriteAccess;
-use starknet::storage::StoragePointerReadAccess;
-use core::result::ResultTrait;
+    use starknet::storage::StoragePointerReadAccess;
+    use core::result::ResultTrait;
     use core::hash::HashStateTrait;
     use core::pedersen::PedersenTrait;
     use core::num::traits::zero::Zero;
@@ -25,7 +25,7 @@ use core::result::ResultTrait;
     //                              STORAGE
     // *************************************************************************
     #[storage]
-    struct Storage {
+   pub struct Storage {
         account_token_contract: ContractAddress, // contract address of NFT
         account_token_id: u256, // token ID of NFT
         state: u256
@@ -36,7 +36,7 @@ use core::result::ResultTrait;
     // *************************************************************************
     #[event]
     #[derive(Drop, starknet::Event)]
-    enum Event {
+    pub enum Event {
         TBACreated: TBACreated
     }
 
@@ -64,7 +64,7 @@ use core::result::ResultTrait;
     //                              EXTERNAL FUNCTIONS
     // *************************************************************************
     #[embeddable_as(AccountImpl)]
-    impl Account<
+    pub impl Account<
         TContractState, +HasComponent<TContractState>, +Drop<TContractState>
     > of IAccount<ComponentState<TContractState>> {
         /// @notice used for signature validation
@@ -157,7 +157,7 @@ use core::result::ResultTrait;
     //                              PRIVATE FUNCTIONS
     // *************************************************************************
     #[generate_trait]
-    impl InternalImpl<
+    pub impl InternalImpl<
         TContractState, +HasComponent<TContractState>, +Drop<TContractState>
     > of InternalTrait<TContractState> {
         /// @notice initializes the account by setting the initial token contract and token id

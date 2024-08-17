@@ -1,3 +1,3 @@
-mod account;
+pub mod account;
 
 use account::AccountComponent;

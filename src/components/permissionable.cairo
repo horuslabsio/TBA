@@ -1,1 +1,1 @@
-mod permissionable;
+pub mod permissionable;

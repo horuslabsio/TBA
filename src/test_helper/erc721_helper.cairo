@@ -1,7 +1,7 @@
 use starknet::ContractAddress;
 
 #[starknet::interface]
-trait IERC721<TContractState> {
+pub trait IERC721<TContractState> {
     fn balance_of(self: @TContractState, account: ContractAddress) -> u256;
     fn ownerOf(self: @TContractState, token_id: u256) -> ContractAddress;
     fn owner_of(self: @TContractState, token_id: u256) -> ContractAddress;
@@ -23,7 +23,7 @@ trait IERC721<TContractState> {
 }
 
 #[starknet::contract]
-mod ERC721 {
+pub mod ERC721 {
     use starknet::storage::StorageMapWriteAccess;
 use starknet::storage::StorageMapReadAccess;
 use starknet::storage::StoragePointerReadAccess;

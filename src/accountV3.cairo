@@ -1,1 +1,1 @@
-mod accountV3;
+pub mod accountV3;

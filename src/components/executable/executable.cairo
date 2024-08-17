@@ -2,26 +2,27 @@
 //                              EXECUTABLE COMPONENT
 // *************************************************************************
 #[starknet::component]
-mod ExecutableComponent {
+pub mod ExecutableComponent {
     use starknet::{
         ContractAddress, get_caller_address, get_contract_address, syscalls::call_contract_syscall,
         get_tx_info, SyscallResultTrait, account::Call
     };
 
     use token_bound_accounts::interfaces::IExecutable::IExecutable;
+    use token_bound_accounts::components::account::account::AccountComponent;
 
     // *************************************************************************
     //                              STORAGE
     // *************************************************************************
     #[storage]
-    struct Storage {}
+    pub struct Storage {}
 
     // *************************************************************************
     //                              EVENT
     // *************************************************************************
     #[event]
     #[derive(Drop, starknet::Event)]
-    enum Event {
+    pub enum Event {
         TransactionExecuted: TransactionExecuted
     }
 
@@ -48,9 +49,12 @@ mod ExecutableComponent {
     // *************************************************************************
     //                              EXTERNAL FUNCTIONS
     // *************************************************************************
-    #[embeddable_as(AccountExecutable)]
+    #[embeddable_as(ExecutableImpl)]
     impl Executable<
-        TContractState, +HasComponent<TContractState>, +Drop<TContractState>
+        TContractState, 
+        +HasComponent<TContractState>, 
+        +Drop<TContractState>,
+        impl Account: AccountComponent::HasComponent<TContractState>
     > of IExecutable<ComponentState<TContractState>> {
         /// @notice executes a transaction
         /// @notice whilst implementing this method, ensure to validate the signer by calling
@@ -59,6 +63,10 @@ mod ExecutableComponent {
         fn _execute(
             ref self: ComponentState<TContractState>, mut calls: Array<Call>
         ) -> Array<Span<felt252>> {
+            // let caller = get_caller_address();
+            // let account_comp = get_dep_component!(@self, Account);
+            // account_comp._is_valid_signer(caller);
+            // assert(is_valid == 'VALID', Errors::UNAUTHORIZED);
             let tx_info = get_tx_info().unbox();
             assert(tx_info.version != 0, Errors::INV_TX_VERSION);
 
@@ -78,7 +86,9 @@ mod ExecutableComponent {
     // *************************************************************************
     #[generate_trait]
     impl InternalImpl<
-        TContractState, +HasComponent<TContractState>, +Drop<TContractState>
+        TContractState, 
+        +HasComponent<TContractState>, 
+        +Drop<TContractState>
     > of InternalTrait<TContractState> {
         /// @notice internal function for executing transactions
         /// @param calls An array of transactions to be executed
