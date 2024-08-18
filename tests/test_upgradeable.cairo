@@ -16,7 +16,7 @@ use token_bound_accounts::interfaces::IUpgradeable::{
     IUpgradeableDispatcher, IUpgradeableDispatcherTrait
 };
 use token_bound_accounts::components::presets::account_preset::AccountPreset;
-use token_bound_accounts::components::account::account::AccountComponent;
+use token_bound_accounts::components::upgradeable::upgradeable::UpgradeableComponent;
 
 use token_bound_accounts::test_helper::{
     erc721_helper::{IERC721Dispatcher, IERC721DispatcherTrait, ERC721},
@@ -66,7 +66,6 @@ fn __setup__() -> (ContractAddress, ContractAddress) {
 #[test]
 fn test_upgrade() {
     let (contract_address, erc721_contract_address) = __setup__();
-
     let new_class_hash = declare("UpgradedAccount").unwrap().class_hash;
 
     // get token owner
@@ -89,11 +88,43 @@ fn test_upgrade() {
 #[should_panic(expected: ('Account: unauthorized',))]
 fn test_upgrade_with_unauthorized() {
     let (contract_address, _) = __setup__();
-
     let new_class_hash = declare("UpgradedAccount").unwrap().class_hash;
 
     // call upgrade function with an unauthorized address
     start_cheat_caller_address(contract_address, ACCOUNT2.try_into().unwrap());
     let safe_upgrade_dispatcher = IUpgradeableDispatcher { contract_address };
     safe_upgrade_dispatcher.upgrade(new_class_hash);
+}
+
+#[test]
+fn test_upgrade_emits_event() {
+    let (contract_address, erc721_contract_address) = __setup__();
+    let new_class_hash = declare("UpgradedAccount").unwrap().class_hash;
+
+    // get token owner
+    let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };
+    let token_owner = token_dispatcher.ownerOf(1.try_into().unwrap());
+
+    // spy on emitted events
+    let mut spy = spy_events();
+
+    // call the upgrade function
+    let dispatcher = IUpgradeableDispatcher { contract_address };
+    start_cheat_caller_address(contract_address, token_owner);
+    dispatcher.upgrade(new_class_hash);
+
+    // check events are emitted
+    spy
+        .assert_emitted(
+            @array![
+                (
+                    contract_address,
+                    UpgradeableComponent::Event::TBAUpgraded(
+                        UpgradeableComponent::TBAUpgraded {
+                            account_address: contract_address, class_hash: new_class_hash
+                        }
+                    )
+                )
+            ]
+        );
 }

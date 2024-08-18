@@ -6,7 +6,9 @@ pub mod UpgradeableComponent {
     // *************************************************************************
     //                              IMPORTS
     // *************************************************************************
-    use starknet::{ClassHash, SyscallResultTrait, get_caller_address};
+    use starknet::{
+        ClassHash, SyscallResultTrait, get_caller_address, get_contract_address, ContractAddress
+    };
     use core::num::traits::zero::Zero;
     use token_bound_accounts::components::account::account::AccountComponent;
     use token_bound_accounts::components::account::account::AccountComponent::InternalImpl;
@@ -23,13 +25,14 @@ pub mod UpgradeableComponent {
     #[event]
     #[derive(Drop, starknet::Event)]
     pub enum Event {
-        Upgraded: Upgraded
+        TBAUpgraded: TBAUpgraded
     }
 
     /// @notice Emitted when the contract is upgraded.
     /// @param class_hash implementation hash to be upgraded to
     #[derive(Drop, starknet::Event)]
-    pub struct Upgraded {
+    pub struct TBAUpgraded {
+        pub account_address: ContractAddress,
         pub class_hash: ClassHash
     }
 
@@ -68,7 +71,12 @@ pub mod UpgradeableComponent {
 
             // upgrade account
             starknet::syscalls::replace_class_syscall(new_class_hash).unwrap_syscall();
-            self.emit(Upgraded { class_hash: new_class_hash });
+            self
+                .emit(
+                    TBAUpgraded {
+                        account_address: get_contract_address(), class_hash: new_class_hash
+                    }
+                );
         }
     }
 }
