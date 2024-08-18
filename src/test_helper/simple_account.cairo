@@ -16,10 +16,11 @@ pub trait ISimpleAccount<TContractState> {
 #[starknet::contract(account)]
 pub mod SimpleAccount {
     use starknet::storage::StoragePointerWriteAccess;
-use starknet::storage::StoragePointerReadAccess;
-use starknet::{
+    use starknet::storage::StoragePointerReadAccess;
+    use starknet::{
         get_tx_info, get_caller_address, get_contract_address, ContractAddress, account::Call,
-        syscalls::call_contract_syscall, syscalls::replace_class_syscall, ClassHash, SyscallResultTrait
+        syscalls::call_contract_syscall, syscalls::replace_class_syscall, ClassHash,
+        SyscallResultTrait
     };
     use core::ecdsa::check_ecdsa_signature;
     use core::num::traits::zero::Zero;

@@ -25,10 +25,10 @@ pub trait IERC721<TContractState> {
 #[starknet::contract]
 pub mod ERC721 {
     use starknet::storage::StorageMapWriteAccess;
-use starknet::storage::StorageMapReadAccess;
-use starknet::storage::StoragePointerReadAccess;
-use starknet::storage::StoragePointerWriteAccess;
-use starknet::ContractAddress;
+    use starknet::storage::StorageMapReadAccess;
+    use starknet::storage::StoragePointerReadAccess;
+    use starknet::storage::StoragePointerWriteAccess;
+    use starknet::ContractAddress;
     use starknet::get_caller_address;
     use core::num::traits::zero::Zero;
     use starknet::{storage::Map};

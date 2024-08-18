@@ -1,6 +1,10 @@
+// *************************************************************************
+//                              ACCOUNT COMPONENT TEST
+// *************************************************************************
 use starknet::{ContractAddress, account::Call};
 use snforge_std::{
-    declare, start_cheat_caller_address, stop_cheat_caller_address, start_cheat_transaction_hash, start_cheat_nonce, spy_events, EventSpyAssertionsTrait, ContractClassTrait, ContractClass
+    declare, start_cheat_caller_address, stop_cheat_caller_address, start_cheat_transaction_hash,
+    start_cheat_nonce, spy_events, EventSpyAssertionsTrait, ContractClassTrait, ContractClass
 };
 use core::hash::HashStateTrait;
 use core::pedersen::PedersenTrait;
@@ -43,11 +47,16 @@ fn SIGNED_TX_DATA() -> SignedTransactionData {
     }
 }
 
+// *************************************************************************
+//                              SETUP
+// *************************************************************************
 fn __setup__() -> (ContractAddress, ContractAddress) {
     // deploy erc721 helper contract
     let erc721_contract = declare("ERC721").unwrap();
     let mut erc721_constructor_calldata = array!['tokenbound', 'TBA'];
-    let (erc721_contract_address, _) = erc721_contract.deploy(@erc721_constructor_calldata).unwrap();
+    let (erc721_contract_address, _) = erc721_contract
+        .deploy(@erc721_constructor_calldata)
+        .unwrap();
 
     // deploy recipient contract
     let account_contract = declare("SimpleAccount").unwrap();
@@ -63,14 +72,17 @@ fn __setup__() -> (ContractAddress, ContractAddress) {
 
     // deploy account contract
     let account_contract = declare("AccountPreset").unwrap();
-    let mut acct_constructor_calldata = array![
-        erc721_contract_address.try_into().unwrap(), 1, 0
-    ];
-    let (account_contract_address, _) = account_contract.deploy(@acct_constructor_calldata).unwrap();
+    let mut acct_constructor_calldata = array![erc721_contract_address.try_into().unwrap(), 1, 0];
+    let (account_contract_address, _) = account_contract
+        .deploy(@acct_constructor_calldata)
+        .unwrap();
 
     (account_contract_address, erc721_contract_address)
 }
 
+// *************************************************************************
+//                              TESTS
+// *************************************************************************
 #[test]
 fn test_constructor() {
     let (contract_address, erc721_contract_address) = __setup__();
@@ -87,7 +99,9 @@ fn test_event_is_emitted_on_initialization() {
     // deploy erc721 contract
     let erc721_contract = declare("ERC721").unwrap();
     let mut erc721_constructor_calldata = array!['tokenbound', 'TBA'];
-    let (erc721_contract_address, _) = erc721_contract.deploy(@erc721_constructor_calldata).unwrap();
+    let (erc721_contract_address, _) = erc721_contract
+        .deploy(@erc721_constructor_calldata)
+        .unwrap();
 
     // mint a new token
     let dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };
@@ -98,25 +112,28 @@ fn test_event_is_emitted_on_initialization() {
 
     // deploy account contract
     let account_contract = declare("AccountPreset").unwrap();
-    let mut acct_constructor_calldata = array![
-        erc721_contract_address.try_into().unwrap(), 1, 0
-    ];
-    let (account_contract_address, _) = account_contract.deploy(@acct_constructor_calldata).unwrap();
+    let mut acct_constructor_calldata = array![erc721_contract_address.try_into().unwrap(), 1, 0];
+    let (account_contract_address, _) = account_contract
+        .deploy(@acct_constructor_calldata)
+        .unwrap();
 
     // check events are emitted
-    spy.assert_emitted(@array![
-        (
-            account_contract_address,
-            AccountComponent::Event::TBACreated(
-                AccountComponent::TBACreated {
-                    account_address: account_contract_address,
-                    parent_account: ACCOUNT.try_into().unwrap(),
-                    token_contract: erc721_contract_address,
-                    token_id: 1.try_into().unwrap()
-                }
-            )
-        )
-    ]);
+    spy
+        .assert_emitted(
+            @array![
+                (
+                    account_contract_address,
+                    AccountComponent::Event::TBACreated(
+                        AccountComponent::TBACreated {
+                            account_address: account_contract_address,
+                            parent_account: ACCOUNT.try_into().unwrap(),
+                            token_contract: erc721_contract_address,
+                            token_id: 1.try_into().unwrap()
+                        }
+                    )
+                )
+            ]
+        );
 }
 
 #[test]
@@ -289,18 +306,21 @@ fn test_execution_emits_event() {
     let retdata = dispatcher.execute(calls);
 
     // check events are emitted
-    spy.assert_emitted(@array![
-        (
-            contract_address,
-            AccountComponent::Event::TransactionExecuted(
-                AccountComponent::TransactionExecuted {
-                    hash: 121432345,
-                    account_address: contract_address,
-                    response: retdata.span()
-                }
-            )
-        )
-    ]);
+    spy
+        .assert_emitted(
+            @array![
+                (
+                    contract_address,
+                    AccountComponent::Event::TransactionExecuted(
+                        AccountComponent::TransactionExecuted {
+                            hash: 121432345,
+                            account_address: contract_address,
+                            response: retdata.span()
+                        }
+                    )
+                )
+            ]
+        );
 }
 
 #[test]
@@ -334,10 +354,8 @@ fn test_execution_updates_state() {
     // calculate intended state
     let old_state = account_dispatcher.state();
     dispatcher.execute(calls);
-    let new_state = PedersenTrait::new(old_state.try_into().unwrap())
-    .update(nonce)
-    .finalize();
-    
+    let new_state = PedersenTrait::new(old_state.try_into().unwrap()).update(nonce).finalize();
+
     // retrieve and check new state aligns with intended
     let state = account_dispatcher.state();
     assert(state == new_state.try_into().unwrap(), 'invalid state!');

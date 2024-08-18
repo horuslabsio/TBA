@@ -1,7 +1,7 @@
 use starknet::{account::Call, ContractAddress, ClassHash};
 
 #[starknet::interface]
-trait IUpgradedAccount<TContractState> {
+pub trait IUpgradedAccount<TContractState> {
     fn get_public_key(self: @TContractState) -> felt252;
     fn set_public_key(ref self: TContractState, new_public_key: felt252);
     fn isValidSignature(self: @TContractState, hash: felt252, signature: Span<felt252>) -> bool;
@@ -51,10 +51,11 @@ trait IERC721<TContractState> {
 #[starknet::contract(account)]
 pub mod UpgradedAccount {
     use starknet::storage::StoragePointerWriteAccess;
-use starknet::storage::StoragePointerReadAccess;
-use starknet::{
+    use starknet::storage::StoragePointerReadAccess;
+    use starknet::{
         get_tx_info, get_caller_address, get_contract_address, ContractAddress, account::Call,
-        syscalls::call_contract_syscall, syscalls::replace_class_syscall, ClassHash, SyscallResultTrait
+        syscalls::call_contract_syscall, syscalls::replace_class_syscall, ClassHash,
+        SyscallResultTrait
     };
     use core::ecdsa::check_ecdsa_signature;
     use core::num::traits::zero::Zero;

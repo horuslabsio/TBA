@@ -8,8 +8,8 @@ pub trait IHelloStarknet<TContractState> {
 #[starknet::contract]
 pub mod HelloStarknet {
     use starknet::storage::StoragePointerReadAccess;
-use starknet::storage::StoragePointerWriteAccess;
-#[storage]
+    use starknet::storage::StoragePointerWriteAccess;
+    #[storage]
     struct Storage {
         balance: felt252,
     }

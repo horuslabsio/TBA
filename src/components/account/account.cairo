@@ -14,7 +14,8 @@ pub mod AccountComponent {
     use core::num::traits::zero::Zero;
     use starknet::{
         get_tx_info, get_caller_address, get_contract_address, get_block_timestamp, ContractAddress,
-        account::Call, syscalls::call_contract_syscall, syscalls::replace_class_syscall, ClassHash, SyscallResultTrait
+        account::Call, syscalls::call_contract_syscall, syscalls::replace_class_syscall, ClassHash,
+        SyscallResultTrait
     };
     use token_bound_accounts::interfaces::IERC721::{IERC721DispatcherTrait, IERC721Dispatcher};
     use token_bound_accounts::interfaces::IAccount::{
@@ -25,7 +26,7 @@ pub mod AccountComponent {
     //                              STORAGE
     // *************************************************************************
     #[storage]
-   pub struct Storage {
+    pub struct Storage {
         account_token_contract: ContractAddress, // contract address of NFT
         account_token_id: u256, // token ID of NFT
         state: u256
@@ -92,10 +93,8 @@ pub mod AccountComponent {
 
         /// @notice used to validate signer
         /// @param signer address to be validated
-        fn is_valid_signer(
-            self: @ComponentState<TContractState>, signer: ContractAddress
-        ) -> bool {
-           self._is_valid_signer(signer)
+        fn is_valid_signer(self: @ComponentState<TContractState>, signer: ContractAddress) -> bool {
+            self._is_valid_signer(signer)
         }
 
         fn __validate_declare__(
