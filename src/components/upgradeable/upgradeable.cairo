@@ -6,8 +6,6 @@ mod UpgradeableComponent {
     use starknet::{ClassHash, SyscallResultTrait};
     use core::num::traits::zero::Zero;
 
-    use token_bound_accounts::interfaces::IUpgradeable::IUpgradeable;
-
     // *************************************************************************
     //                              STORAGE
     // *************************************************************************
@@ -40,15 +38,15 @@ mod UpgradeableComponent {
     // *************************************************************************
     //                              EXTERNAL FUNCTIONS
     // *************************************************************************
-    #[embeddable_as(AccountUpgradeable)]
-    impl Upgradeable<
-        TContractState, +HasComponent<TContractState>, +Drop<TContractState>
-    > of IUpgradeable<ComponentState<TContractState>> {
+    #[generate_trait]
+    pub impl InternalImpl<
+        TContractState, +HasComponent<TContractState>
+    > of InternalTrait<TContractState> {
         /// @notice replaces the contract's class hash with `new_class_hash`.
-        /// @notice whilst implementing this component, ensure to validate the signer/caller by
-        /// calling `is_valid_signer`.
         /// Emits an `Upgraded` event.
         fn _upgrade(ref self: ComponentState<TContractState>, new_class_hash: ClassHash) {
+            // TODO: validate new signer
+            // TODO: update state
             assert(!new_class_hash.is_zero(), Errors::INVALID_CLASS);
             starknet::syscalls::replace_class_syscall(new_class_hash).unwrap_syscall();
             self.emit(Upgraded { class_hash: new_class_hash });

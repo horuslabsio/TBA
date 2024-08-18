@@ -1,10 +1,15 @@
 use starknet::{ContractAddress, account::Call};
 use snforge_std::{
-    declare, start_cheat_caller_address, stop_cheat_caller_address, spy_events, EventSpyAssertionsTrait, ContractClassTrait, ContractClass
+    declare, start_cheat_caller_address, stop_cheat_caller_address, start_cheat_transaction_hash, start_cheat_nonce, spy_events, EventSpyAssertionsTrait, ContractClassTrait, ContractClass
 };
+use core::hash::HashStateTrait;
+use core::pedersen::PedersenTrait;
 
 use token_bound_accounts::interfaces::IAccount::{
     IAccountDispatcher, IAccountDispatcherTrait, IAccountSafeDispatcher, IAccountSafeDispatcherTrait
+};
+use token_bound_accounts::interfaces::IExecutable::{
+    IExecutableDispatcher, IExecutableDispatcherTrait
 };
 use token_bound_accounts::components::presets::account_preset::AccountPreset;
 use token_bound_accounts::components::account::account::AccountComponent;
@@ -149,6 +154,193 @@ fn test_is_valid_signer() {
     let invalid_signer = dispatcher.is_valid_signer(ACCOUNT.try_into().unwrap());
     assert(valid_signer == true, 'signer is meant to be valid!');
     assert(invalid_signer == false, 'signer is meant to be invalid!');
+}
+
+#[test]
+fn test_execute() {
+    let (contract_address, erc721_contract_address) = __setup__();
+    let dispatcher = IExecutableDispatcher { contract_address };
+
+    // deploy `HelloStarknet` contract for testing
+    let test_contract = declare("HelloStarknet").unwrap();
+    let (test_address, _) = test_contract.deploy(@array![]).unwrap();
+
+    // craft calldata for call array
+    let mut calldata = array![100].span();
+    let call = Call {
+        to: test_address,
+        selector: 1530486729947006463063166157847785599120665941190480211966374137237989315360,
+        calldata: calldata
+    };
+
+    // construct call array
+    let mut calls = array![call];
+
+    // get token owner to prank contract
+    let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };
+    let token_owner = token_dispatcher.ownerOf(1.try_into().unwrap());
+    start_cheat_caller_address(contract_address, token_owner);
+
+    // make calls
+    dispatcher.execute(calls);
+
+    // check test contract state was updated
+    let test_dispatcher = IHelloStarknetDispatcher { contract_address: test_address };
+    let balance = test_dispatcher.get_balance();
+    assert(balance == 100, 'execute was not successful');
+}
+
+#[test]
+fn test_execute_multicall() {
+    let (contract_address, erc721_contract_address) = __setup__();
+    let dispatcher = IExecutableDispatcher { contract_address };
+
+    // deploy `HelloStarknet` contract for testing
+    let test_contract = declare("HelloStarknet").unwrap();
+    let (test_address, _) = test_contract.deploy(@array![]).unwrap();
+
+    // craft calldata and create call array
+    let mut calldata = array![100];
+    let call1 = Call {
+        to: test_address,
+        selector: 1530486729947006463063166157847785599120665941190480211966374137237989315360,
+        calldata: calldata.span()
+    };
+    let mut calldata2 = array![200];
+    let call2 = Call {
+        to: test_address,
+        selector: 1157683809588496510300162709548024577765603117833695133799390448986300456129,
+        calldata: calldata2.span()
+    };
+
+    // construct call array
+    let mut calls = array![call1, call2];
+
+    // get token owner to prank contract
+    let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };
+    let token_owner = token_dispatcher.ownerOf(1.try_into().unwrap());
+    start_cheat_caller_address(contract_address, token_owner);
+
+    // make calls
+    dispatcher.execute(calls);
+
+    // check test contract state was updated
+    let test_dispatcher = IHelloStarknetDispatcher { contract_address: test_address };
+    let balance = test_dispatcher.get_balance();
+    assert(balance == 500, 'execute was not successful');
+}
+
+#[test]
+#[should_panic(expected: ('Account: unauthorized',))]
+fn test_execution_fails_if_invalid_signer() {
+    let (contract_address, _) = __setup__();
+    let dispatcher = IExecutableDispatcher { contract_address };
+
+    // deploy `HelloStarknet` contract for testing
+    let test_contract = declare("HelloStarknet").unwrap();
+    let (test_address, _) = test_contract.deploy(@array![]).unwrap();
+
+    // craft calldata for call array
+    let mut calldata = array![100].span();
+    let call = Call {
+        to: test_address,
+        selector: 1530486729947006463063166157847785599120665941190480211966374137237989315360,
+        calldata: calldata
+    };
+    let mut calls = array![call];
+
+    // prank with invalid owner
+    start_cheat_caller_address(contract_address, ACCOUNT.try_into().unwrap());
+
+    // make calls
+    dispatcher.execute(calls);
+}
+
+#[test]
+fn test_execution_emits_event() {
+    let (contract_address, erc721_contract_address) = __setup__();
+    let dispatcher = IExecutableDispatcher { contract_address };
+
+    // deploy `HelloStarknet` contract for testing
+    let test_contract = declare("HelloStarknet").unwrap();
+    let (test_address, _) = test_contract.deploy(@array![]).unwrap();
+
+    // craft calldata for call array
+    let mut calldata = array![100].span();
+    let call = Call {
+        to: test_address,
+        selector: 1530486729947006463063166157847785599120665941190480211966374137237989315360,
+        calldata: calldata
+    };
+    let mut calls = array![call];
+
+    // get token owner to prank contract
+    let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };
+    let token_owner = token_dispatcher.ownerOf(1.try_into().unwrap());
+
+    // pranks
+    start_cheat_caller_address(contract_address, token_owner);
+    start_cheat_transaction_hash(contract_address, 121432345);
+
+    // spy on emitted events
+    let mut spy = spy_events();
+
+    // make calls
+    let retdata = dispatcher.execute(calls);
+
+    // check events are emitted
+    spy.assert_emitted(@array![
+        (
+            contract_address,
+            AccountComponent::Event::TransactionExecuted(
+                AccountComponent::TransactionExecuted {
+                    hash: 121432345,
+                    account_address: contract_address,
+                    response: retdata.span()
+                }
+            )
+        )
+    ]);
+}
+
+#[test]
+fn test_execution_updates_state() {
+    let (contract_address, erc721_contract_address) = __setup__();
+    let dispatcher = IExecutableDispatcher { contract_address };
+    let account_dispatcher = IAccountDispatcher { contract_address };
+
+    // deploy `HelloStarknet` contract for testing
+    let test_contract = declare("HelloStarknet").unwrap();
+    let (test_address, _) = test_contract.deploy(@array![]).unwrap();
+
+    // craft calldata for call array
+    let mut calldata = array![100].span();
+    let call = Call {
+        to: test_address,
+        selector: 1530486729947006463063166157847785599120665941190480211966374137237989315360,
+        calldata: calldata
+    };
+    let mut calls = array![call];
+
+    // get token owner to prank contract
+    let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };
+    let token_owner = token_dispatcher.ownerOf(1.try_into().unwrap());
+
+    // pranks
+    let nonce = 20;
+    start_cheat_caller_address(contract_address, token_owner);
+    start_cheat_nonce(contract_address, nonce);
+
+    // calculate intended state
+    let old_state = account_dispatcher.state();
+    dispatcher.execute(calls);
+    let new_state = PedersenTrait::new(old_state.try_into().unwrap())
+    .update(nonce)
+    .finalize();
+    
+    // retrieve and check new state aligns with intended
+    let state = account_dispatcher.state();
+    assert(state == new_state.try_into().unwrap(), 'invalid state!');
 }
 
 #[test]

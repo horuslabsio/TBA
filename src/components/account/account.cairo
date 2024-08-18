@@ -37,7 +37,8 @@ pub mod AccountComponent {
     #[event]
     #[derive(Drop, starknet::Event)]
     pub enum Event {
-        TBACreated: TBACreated
+        TBACreated: TBACreated,
+        TransactionExecuted: TransactionExecuted
     }
 
     /// @notice Emitted exactly once when the account is initialized
@@ -51,6 +52,18 @@ pub mod AccountComponent {
         pub token_id: u256
     }
 
+    /// @notice Emitted when the account executes a transaction
+    /// @param hash The transaction hash
+    /// @param response The data returned by the methods called
+    #[derive(Drop, starknet::Event)]
+    pub struct TransactionExecuted {
+        #[key]
+        pub hash: felt252,
+        #[key]
+        pub account_address: ContractAddress,
+        pub response: Span<Span<felt252>>
+    }
+
     // *************************************************************************
     //                              ERRORS
     // *************************************************************************
@@ -58,6 +71,7 @@ pub mod AccountComponent {
         pub const UNAUTHORIZED: felt252 = 'Account: unauthorized';
         pub const INV_SIG_LEN: felt252 = 'Account: invalid sig length';
         pub const INV_SIGNATURE: felt252 = 'Account: invalid signature';
+        pub const INV_TX_VERSION: felt252 = 'Account: invalid tx version';
     }
 
     // *************************************************************************
@@ -84,24 +98,8 @@ pub mod AccountComponent {
            self._is_valid_signer(signer)
         }
 
-        fn __validate_deploy__(
-            ref self: ComponentState<TContractState>,
-            token_contract: ContractAddress,
-            token_id: u256
-        ) -> felt252 {
-            self._validate_transaction()
-        }
-
         fn __validate_declare__(
             self: @ComponentState<TContractState>, class_hash: felt252
-        ) -> felt252 {
-            self._validate_transaction()
-        }
-
-        /// @notice validate an account transaction
-        /// @param calls an array of transactions to be executed
-        fn __validate__(
-            ref self: ComponentState<TContractState>, mut calls: Array<Call>
         ) -> felt252 {
             self._validate_transaction()
         }
@@ -165,6 +163,34 @@ pub mod AccountComponent {
                         token_id
                     }
                 );
+        }
+
+        // @notice executes a transaction
+        // @notice this should be called within an `execute` method in implementation contracts
+        // @param calls an array of transactions to be executed
+        fn _execute(
+            ref self: ComponentState<TContractState>, mut calls: Array<Call>
+        ) -> Array<Span<felt252>> {
+            // validate signer
+            let caller = get_caller_address();
+            assert(self._is_valid_signer(caller), Errors::UNAUTHORIZED);
+
+            // update state
+            self._update_state();
+
+            // validate tx version
+            let tx_info = get_tx_info().unbox();
+            assert(tx_info.version != 0, Errors::INV_TX_VERSION);
+
+            // execute calls and emit event
+            let retdata = self._execute_calls(calls);
+            let hash = tx_info.transaction_hash;
+            let response = retdata.span();
+            self
+                .emit(
+                    TransactionExecuted { hash, account_address: get_contract_address(), response }
+                );
+            retdata
         }
 
         // @notice updates the state of the account
@@ -249,6 +275,28 @@ pub mod AccountComponent {
                 Errors::INV_SIGNATURE
             );
             starknet::VALIDATED
+        }
+
+        /// @notice internal function for executing transactions
+        /// @param calls An array of transactions to be executed
+        fn _execute_calls(
+            ref self: ComponentState<TContractState>, mut calls: Array<Call>
+        ) -> Array<Span<felt252>> {
+            let mut result: Array<Span<felt252>> = ArrayTrait::new();
+            let mut calls = calls;
+
+            loop {
+                match calls.pop_front() {
+                    Option::Some(call) => {
+                        match call_contract_syscall(call.to, call.selector, call.calldata) {
+                            Result::Ok(mut retdata) => { result.append(retdata); },
+                            Result::Err(_) => { panic(array!['multicall_failed']); }
+                        }
+                    },
+                    Option::None(_) => { break (); }
+                };
+            };
+            result
         }
     }
 }
