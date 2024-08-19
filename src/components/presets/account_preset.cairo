@@ -6,10 +6,14 @@ pub mod AccountPreset {
     use starknet::{ContractAddress, get_caller_address, ClassHash, account::Call};
     use token_bound_accounts::components::account::account::AccountComponent;
     use token_bound_accounts::components::upgradeable::upgradeable::UpgradeableComponent;
-    use token_bound_accounts::interfaces::{IUpgradeable::IUpgradeable, IExecutable::IExecutable,};
+    use token_bound_accounts::components::lockable::lockable::LockableComponent;
+    use token_bound_accounts::interfaces::{
+        IUpgradeable::IUpgradeable, IExecutable::IExecutable, ILockable::ILockable
+    };
 
     component!(path: AccountComponent, storage: account, event: AccountEvent);
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
+    component!(path: LockableComponent, storage: lockable, event: LockableEvent);
 
     // Account
     #[abi(embed_v0)]
@@ -17,6 +21,7 @@ pub mod AccountPreset {
 
     impl AccountInternalImpl = AccountComponent::InternalImpl<ContractState>;
     impl UpgradeableInternalImpl = UpgradeableComponent::Private<ContractState>;
+    impl LockableImpl = LockableComponent::LockableImpl<ContractState>;
 
     // *************************************************************************
     //                             STORAGE
@@ -26,7 +31,9 @@ pub mod AccountPreset {
         #[substorage(v0)]
         account: AccountComponent::Storage,
         #[substorage(v0)]
-        upgradeable: UpgradeableComponent::Storage
+        upgradeable: UpgradeableComponent::Storage,
+        #[substorage(v0)]
+        lockable: LockableComponent::Storage,
     }
 
     // *************************************************************************
@@ -38,7 +45,9 @@ pub mod AccountPreset {
         #[flat]
         AccountEvent: AccountComponent::Event,
         #[flat]
-        UpgradeableEvent: UpgradeableComponent::Event
+        UpgradeableEvent: UpgradeableComponent::Event,
+        #[flat]
+        LockableEvent: LockableComponent::Event
     }
 
     // *************************************************************************
@@ -66,6 +75,19 @@ pub mod AccountPreset {
     impl Upgradeable of IUpgradeable<ContractState> {
         fn upgrade(ref self: ContractState, new_class_hash: ClassHash) {
             self.upgradeable._upgrade(new_class_hash);
+        }
+    }
+
+    // *************************************************************************
+    //                              LOCKABLE IMPL
+    // *************************************************************************
+    #[abi(embed_v0)]
+    impl Lockable of ILockable<ContractState> {
+        fn lock(ref self: ContractState, lock_until: u64) {
+            self.lockable.lock(lock_until);
+        }
+        fn is_lock(self: @ContractState) -> bool {
+            self.lockable.is_lock()
         }
     }
 }

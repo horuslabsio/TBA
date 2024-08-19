@@ -18,13 +18,13 @@ pub mod LockableComponent {
     };
 
     #[storage]
-    struct Storage {
+    pub struct Storage {
         lock_until: u64
     }
 
     #[event]
     #[derive(Drop, starknet::Event)]
-    enum Event {
+    pub enum Event {
         AccountLocked: AccountLocked
     }
 
@@ -69,20 +69,16 @@ pub mod LockableComponent {
 
             let account_comp = get_dep_component!(@self, Account);
 
-            // get the token
-            //  let (token_contract, token_id, chain_id) = account_comp.token();
-
             // get the token owner
             let owner = account_comp.owner();
 
-            //  assert(account_comp.is_non_zero(), Errors::UNAUTHORIZED);
-            assert(get_caller_address() != owner, Errors::NOT_OWNER);
+            assert(get_caller_address() == owner, Errors::NOT_OWNER);
 
             assert(lock_until <= current_timestamp + 356, Errors::EXCEEDS_MAX_LOCK_TIME);
 
-            // _beforeLock may be call before upating the lock period
-            let lock_status = self.is_lock(); //.is_locked();
-            assert(!lock_status, Errors::LOCKED_ACCOUNT);
+            let lock_status = self.is_lock();
+
+            assert(lock_status != true, Errors::LOCKED_ACCOUNT);
             // set the lock_util which set the period the account is lock
             self.lock_until.write(lock_until);
             // emit event
@@ -90,7 +86,7 @@ pub mod LockableComponent {
                 .emit(
                     AccountLocked {
                         account: get_caller_address(),
-                        locked_at: current_timestamp,
+                        locked_at: get_block_timestamp(),
                         lock_until: lock_until
                     }
                 );
