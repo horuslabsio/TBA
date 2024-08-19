@@ -3,33 +3,28 @@
 //                              LOCKABLE COMPONENT
 // *************************************************************************
 #[starknet::component]
-mod LockableComponent {
+pub mod LockableComponent {
     // *************************************************************************
     //                              IMPORTS
     // *************************************************************************
+    use starknet::storage::StoragePointerWriteAccess;
     use starknet::{ContractAddress, get_caller_address, get_block_timestamp};
-    use token_bound_accounts::account::AccountComponent;
-    use token_bound_accounts::interfaces::IAccount::{
-        IAccount, IAccountDispatcherTrait, ILockableDispatcher
+    use token_bound_accounts::components::account::account::AccountComponent;
+    use token_bound_accounts::interfaces::IAccount::{IAccount, IAccountDispatcherTrait};
+    use token_bound_accounts::components::account::account::AccountComponent::InternalImpl;
+    use token_bound_accounts::interfaces::ILockable::{
+        ILockable, ILockableDispatcher, ILockableDispatcherTrait
     };
 
-    component!(path: AccountComponent, storage: account, event: AccountEvent);
-
-    // Account
-    #[abi(embed_v0)]
-    impl AccountImpl = AccountComponent::AccountImpl<ContractState>;
-    impl AccountInternalImpl = AccountComponent::InternalImpl<ContractState>;
-
     #[storage]
-    struct Storage {
-        lock_util: u64,
-        #[substorage(v0)]
-        account: AccountComponent::Storage,
+    pub struct Storage{
+        lock_until: u64
     }
+
     #[event]
     #[derive(Drop, starknet::Event)]
-    enum Event {
-        LockUpdated: LockUpdated
+    pub enum Event {
+        AccountLocked: AccountLocked
     }
 
     /// @notice Emitted when the account is locked
@@ -37,22 +32,22 @@ mod LockableComponent {
     /// @param locked_at timestamp at which the lock function was triggered
     /// @param duration time duration for which the account remains locked
     #[derive(Drop, starknet::Event)]
-    struct AccountLocked {
+    pub struct AccountLocked {
         #[key]
-        account: ContractAddress,
-        locked_at: u64,
-        lock_util: u64,
+        pub account: ContractAddress,
+        pub locked_at: u64,
+        pub lock_until: u64,
     }
 
 
     // *************************************************************************
     //                              ERRORS
     // *************************************************************************
-    mod Errors {
-        const UNAUTHORIZED: felt252 = 'Account: unauthorized';
-        const NOT_OWNER: felt252 = 'Not Account Owner';
-        const EXCEEDS_MAX_LOCK_TIME: felt252 = 'Lock time exceeded';
-        const LOCKED_ACCOUNT: felt252 = 'Account Locked';
+    pub mod Errors {
+        pub const UNAUTHORIZED: felt252 = 'Account: unauthorized';
+        pub const NOT_OWNER: felt252 = 'Not Account Owner';
+        pub const EXCEEDS_MAX_LOCK_TIME: felt252 = 'Lock time exceeded';
+        pub const LOCKED_ACCOUNT: felt252 = 'Account Locked';
     }
 
 
@@ -62,40 +57,47 @@ mod LockableComponent {
     //                              EXTERNAL FUNCTIONS
     // *************************************************************************
     #[embeddable_as(LockableImpl)]
-    impl Lockable<
-        TContractState, +HasComponent<TContractState>, +Drop<TContractState>
+    pub impl Lockable<
+        TContractState,
+        +HasComponent<TContractState>,
+        +Drop<TContractState>,
+        impl Account: AccountComponent::HasComponent<TContractState>
     > of ILockable<ComponentState<TContractState>> {
-        fn lock(ref self: @ComponentState<TContractState>, lock_until: u64) {
+        fn lock(ref self: ComponentState<TContractState>, lock_until: u64) {
             let current_timestamp = get_block_timestamp();
 
-            // get the token 
-            let (token_contract, token_id, chain_id) = self.account.token();
+            let account_comp = get_dep_component!(@self, Account);
+
+            // get the token
+            //  let (token_contract, token_id, chain_id) = account_comp.token();
 
             // get the token owner
-            let owner = self.account.owner();
+            let owner = account_comp.owner();
 
-            assert(owner.is_non_zero(), Errors::UNAUTHORIZED);
-            assert(get_caller_address != owner, Errors::NOT_OWNER);
+            //  assert(account_comp.is_non_zero(), Errors::UNAUTHORIZED);
+            assert(get_caller_address() != owner, Errors::NOT_OWNER);
 
-            assert(lock_until <= current_timestamp + 356, EXCEEDS_MAX_LOCK_TIME);
+            assert(lock_until <= current_timestamp + 356, Errors::EXCEEDS_MAX_LOCK_TIME);
 
             // _beforeLock may be call before upating the lock period
-            let ock_status = self._is_locked();
+            let lock_status = self.is_lock(); //.is_locked();
             assert(!lock_status, Errors::LOCKED_ACCOUNT);
-            // set the lock_util which set the period the account is lock 
-            self.lock_util.write(lock_until);
-
+            // set the lock_util which set the period the account is lock
+            self.lock_until.write(lock_until);
             // emit event
             self
                 .emit(
                     AccountLocked {
-                        account: get_contract_address(), locked_at: current_timestamp, lock_util
+                        account: get_caller_address(),
+                        locked_at: current_timestamp,
+                        lock_until: lock_until
                     }
                 );
         }
 
-        fn is_lock(self: @TContractState) -> bool {
-            self.lock_until.read() > get_block_timestamp()
+        fn is_lock(self: @ComponentState<TContractState>) -> bool {
+           //  self.lock_until.read() > get_block_timestamp()
+           true
         }
     }
 }
