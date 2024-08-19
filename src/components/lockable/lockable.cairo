@@ -8,6 +8,7 @@ pub mod LockableComponent {
     //                              IMPORTS
     // *************************************************************************
     use starknet::storage::StoragePointerWriteAccess;
+    use starknet::storage::StoragePointerReadAccess;
     use starknet::{ContractAddress, get_caller_address, get_block_timestamp};
     use token_bound_accounts::components::account::account::AccountComponent;
     use token_bound_accounts::interfaces::IAccount::{IAccount, IAccountDispatcherTrait};
@@ -17,13 +18,13 @@ pub mod LockableComponent {
     };
 
     #[storage]
-    pub struct Storage {
+    struct Storage {
         lock_until: u64
     }
 
     #[event]
     #[derive(Drop, starknet::Event)]
-    pub enum Event {
+    enum Event {
         AccountLocked: AccountLocked
     }
 
@@ -96,8 +97,7 @@ pub mod LockableComponent {
         }
 
         fn is_lock(self: @ComponentState<TContractState>) -> bool {
-            //  self.lock_until.read() > get_block_timestamp()
-            true
+            self.lock_until.read() > get_block_timestamp()
         }
     }
 }
