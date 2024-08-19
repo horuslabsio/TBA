@@ -17,7 +17,7 @@ pub mod LockableComponent {
     };
 
     #[storage]
-    pub struct Storage{
+    pub struct Storage {
         lock_until: u64
     }
 
@@ -96,8 +96,8 @@ pub mod LockableComponent {
         }
 
         fn is_lock(self: @ComponentState<TContractState>) -> bool {
-           //  self.lock_until.read() > get_block_timestamp()
-           true
+            //  self.lock_until.read() > get_block_timestamp()
+            true
         }
     }
 }
