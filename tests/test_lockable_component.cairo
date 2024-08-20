@@ -4,7 +4,8 @@
 use starknet::{ContractAddress, account::Call, get_block_timestamp};
 use snforge_std::{
     declare, start_cheat_caller_address, stop_cheat_caller_address, start_cheat_transaction_hash,
-    start_cheat_nonce, spy_events, EventSpyAssertionsTrait, ContractClassTrait, ContractClass
+    start_cheat_nonce, spy_events, EventSpyAssertionsTrait, ContractClassTrait, ContractClass,
+    start_cheat_block_timestamp, stop_cheat_block_timestamp
 };
 use core::hash::HashStateTrait;
 use core::pedersen::PedersenTrait;
@@ -92,9 +93,30 @@ fn test_lockable() {
     let lockable_dispatcher = ILockableDispatcher { contract_address };
     let lock_duration = 40_u64;
     lockable_dispatcher.lock(lock_duration);
-    let check_lock = lockable_dispatcher.is_lock();
+    let (check_lock, _) = lockable_dispatcher.is_lock();
 
     assert(check_lock == true, 'Account Not Lock');
+    stop_cheat_caller_address(contract_address);
+}
+
+#[test]
+fn test_unlock_once_lock_duration_end() {
+    let (contract_address, _) = __setup__();
+    let acct_dispatcher = IAccountDispatcher { contract_address: contract_address };
+
+    let owner = acct_dispatcher.owner();
+
+    start_cheat_caller_address(contract_address, owner);
+
+    let lockable_dispatcher = ILockableDispatcher { contract_address };
+    let lock_duration = 40_u64;
+    lockable_dispatcher.lock(lock_duration);
+    start_cheat_block_timestamp(contract_address, lock_duration);
+
+    start_cheat_block_timestamp(contract_address, lock_duration);
+    let (check_lock, _) = lockable_dispatcher.is_lock();
+    assert(check_lock != true, 'Account Not Lock');
+    stop_cheat_block_timestamp(contract_address);
     stop_cheat_caller_address(contract_address);
 }
 
@@ -112,6 +134,7 @@ fn test_execute_should_fail_when_locked() {
 
     start_cheat_caller_address(contract_address, owner);
     lockable_dispatcher.lock(lock_duration);
+
     stop_cheat_caller_address(contract_address);
 
     // deploy `HelloStarknet` contract for testing

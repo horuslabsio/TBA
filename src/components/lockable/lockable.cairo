@@ -66,7 +66,6 @@ pub mod LockableComponent {
     > of ILockable<ComponentState<TContractState>> {
         fn lock(ref self: ComponentState<TContractState>, lock_until: u64) {
             let current_timestamp = get_block_timestamp();
-
             let account_comp = get_dep_component!(@self, Account);
 
             let is_valid = account_comp._is_valid_signer(get_caller_address());
@@ -74,7 +73,7 @@ pub mod LockableComponent {
 
             assert(lock_until <= current_timestamp + 356, Errors::EXCEEDS_MAX_LOCK_TIME);
 
-            let lock_status = self.is_lock();
+            let (lock_status, _) = self.is_lock();
 
             assert(lock_status != true, Errors::LOCKED_ACCOUNT);
 
@@ -95,9 +94,25 @@ pub mod LockableComponent {
                 );
         }
 
-        fn is_lock(self: @ComponentState<TContractState>) -> bool {
-            self.lock_until.read() > get_block_timestamp()
+        fn is_lock(self: @ComponentState<TContractState>) -> (bool, u64) {
+            let unlock_timestamp = self.lock_until.read();
+            let current_time = get_block_timestamp();
+            if (current_time < unlock_timestamp) {
+                let time_until_unlocks = unlock_timestamp - current_time;
+                return (true, time_until_unlocks);
+            } else {
+                return (false, 0_u64);
+            }
         }
     }
 }
+// let unlock_timestamp = self.account_unlock_timestamp.read();
+//             let current_time = get_block_timestamp();
+//             if (current_time < unlock_timestamp) {
+//                 let time_until_unlocks = unlock_timestamp - current_time;
+//                 return (true, time_until_unlocks);
+//             } else {
+//                 return (false, 0_u64);
+//             }
+
 
