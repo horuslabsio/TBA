@@ -17,6 +17,9 @@ use token_bound_accounts::interfaces::ILockable::{ILockableDispatcher, ILockable
 use token_bound_accounts::interfaces::IExecutable::{
     IExecutableDispatcher, IExecutableDispatcherTrait
 };
+use token_bound_accounts::interfaces::IUpgradeable::{
+    IUpgradeableDispatcher, IUpgradeableDispatcherTrait
+};
 use token_bound_accounts::components::presets::account_preset::AccountPreset;
 use token_bound_accounts::components::account::account::AccountComponent;
 use token_bound_accounts::components::lockable::lockable::LockableComponent;
@@ -27,6 +30,7 @@ use token_bound_accounts::test_helper::{
     simple_account::{ISimpleAccountDispatcher, ISimpleAccountDispatcherTrait, SimpleAccount}
 };
 
+const ACCOUNT2: felt252 = 5729;
 
 // *************************************************************************
 //                              SETUP
@@ -96,7 +100,7 @@ fn test_lockable() {
 
 #[test]
 #[should_panic(expected: ('Account locked',))]
-fn test_should_fail_when_locked() {
+fn test_execute_should_fail_when_locked() {
     let (contract_address, _) = __setup__();
     let acct_dispatcher = IAccountDispatcher { contract_address: contract_address };
     let safe_dispatcher = IExecutableDispatcher { contract_address };
@@ -127,10 +131,44 @@ fn test_should_fail_when_locked() {
 }
 
 #[test]
-#[should_panic(expected: ('Lock time exceeded',))]
-fn test_should_fail_when_lock_until_exceed() {
+#[should_panic(expected: ('Account locked',))]
+fn test_upgrade_should_fail_when_locked() {
     let (contract_address, _) = __setup__();
-    // let safe_acc_dispatcher = IAccountSafeDispatcher { contract_address };
+    let acct_dispatcher = IAccountDispatcher { contract_address: contract_address };
+    let new_class_hash = declare("UpgradedAccount").unwrap().class_hash;
+
+    let owner = acct_dispatcher.owner();
+    let lock_duration = 30_u64;
+
+    let lockable_dispatcher = ILockableDispatcher { contract_address };
+
+    start_cheat_caller_address(contract_address, owner);
+    lockable_dispatcher.lock(lock_duration);
+    stop_cheat_caller_address(contract_address);
+
+    // call the upgrade function
+    let dispatcher = IUpgradeableDispatcher { contract_address };
+    start_cheat_caller_address(contract_address, owner);
+    dispatcher.upgrade(new_class_hash);
+}
+
+#[test]
+#[should_panic(expected: ('Account: unauthorized',))]
+fn test_locking_should_fail_if_not_owner() {
+    let (contract_address, _) = __setup__();
+    let acct_dispatcher = IAccountDispatcher { contract_address: contract_address };
+
+    start_cheat_caller_address(contract_address, ACCOUNT2.try_into().unwrap());
+
+    let lockable_dispatcher = ILockableDispatcher { contract_address };
+
+    lockable_dispatcher.lock(40);
+}
+
+#[test]
+#[should_panic(expected: ('Lock time exceeded',))]
+fn test_should_fail_for_greater_than_a_year_lock_time() {
+    let (contract_address, _) = __setup__();
     let acct_dispatcher = IAccountDispatcher { contract_address: contract_address };
 
     let owner = acct_dispatcher.owner();
