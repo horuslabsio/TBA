@@ -47,8 +47,8 @@ pub mod LockableComponent {
     pub mod Errors {
         pub const UNAUTHORIZED: felt252 = 'Account: unauthorized';
         pub const NOT_OWNER: felt252 = 'Account: Not Account Owner';
-        pub const EXCEEDS_MAX_LOCK_TIME: felt252 = 'Lock time exceeded';
-        pub const LOCKED_ACCOUNT: felt252 = 'Account Locked';
+        pub const EXCEEDS_MAX_LOCK_TIME: felt252 = 'Account: Lock time exceeded';
+        pub const LOCKED_ACCOUNT: felt252 = 'Account: Locked';
     }
 
 

@@ -90,8 +90,8 @@ fn test_lockable() {
     start_cheat_caller_address(contract_address, owner);
 
     let lockable_dispatcher = ILockableDispatcher { contract_address };
-
-    lockable_dispatcher.lock(40);
+    let lock_duration = 40_u64;
+    lockable_dispatcher.lock(lock_duration);
     let check_lock = lockable_dispatcher.is_lock();
 
     assert(check_lock == true, 'Account Not Lock');
@@ -99,7 +99,7 @@ fn test_lockable() {
 }
 
 #[test]
-#[should_panic(expected: ('Account locked',))]
+#[should_panic(expected: ('Account: locked',))]
 fn test_execute_should_fail_when_locked() {
     let (contract_address, _) = __setup__();
     let acct_dispatcher = IAccountDispatcher { contract_address: contract_address };
@@ -131,7 +131,7 @@ fn test_execute_should_fail_when_locked() {
 }
 
 #[test]
-#[should_panic(expected: ('Account locked',))]
+#[should_panic(expected: ('Account: locked',))]
 fn test_upgrade_should_fail_when_locked() {
     let (contract_address, _) = __setup__();
     let acct_dispatcher = IAccountDispatcher { contract_address: contract_address };
@@ -151,22 +151,39 @@ fn test_upgrade_should_fail_when_locked() {
     start_cheat_caller_address(contract_address, owner);
     dispatcher.upgrade(new_class_hash);
 }
+#[test]
+#[should_panic(expected: ('Account: Locked',))]
+fn test_locking_should_fail_if_already_locked() {
+    let (contract_address, _) = __setup__();
+    let acct_dispatcher = IAccountDispatcher { contract_address: contract_address };
+
+    let owner = acct_dispatcher.owner();
+
+    start_cheat_caller_address(contract_address, owner);
+
+    let lockable_dispatcher = ILockableDispatcher { contract_address };
+    // First Lock
+    let lock_duration_one = 40_u64;
+    lockable_dispatcher.lock(lock_duration_one);
+    // Second lock
+    let lock_duration_two = 60_u64;
+    lockable_dispatcher.lock(lock_duration_two);
+}
 
 #[test]
 #[should_panic(expected: ('Account: unauthorized',))]
 fn test_locking_should_fail_if_not_owner() {
     let (contract_address, _) = __setup__();
-    let acct_dispatcher = IAccountDispatcher { contract_address: contract_address };
 
     start_cheat_caller_address(contract_address, ACCOUNT2.try_into().unwrap());
 
     let lockable_dispatcher = ILockableDispatcher { contract_address };
-
-    lockable_dispatcher.lock(40);
+    let lock_duration = 40_u64;
+    lockable_dispatcher.lock(lock_duration);
 }
 
 #[test]
-#[should_panic(expected: ('Lock time exceeded',))]
+#[should_panic(expected: ('Account: Lock time exceeded',))]
 fn test_should_fail_for_greater_than_a_year_lock_time() {
     let (contract_address, _) = __setup__();
     let acct_dispatcher = IAccountDispatcher { contract_address: contract_address };
