@@ -51,6 +51,8 @@ pub mod LockableComponent {
         pub const LOCKED_ACCOUNT: felt252 = 'Account: Locked';
     }
 
+    pub const YEARS_DAYS_MILLISECONS: u64 = 31536000000;
+    pub const ONE_DAY_IN_MILLISECONDS: u64 = 86400000;
 
     // storage that store the token_id and the lock_util perioed
 
@@ -70,8 +72,11 @@ pub mod LockableComponent {
 
             let is_valid = account_comp._is_valid_signer(get_caller_address());
             assert(is_valid, Errors::UNAUTHORIZED);
-
-            assert(lock_until <= current_timestamp + 356, Errors::EXCEEDS_MAX_LOCK_TIME);
+            let lock_until_in_milliseconds: u64 = lock_until * ONE_DAY_IN_MILLISECONDS;
+            assert(
+                lock_until_in_milliseconds <= current_timestamp + YEARS_DAYS_MILLISECONS,
+                Errors::EXCEEDS_MAX_LOCK_TIME
+            );
 
             let (lock_status, _) = self.is_lock();
 
