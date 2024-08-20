@@ -64,6 +64,9 @@ pub mod AccountPreset {
     #[abi(embed_v0)]
     impl Executable of IExecutable<ContractState> {
         fn execute(ref self: ContractState, mut calls: Array<Call>) -> Array<Span<felt252>> {
+            // cannot make this call when the account is lock
+            let is_lock = self.lockable.is_lock();
+            assert(is_lock != true, 'Account locked');
             self.account._execute(calls)
         }
     }
@@ -74,6 +77,9 @@ pub mod AccountPreset {
     #[abi(embed_v0)]
     impl Upgradeable of IUpgradeable<ContractState> {
         fn upgrade(ref self: ContractState, new_class_hash: ClassHash) {
+            // cannot make this call when the account is lock
+            let is_lock = self.lockable.is_lock();
+            assert(is_lock != true, 'Account locked');
             self.upgradeable._upgrade(new_class_hash);
         }
     }

@@ -46,7 +46,7 @@ pub mod LockableComponent {
     // *************************************************************************
     pub mod Errors {
         pub const UNAUTHORIZED: felt252 = 'Account: unauthorized';
-        pub const NOT_OWNER: felt252 = 'Not Account Owner';
+        pub const NOT_OWNER: felt252 = 'Account: Not Account Owner';
         pub const EXCEEDS_MAX_LOCK_TIME: felt252 = 'Lock time exceeded';
         pub const LOCKED_ACCOUNT: felt252 = 'Account Locked';
     }
@@ -69,16 +69,19 @@ pub mod LockableComponent {
 
             let account_comp = get_dep_component!(@self, Account);
 
-            // get the token owner
-            let owner = account_comp.owner();
-
-            assert(get_caller_address() == owner, Errors::NOT_OWNER);
+            let is_valid = account_comp._is_valid_signer(get_caller_address());
+            assert(is_valid, Errors::UNAUTHORIZED);
 
             assert(lock_until <= current_timestamp + 356, Errors::EXCEEDS_MAX_LOCK_TIME);
 
             let lock_status = self.is_lock();
 
             assert(lock_status != true, Errors::LOCKED_ACCOUNT);
+
+            // update account state
+            let mut account_comp_mut = get_dep_component_mut!(ref self, Account);
+            account_comp_mut._update_state();
+
             // set the lock_util which set the period the account is lock
             self.lock_until.write(lock_until);
             // emit event

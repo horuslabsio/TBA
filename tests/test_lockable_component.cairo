@@ -28,29 +28,6 @@ use token_bound_accounts::test_helper::{
 };
 
 
-const ACCOUNT: felt252 = 1234;
-const ACCOUNT2: felt252 = 5729;
-const SALT: felt252 = 123;
-
-#[derive(Drop)]
-struct SignedTransactionData {
-    private_key: felt252,
-    public_key: felt252,
-    transaction_hash: felt252,
-    r: felt252,
-    s: felt252
-}
-
-fn SIGNED_TX_DATA() -> SignedTransactionData {
-    SignedTransactionData {
-        private_key: 1234,
-        public_key: 883045738439352841478194533192765345509759306772397516907181243450667673002,
-        transaction_hash: 2717105892474786771566982177444710571376803476229898722748888396642649184538,
-        r: 3068558690657879390136740086327753007413919701043650133111397282816679110801,
-        s: 3355728545224320878895493649495491771252432631648740019139167265522817576501
-    }
-}
-
 // *************************************************************************
 //                              SETUP
 // *************************************************************************
@@ -116,6 +93,55 @@ fn test_lockable() {
     assert(check_lock == true, 'Account Not Lock');
     stop_cheat_caller_address(contract_address);
 }
+
+#[test]
+#[should_panic(expected: ('Account locked',))]
+fn test_should_fail_when_locked() {
+    let (contract_address, _) = __setup__();
+    let acct_dispatcher = IAccountDispatcher { contract_address: contract_address };
+    let safe_dispatcher = IExecutableDispatcher { contract_address };
+
+    let owner = acct_dispatcher.owner();
+    let lock_duration = 30_u64;
+
+    let lockable_dispatcher = ILockableDispatcher { contract_address };
+
+    start_cheat_caller_address(contract_address, owner);
+    lockable_dispatcher.lock(lock_duration);
+    stop_cheat_caller_address(contract_address);
+
+    // deploy `HelloStarknet` contract for testing
+    let test_contract = declare("HelloStarknet").unwrap();
+    let (test_address, _) = test_contract.deploy(@array![]).unwrap();
+
+    // craft calldata for call array
+    let mut calldata = array![100].span();
+    let call = Call {
+        to: test_address,
+        selector: 1530486729947006463063166157847785599120665941190480211966374137237989315360,
+        calldata: calldata
+    };
+
+    start_cheat_caller_address(contract_address, owner);
+    safe_dispatcher.execute(array![call]);
+}
+
+#[test]
+#[should_panic(expected: ('Lock time exceeded',))]
+fn test_should_fail_when_lock_until_exceed() {
+    let (contract_address, _) = __setup__();
+    // let safe_acc_dispatcher = IAccountSafeDispatcher { contract_address };
+    let acct_dispatcher = IAccountDispatcher { contract_address: contract_address };
+
+    let owner = acct_dispatcher.owner();
+    let lock_duration = 3000_u64;
+
+    let lockable_dispatcher = ILockableDispatcher { contract_address };
+
+    start_cheat_caller_address(contract_address, owner);
+    lockable_dispatcher.lock(lock_duration);
+}
+
 #[test]
 fn test_lockable_emits_event() {
     let (contract_address, _) = __setup__();
