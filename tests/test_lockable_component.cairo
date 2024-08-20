@@ -93,7 +93,7 @@ fn test_lockable() {
     let lockable_dispatcher = ILockableDispatcher { contract_address };
     let lock_duration = 40_u64;
     lockable_dispatcher.lock(lock_duration);
-    let (check_lock, _) = lockable_dispatcher.is_lock();
+    let (check_lock, _) = lockable_dispatcher.is_locked();
 
     assert(check_lock == true, 'Account Not Lock');
     stop_cheat_caller_address(contract_address);
@@ -114,7 +114,7 @@ fn test_unlock_once_lock_duration_end() {
     start_cheat_block_timestamp(contract_address, lock_duration);
 
     start_cheat_block_timestamp(contract_address, lock_duration);
-    let (check_lock, _) = lockable_dispatcher.is_lock();
+    let (check_lock, _) = lockable_dispatcher.is_locked();
     assert(check_lock != true, 'Account Not Lock');
     stop_cheat_block_timestamp(contract_address);
     stop_cheat_caller_address(contract_address);
@@ -212,7 +212,7 @@ fn test_should_fail_for_greater_than_a_year_lock_time() {
     let acct_dispatcher = IAccountDispatcher { contract_address: contract_address };
 
     let owner = acct_dispatcher.owner();
-    let lock_duration = 3000_u64;
+    let lock_duration = 315365000_u64;
 
     let lockable_dispatcher = ILockableDispatcher { contract_address };
 

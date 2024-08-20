@@ -31,7 +31,7 @@ pub mod LockableComponent {
     /// @notice Emitted when the account is locked
     /// @param account tokenbound account who's lock function was triggered
     /// @param locked_at timestamp at which the lock function was triggered
-    /// @param duration time duration for which the account remains locked
+    /// @param lock_until time duration for which the account remains locked in second
     #[derive(Drop, starknet::Event)]
     pub struct AccountLocked {
         #[key]
@@ -51,8 +51,8 @@ pub mod LockableComponent {
         pub const LOCKED_ACCOUNT: felt252 = 'Account: Locked';
     }
 
-    pub const YEARS_DAYS_MILLISECONS: u64 = 31536000000;
-    pub const ONE_DAY_IN_MILLISECONDS: u64 = 86400000;
+    pub const YEAR_DAYS_SECONDS: u64 = 31536000;
+
 
     // storage that store the token_id and the lock_util perioed
 
@@ -72,13 +72,13 @@ pub mod LockableComponent {
 
             let is_valid = account_comp._is_valid_signer(get_caller_address());
             assert(is_valid, Errors::UNAUTHORIZED);
-            let lock_until_in_milliseconds: u64 = lock_until * ONE_DAY_IN_MILLISECONDS;
+           
             assert(
-                lock_until_in_milliseconds <= current_timestamp + YEARS_DAYS_MILLISECONS,
+                lock_until <= current_timestamp + YEAR_DAYS_SECONDS,
                 Errors::EXCEEDS_MAX_LOCK_TIME
             );
 
-            let (lock_status, _) = self.is_lock();
+            let (lock_status, _) = self.is_locked();
 
             assert(lock_status != true, Errors::LOCKED_ACCOUNT);
 
@@ -99,7 +99,7 @@ pub mod LockableComponent {
                 );
         }
 
-        fn is_lock(self: @ComponentState<TContractState>) -> (bool, u64) {
+        fn is_locked (self: @ComponentState<TContractState>) -> (bool, u64) {
             let unlock_timestamp = self.lock_until.read();
             let current_time = get_block_timestamp();
             if (current_time < unlock_timestamp) {
