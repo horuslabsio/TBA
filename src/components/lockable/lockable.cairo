@@ -72,10 +72,9 @@ pub mod LockableComponent {
 
             let is_valid = account_comp._is_valid_signer(get_caller_address());
             assert(is_valid, Errors::UNAUTHORIZED);
-           
+
             assert(
-                lock_until <= current_timestamp + YEAR_DAYS_SECONDS,
-                Errors::EXCEEDS_MAX_LOCK_TIME
+                lock_until <= current_timestamp + YEAR_DAYS_SECONDS, Errors::EXCEEDS_MAX_LOCK_TIME
             );
 
             let (lock_status, _) = self.is_locked();
@@ -99,7 +98,7 @@ pub mod LockableComponent {
                 );
         }
 
-        fn is_locked (self: @ComponentState<TContractState>) -> (bool, u64) {
+        fn is_locked(self: @ComponentState<TContractState>) -> (bool, u64) {
             let unlock_timestamp = self.lock_until.read();
             let current_time = get_block_timestamp();
             if (current_time < unlock_timestamp) {
