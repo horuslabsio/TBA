@@ -54,8 +54,8 @@ pub mod AccountPreset {
         UpgradeableEvent: UpgradeableComponent::Event,
         #[flat]
         LockableEvent: LockableComponent::Event,
-         #[flat]
-         PermissionableEvent: PermissionableComponent::Event
+        #[flat]
+        PermissionableEvent: PermissionableComponent::Event
     }
 
     // *************************************************************************
@@ -108,12 +108,14 @@ pub mod AccountPreset {
     // *************************************************************************
     //                              PERMISSIONABLE IMPL
     // *************************************************************************
-        #[abi(embed_v0)]
+    #[abi(embed_v0)]
     impl Permissionable of IPermissionable<ContractState> {
-        fn set_permission(ref self: ContractState,  permission_addresses: Array<ContractAddress>,
-            permissions: Array<bool>) {
-            self.permissionable.set_permission( permission_addresses,
-            permissions)
+        fn set_permission(
+            ref self: ContractState,
+            permission_addresses: Array<ContractAddress>,
+            permissions: Array<bool>
+        ) {
+            self.permissionable.set_permission(permission_addresses, permissions)
         }
         fn has_permission(self: @ContractState, permission_addresses: ContractAddress) -> bool {
             self.permissionable.has_permission(permission_addresses)
