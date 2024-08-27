@@ -96,7 +96,6 @@ pub mod PermissionableComponent {
         ) -> bool {
             let (_, permission): (ContractAddress, bool) = self.permissions.read(owner);
             permission
-            
         }
     }
 }
