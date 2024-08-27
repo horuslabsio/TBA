@@ -118,9 +118,9 @@ pub mod AccountPreset {
             self.permissionable.set_permission(permissioned_addresses, permissions)
         }
         fn has_permission(
-            self: @ContractState, owner: ContractAddress, permission_address: ContractAddress
+            self: @ContractState, owner: ContractAddress, permissioned_address: ContractAddress
         ) -> bool {
-            self.permissionable.has_permission(owner, permission_address)
+            self.permissionable.has_permission(owner, permissioned_address)
         }
     }
 }

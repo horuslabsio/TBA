@@ -20,7 +20,7 @@ pub mod PermissionableComponent {
 
     #[storage]
     pub struct Storage {
-        permissions: Map<ContractAddress, (ContractAddress, bool)> // <owner => <caller, bool>>
+        permissions: Map<(ContractAddress, ContractAddress), bool> // <<caller, owner>, bool>
     }
 
     // *************************************************************************
@@ -76,7 +76,7 @@ pub mod PermissionableComponent {
             while index < length {
                 self
                     .permissions
-                    .write(owner, (*permissioned_addresses[index], *permissions[index]));
+                    .write((owner, *permissioned_addresses[index]), *permissions[index]);
                 // emit event
                 self
                     .emit(
@@ -93,11 +93,9 @@ pub mod PermissionableComponent {
         fn has_permission(
             self: @ComponentState<TContractState>,
             owner: ContractAddress,
-            permission_address: ContractAddress
+            permissioned_address: ContractAddress
         ) -> bool {
-            let (caller, permission): (ContractAddress, bool) = self.permissions.read(owner);
-
-            assert(caller != permission_address, Errors::NOT_PERMITTED);
+            let permission = self.permissions.read((owner, permissioned_address));
             permission
         }
     }
