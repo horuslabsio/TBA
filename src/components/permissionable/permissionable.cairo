@@ -30,6 +30,7 @@ pub mod PermissionableComponent {
         pub const UNAUTHORIZED: felt252 = 'Permission: unauthorized';
         pub const NOT_OWNER: felt252 = 'Permission: not account owner';
         pub const INVALID_LENGTH: felt252 = 'Permission: invalid length';
+        pub const NOT_PERMITTED: felt252 = 'Permisson: not permitted';
     }
 
     #[event]
@@ -94,7 +95,9 @@ pub mod PermissionableComponent {
             owner: ContractAddress,
             permission_address: ContractAddress
         ) -> bool {
-            let (_, permission): (ContractAddress, bool) = self.permissions.read(owner);
+            let (caller, permission): (ContractAddress, bool) = self.permissions.read(owner);
+
+            assert(caller != permission_address, Errors::NOT_PERMITTED);
             permission
         }
     }
