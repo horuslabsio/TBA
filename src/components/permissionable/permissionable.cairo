@@ -28,8 +28,8 @@ pub mod PermissionableComponent {
     // *************************************************************************
     pub mod Errors {
         pub const UNAUTHORIZED: felt252 = 'Permission: unauthorized';
-        pub const NOT_OWNER: felt252 = 'Permission: Not Account Owner';
-        pub const INVALID_LENGHT: felt252 = 'Permission: Invalid Length';
+        pub const NOT_OWNER: felt252 = 'Permission: not account owner';
+        pub const INVALID_LENGTH: felt252 = 'Permission: invalid length';
     }
 
     #[event]
@@ -60,37 +60,39 @@ pub mod PermissionableComponent {
     > of IPermissionable<ComponentState<TContractState>> {
         fn set_permission(
             ref self: ComponentState<TContractState>,
-            permission_addresses: Array<ContractAddress>,
+            permissioned_addresses: Array<ContractAddress>,
             permissions: Array<bool>
         ) {
             let account_comp = get_dep_component!(@self, Account);
             let is_valid = account_comp._is_valid_signer(get_caller_address());
             assert(is_valid, Errors::UNAUTHORIZED);
 
-            assert(permission_addresses.len() == permissions.len(), Errors::INVALID_LENGHT);
+            assert(permissioned_addresses.len() == permissions.len(), Errors::INVALID_LENGTH);
 
             let owner = account_comp.owner();
-            let length = permission_addresses.len();
-            let mut count_index: u32 = 0;
-            while count_index < length {
+            let length = permissioned_addresses.len();
+            let mut index: u32 = 0;
+            while index < length {
                 self
                     .permissions
-                    .write(owner, (*permission_addresses[count_index], *permissions[count_index]));
+                    .write(owner, (*permissioned_addresses[index], *permissions[index]));
                 // emit event
                 self
                     .emit(
                         PermissionUpdated {
                             owner: owner,
-                            caller: *permission_addresses[count_index],
-                            has_permission: *permissions[count_index]
+                            caller: *permissioned_addresses[index],
+                            has_permission: *permissions[index]
                         }
                     );
-                count_index += 1
+                index += 1
             }
         }
 
         fn has_permission(
-            self: @ComponentState<TContractState>, permission_addresses: ContractAddress
+            self: @ComponentState<TContractState>,
+            owner: ContractAddress,
+            permission_address: ContractAddress
         ) -> bool {
             true
         }

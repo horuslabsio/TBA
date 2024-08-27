@@ -112,13 +112,15 @@ pub mod AccountPreset {
     impl Permissionable of IPermissionable<ContractState> {
         fn set_permission(
             ref self: ContractState,
-            permission_addresses: Array<ContractAddress>,
+            permissioned_addresses: Array<ContractAddress>,
             permissions: Array<bool>
         ) {
-            self.permissionable.set_permission(permission_addresses, permissions)
+            self.permissionable.set_permission(permissioned_addresses, permissions)
         }
-        fn has_permission(self: @ContractState, permission_addresses: ContractAddress) -> bool {
-            self.permissionable.has_permission(permission_addresses)
+        fn has_permission(
+            self: @ContractState, owner: ContractAddress, permission_address: ContractAddress
+        ) -> bool {
+            self.permissionable.has_permission(owner, permission_address)
         }
     }
 }
