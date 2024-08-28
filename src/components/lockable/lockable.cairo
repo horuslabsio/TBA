@@ -74,11 +74,6 @@ pub mod LockableComponent {
     > of ILockable<ComponentState<TContractState>> {
         fn lock(ref self: ComponentState<TContractState>, lock_until: u64) {
             let current_timestamp = get_block_timestamp();
-            let account_comp = get_dep_component!(@self, Account);
-
-            let is_valid = account_comp._is_valid_signer(get_caller_address());
-            assert(is_valid, Errors::UNAUTHORIZED);
-
             assert(
                 lock_until <= current_timestamp + YEAR_DAYS_SECONDS, Errors::EXCEEDS_MAX_LOCK_TIME
             );

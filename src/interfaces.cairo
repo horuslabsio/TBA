@@ -4,3 +4,4 @@ pub mod IRegistry;
 pub mod IUpgradeable;
 pub mod IExecutable;
 pub mod ILockable;
+pub mod ISignatory;

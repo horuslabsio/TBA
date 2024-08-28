@@ -41,7 +41,6 @@ pub mod UpgradeableComponent {
     // *************************************************************************
     pub mod Errors {
         pub const INVALID_CLASS: felt252 = 'Class hash cannot be zero';
-        pub const UNAUTHORIZED: felt252 = 'Account: unauthorized';
     }
 
     // *************************************************************************
@@ -57,11 +56,6 @@ pub mod UpgradeableComponent {
         /// @notice replaces the contract's class hash with `new_class_hash`.
         /// Emits an `Upgraded` event.
         fn _upgrade(ref self: ComponentState<TContractState>, new_class_hash: ClassHash) {
-            // validate new signer
-            let account_comp = get_dep_component!(@self, Account);
-            let is_valid = account_comp._is_valid_signer(get_caller_address());
-            assert(is_valid, Errors::UNAUTHORIZED);
-
             // update state
             let mut account_comp_mut = get_dep_component_mut!(ref self, Account);
             account_comp_mut._update_state();

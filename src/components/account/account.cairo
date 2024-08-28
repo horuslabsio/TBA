@@ -91,18 +91,6 @@ pub mod AccountComponent {
             self._is_valid_signature(hash, signature)
         }
 
-        /// @notice used to validate signer
-        /// @param signer address to be validated
-        fn is_valid_signer(self: @ComponentState<TContractState>, signer: ContractAddress) -> bool {
-            self._is_valid_signer(signer)
-        }
-
-        fn __validate_declare__(
-            self: @ComponentState<TContractState>, class_hash: felt252
-        ) -> felt252 {
-            self._validate_transaction()
-        }
-
         /// @notice gets the NFT owner
         /// @param token_contract the contract address of the NFT
         /// @param token_id the token ID of the NFT
@@ -170,10 +158,6 @@ pub mod AccountComponent {
         fn _execute(
             ref self: ComponentState<TContractState>, mut calls: Array<Call>
         ) -> Array<Span<felt252>> {
-            // validate signer
-            let caller = get_caller_address();
-            assert(self._is_valid_signer(caller), Errors::UNAUTHORIZED);
-
             // update state
             self._update_state();
 
@@ -225,6 +209,20 @@ pub mod AccountComponent {
             Serde::<ContractAddress>::deserialize(ref address).unwrap()
         }
 
+        /// @notice internal function for getting the root NFT owner
+        /// @param token_contract contract address of NFT
+        // @param token_id token ID of NFT
+        // NB: This function aims for compatibility with all contracts (snake or camel case) but do
+        // not work as expected on mainnet as low level calls do not return err at the moment.
+        // Should work for contracts which implements CamelCase but not snake_case until starknet
+        // v0.15.
+        fn _get_root_owner(
+            self: @ComponentState<TContractState>, token_contract: ContractAddress, token_id: u256
+        ) -> ContractAddress {
+            // TODO: implement logic to get root owner
+            123.try_into().unwrap()
+        }
+
         /// @notice internal transaction for returning the contract address and token ID of the NFT
         fn _get_token(self: @ComponentState<TContractState>) -> (ContractAddress, u256, felt252) {
             let contract = self.account_token_contract.read();
@@ -232,19 +230,6 @@ pub mod AccountComponent {
             let tx_info = get_tx_info().unbox();
             let chain_id = tx_info.chain_id;
             (contract, token_id, chain_id)
-        }
-
-        // @notice internal function for validating signer
-        fn _is_valid_signer(
-            self: @ComponentState<TContractState>, signer: ContractAddress
-        ) -> bool {
-            let owner = self
-                ._get_owner(self.account_token_contract.read(), self.account_token_id.read());
-            if (signer == owner) {
-                return true;
-            } else {
-                return false;
-            }
         }
 
         /// @notice internal function for signature validation
