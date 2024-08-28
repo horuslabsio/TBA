@@ -84,7 +84,7 @@ pub mod AccountPreset {
         fn is_valid_signature(
             self: @ContractState, hash: felt252, signature: Span<felt252>
         ) -> felt252 {
-            self.signatory._permissioned_signature_validation(hash, signature)
+            self.signatory._is_valid_signature(hash, signature)
         }
     }
 

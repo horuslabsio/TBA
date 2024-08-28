@@ -58,27 +58,6 @@ pub mod SignatoryComponent {
             }
         }
 
-        /// @notice used for signature validation where only NFT owner is a valid signer.
-        /// @param hash The message hash
-        /// @param signature The signature to be validated
-        fn _base_signature_validation(
-            self: @ComponentState<TContractState>, hash: felt252, signature: Span<felt252>
-        ) -> felt252 {
-            let account = get_dep_component!(self, Account);
-            let (contract_address, token_id, _) = account._get_token();
-            let owner = account._get_owner(contract_address, token_id);
-
-            let signature_length = signature.len();
-            assert(signature_length == 2_u32, Errors::INV_SIG_LEN);
-
-            let account = ISRC6Dispatcher { contract_address: owner };
-            if (account.is_valid_signature(hash, signature) == starknet::VALIDATED) {
-                return starknet::VALIDATED;
-            } else {
-                return Errors::INVALID_SIGNATURE;
-            }
-        }
-
         /// @notice implements a signer validation where both NFT owner and the root owner (for
         /// nested accounts) are valid signers.
         /// @param signer the address to be validated
@@ -103,34 +82,6 @@ pub mod SignatoryComponent {
             }
         }
 
-        /// @notice used for signature validation where both NFT owner and the root owner (for
-        /// nested accounts) are valid signers.
-        /// @param hash The message hash
-        /// @param signature The signature to be validated
-        fn _base_and_root_signature_validation(
-            self: @ComponentState<TContractState>, hash: felt252, signature: Span<felt252>
-        ) -> felt252 {
-            let account = get_dep_component!(self, Account);
-            let (contract_address, token_id, _) = account._get_token();
-            let owner = account._get_owner(contract_address, token_id);
-            let root_owner = account._get_root_owner(contract_address, token_id);
-
-            let signature_length = signature.len();
-            assert(signature_length == 2_u32, Errors::INV_SIG_LEN);
-
-            let owner_account = ISRC6Dispatcher { contract_address: owner };
-            let root_owner_account = ISRC6Dispatcher { contract_address: root_owner };
-
-            // validate
-            if (owner_account.is_valid_signature(hash, signature) == starknet::VALIDATED) {
-                return starknet::VALIDATED;
-            } else if (root_owner_account
-                .is_valid_signature(hash, signature) == starknet::VALIDATED) {
-                return starknet::VALIDATED;
-            } else {
-                return Errors::INVALID_SIGNATURE;
-            }
-        }
 
         /// @notice implements a more complex signer validation where NFT owner, root owner, and
         /// permissioned addresses are valid signers.
@@ -162,11 +113,10 @@ pub mod SignatoryComponent {
             }
         }
 
-        /// @notice used for signature validation where NFT owner, root owner, and
-        /// permissioned addresses are valid signers.
+        /// @notice used for signature validation
         /// @param hash The message hash
         /// @param signature The signature to be validated
-        fn _permissioned_signature_validation(
+        fn _is_valid_signature(
             self: @ComponentState<TContractState>, hash: felt252, signature: Span<felt252>
         ) -> felt252 {
             let account = get_dep_component!(self, Account);
@@ -180,18 +130,11 @@ pub mod SignatoryComponent {
             let owner_account = ISRC6Dispatcher { contract_address: owner };
             let root_owner_account = ISRC6Dispatcher { contract_address: root_owner };
 
-            // check if caller has permissions
-            let permission = get_dep_component!(self, Permissionable);
-            assert(permission.has_permission(owner, get_caller_address()), Errors::UNAUTHORIZED);
-            let caller_account = ISRC6Dispatcher { contract_address: get_caller_address() };
-
             // validate
             if (owner_account.is_valid_signature(hash, signature) == starknet::VALIDATED) {
                 return starknet::VALIDATED;
             } else if (root_owner_account
                 .is_valid_signature(hash, signature) == starknet::VALIDATED) {
-                return starknet::VALIDATED;
-            } else if (caller_account.is_valid_signature(hash, signature) == starknet::VALIDATED) {
                 return starknet::VALIDATED;
             } else {
                 return Errors::INVALID_SIGNATURE;
