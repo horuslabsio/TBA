@@ -80,6 +80,12 @@ pub mod AccountPreset {
         fn is_valid_signer(self: @ContractState, signer: ContractAddress) -> bool {
             self.signatory._permissioned_signer_validation(signer)
         }
+
+        fn is_valid_signature(
+            self: @ContractState, hash: felt252, signature: Span<felt252>
+        ) -> felt252 {
+            self.signatory._permissioned_signature_validation(hash, signature)
+        }
     }
 
     // *************************************************************************

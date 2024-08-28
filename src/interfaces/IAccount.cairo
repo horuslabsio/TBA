@@ -11,9 +11,6 @@ pub const TBA_INTERFACE_ID: felt252 =
 
 #[starknet::interface]
 pub trait IAccount<TContractState> {
-    fn is_valid_signature(
-        self: @TContractState, hash: felt252, signature: Span<felt252>
-    ) -> felt252;
     fn token(self: @TContractState) -> (ContractAddress, u256, felt252);
     fn owner(self: @TContractState) -> ContractAddress;
     fn state(self: @TContractState) -> u256;

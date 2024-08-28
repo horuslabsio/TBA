@@ -71,7 +71,6 @@ pub mod AccountComponent {
     pub mod Errors {
         pub const UNAUTHORIZED: felt252 = 'Account: unauthorized';
         pub const INV_SIG_LEN: felt252 = 'Account: invalid sig length';
-        pub const INV_SIGNATURE: felt252 = 'Account: invalid signature';
         pub const INV_TX_VERSION: felt252 = 'Account: invalid tx version';
     }
 
@@ -82,15 +81,6 @@ pub mod AccountComponent {
     pub impl Account<
         TContractState, +HasComponent<TContractState>, +Drop<TContractState>
     > of IAccount<ComponentState<TContractState>> {
-        /// @notice used for signature validation
-        /// @param hash The message hash
-        /// @param signature The signature to be validated
-        fn is_valid_signature(
-            self: @ComponentState<TContractState>, hash: felt252, signature: Span<felt252>
-        ) -> felt252 {
-            self._is_valid_signature(hash, signature)
-        }
-
         /// @notice gets the NFT owner
         /// @param token_contract the contract address of the NFT
         /// @param token_id the token ID of the NFT
@@ -230,35 +220,6 @@ pub mod AccountComponent {
             let tx_info = get_tx_info().unbox();
             let chain_id = tx_info.chain_id;
             (contract, token_id, chain_id)
-        }
-
-        /// @notice internal function for signature validation
-        fn _is_valid_signature(
-            self: @ComponentState<TContractState>, hash: felt252, signature: Span<felt252>
-        ) -> felt252 {
-            let signature_length = signature.len();
-            assert(signature_length == 2_u32, Errors::INV_SIG_LEN);
-
-            let owner = self
-                ._get_owner(self.account_token_contract.read(), self.account_token_id.read());
-            let account = IAccountDispatcher { contract_address: owner };
-            if (account.is_valid_signature(hash, signature) == starknet::VALIDATED) {
-                return starknet::VALIDATED;
-            } else {
-                return 0;
-            }
-        }
-
-        /// @notice internal function for tx validation
-        fn _validate_transaction(self: @ComponentState<TContractState>) -> felt252 {
-            let tx_info = get_tx_info().unbox();
-            let tx_hash = tx_info.transaction_hash;
-            let signature = tx_info.signature;
-            assert(
-                self._is_valid_signature(tx_hash, signature) == starknet::VALIDATED,
-                Errors::INV_SIGNATURE
-            );
-            starknet::VALIDATED
         }
 
         /// @notice internal function for executing transactions

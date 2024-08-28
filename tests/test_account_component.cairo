@@ -136,28 +136,28 @@ fn test_event_is_emitted_on_initialization() {
         );
 }
 
-#[test]
-fn test_is_valid_signature() {
-    let (contract_address, erc721_contract_address) = __setup__();
-    let dispatcher = IAccountDispatcher { contract_address };
-    let data = SIGNED_TX_DATA();
-    let hash = data.transaction_hash;
+// #[test]
+// fn test_is_valid_signature() {
+//     let (contract_address, erc721_contract_address) = __setup__();
+//     let dispatcher = IAccountDispatcher { contract_address };
+//     let data = SIGNED_TX_DATA();
+//     let hash = data.transaction_hash;
 
-    let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };
-    let token_owner = token_dispatcher.ownerOf(1.try_into().unwrap());
+//     let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };
+//     let token_owner = token_dispatcher.ownerOf(1.try_into().unwrap());
 
-    start_cheat_caller_address(contract_address, token_owner);
-    let mut good_signature = array![data.r, data.s];
-    let is_valid = dispatcher.is_valid_signature(hash, good_signature.span());
-    assert(is_valid == 'VALID', 'should accept valid signature');
-    stop_cheat_caller_address(contract_address);
+//     start_cheat_caller_address(contract_address, token_owner);
+//     let mut good_signature = array![data.r, data.s];
+//     let is_valid = dispatcher.is_valid_signature(hash, good_signature.span());
+//     assert(is_valid == 'VALID', 'should accept valid signature');
+//     stop_cheat_caller_address(contract_address);
 
-    start_cheat_caller_address(contract_address, ACCOUNT2.try_into().unwrap());
-    let mut bad_signature = array![0x284, 0x492];
-    let is_valid = dispatcher.is_valid_signature(hash, bad_signature.span());
-    assert(is_valid == 0, 'should reject invalid signature');
-    stop_cheat_caller_address(contract_address);
-}
+//     start_cheat_caller_address(contract_address, ACCOUNT2.try_into().unwrap());
+//     let mut bad_signature = array![0x284, 0x492];
+//     let is_valid = dispatcher.is_valid_signature(hash, bad_signature.span());
+//     assert(is_valid == 0, 'should reject invalid signature');
+//     stop_cheat_caller_address(contract_address);
+// }
 
 #[test]
 fn test_execute() {
