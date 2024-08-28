@@ -81,7 +81,9 @@ pub mod AccountComponent {
     // *************************************************************************
     #[embeddable_as(AccountImpl)]
     pub impl Account<
-        TContractState, +HasComponent<TContractState>, +Drop<TContractState>,
+        TContractState,
+        +HasComponent<TContractState>,
+        +Drop<TContractState>,
         impl Permissionable: PermissionableComponent::HasComponent<TContractState>
     > of IAccount<ComponentState<TContractState>> {
         /// @notice used for signature validation
@@ -143,7 +145,6 @@ pub mod AccountComponent {
     #[generate_trait]
     pub impl InternalImpl<
         TContractState, +HasComponent<TContractState>, +Drop<TContractState>,
-        impl Permissionable: PermissionableComponent::HasComponent<TContractState>
     > of InternalTrait<TContractState> {
         /// @notice initializes the account by setting the initial token contract and token id
         fn initializer(
@@ -243,24 +244,11 @@ pub mod AccountComponent {
         ) -> bool {
             let owner = self
                 ._get_owner(self.account_token_contract.read(), self.account_token_id.read());
-            let permissionable_comp = get_dep_component!(ref self, Permissionable); 
-
-            let has_permission =  permissionable_comp.has_permission(owner, signer);
-
-            if(signer == owner){
+            if (signer == owner) {
                 return true;
-            }  
-
-            if (has_permission){
-                return true
+            } else {
+                return false;
             }
-            return false;
-            // if (signer == owner) {
-            //     return true;
-            // } else {
-            //     // run the chek here
-            //     return false;
-            // }
         }
 
         /// @notice internal function for signature validation
