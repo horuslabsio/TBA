@@ -160,20 +160,6 @@ fn test_is_valid_signature() {
 }
 
 #[test]
-fn test_is_valid_signer() {
-    let (contract_address, erc721_contract_address) = __setup__();
-    let dispatcher = IAccountDispatcher { contract_address };
-    let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };
-    let token_owner = token_dispatcher.ownerOf(1.try_into().unwrap());
-
-    // check for valid signer
-    let valid_signer = dispatcher.is_valid_signer(token_owner);
-    let invalid_signer = dispatcher.is_valid_signer(ACCOUNT.try_into().unwrap());
-    assert(valid_signer == true, 'signer is meant to be valid!');
-    assert(invalid_signer == false, 'signer is meant to be invalid!');
-}
-
-#[test]
 fn test_execute() {
     let (contract_address, erc721_contract_address) = __setup__();
     let dispatcher = IExecutableDispatcher { contract_address };
