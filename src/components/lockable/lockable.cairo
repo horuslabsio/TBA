@@ -17,11 +17,17 @@ pub mod LockableComponent {
         ILockable, ILockableDispatcher, ILockableDispatcherTrait
     };
 
+    // *************************************************************************
+    //                              STORAGE
+    // *************************************************************************
     #[storage]
     pub struct Storage {
         lock_until: u64
     }
 
+    // *************************************************************************
+    //                              EVENTS
+    // *************************************************************************
     #[event]
     #[derive(Drop, starknet::Event)]
     pub enum Event {
@@ -51,10 +57,10 @@ pub mod LockableComponent {
         pub const LOCKED_ACCOUNT: felt252 = 'Account: Locked';
     }
 
+    // *************************************************************************
+    //                              CONSTANTS
+    // *************************************************************************
     pub const YEAR_DAYS_SECONDS: u64 = 31536000;
-
-
-    // storage that store the token_id and the lock_util perioed
 
     // *************************************************************************
     //                              EXTERNAL FUNCTIONS
@@ -78,7 +84,6 @@ pub mod LockableComponent {
             );
 
             let (lock_status, _) = self.is_locked();
-
             assert(lock_status != true, Errors::LOCKED_ACCOUNT);
 
             // update account state
@@ -110,13 +115,3 @@ pub mod LockableComponent {
         }
     }
 }
-// let unlock_timestamp = self.account_unlock_timestamp.read();
-//             let current_time = get_block_timestamp();
-//             if (current_time < unlock_timestamp) {
-//                 let time_until_unlocks = unlock_timestamp - current_time;
-//                 return (true, time_until_unlocks);
-//             } else {
-//                 return (false, 0_u64);
-//             }
-
-
