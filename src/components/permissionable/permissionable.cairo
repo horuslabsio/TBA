@@ -50,10 +50,7 @@ pub mod PermissionableComponent {
     //                              ERRORS
     // *************************************************************************
     pub mod Errors {
-        pub const UNAUTHORIZED: felt252 = 'Account: unauthorized';
-        pub const NOT_OWNER: felt252 = 'Account: not account owner';
         pub const INVALID_LENGTH: felt252 = 'Account: invalid length';
-        pub const NOT_PERMITTED: felt252 = 'Account: not permitted';
     }
 
 

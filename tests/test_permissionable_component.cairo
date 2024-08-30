@@ -127,7 +127,7 @@ fn test_permissionable() {
 }
 
 #[test]
-fn test_not_permitted() {
+fn test_has_permissions() {
     let (contract_address, _) = __setup__();
     let acct_dispatcher = IAccountDispatcher { contract_address: contract_address };
 
@@ -148,16 +148,27 @@ fn test_not_permitted() {
     let permissionable_dispatcher = IPermissionableDispatcher { contract_address };
     permissionable_dispatcher.set_permission(permission_addresses, permissions);
 
-    let has_permission = permissionable_dispatcher
+    let has_permission2 = permissionable_dispatcher
+        .has_permission(owner, ACCOUNT2.try_into().unwrap());
+
+    assert(has_permission2 == true, 'Account: permitted');
+
+    let has_permission3 = permissionable_dispatcher
+        .has_permission(owner, ACCOUNT3.try_into().unwrap());
+
+    assert(has_permission3 == true, 'Account: permitted');
+
+    let has_permission4 = permissionable_dispatcher
         .has_permission(owner, ACCOUNT4.try_into().unwrap());
 
-    assert(has_permission == false, 'Account: permitted');
+    assert(has_permission4 == false, 'Account: permitted');
+
     stop_cheat_caller_address(contract_address);
 }
 
 
 #[test]
-fn test_permissionable_emit_event() {
+fn test_set_permission_emits_event() {
     let (contract_address, _) = __setup__();
     let acct_dispatcher = IAccountDispatcher { contract_address: contract_address };
 
