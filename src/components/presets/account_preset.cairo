@@ -155,6 +155,10 @@ pub mod AccountPreset {
             permissioned_addresses: Array<ContractAddress>,
             permissions: Array<bool>
         ) {
+            // validate signer
+            let caller = get_caller_address();
+            assert(self.is_valid_signer(caller), 'Account: unauthorized');
+
             // set permissions
             self.permissionable.set_permission(permissioned_addresses, permissions)
         }
