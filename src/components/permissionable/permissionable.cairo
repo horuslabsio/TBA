@@ -51,6 +51,7 @@ pub mod PermissionableComponent {
     // *************************************************************************
     pub mod Errors {
         pub const INVALID_LENGTH: felt252 = 'Account: invalid length';
+        pub const UNAUTHORIZED: felt252 = 'Account: unauthorized';
     }
 
 
@@ -76,6 +77,9 @@ pub mod PermissionableComponent {
 
             let account_comp = get_dep_component!(@self, Account);
             let owner = account_comp.owner();
+            // call is account owner
+            assert(owner == get_caller_address(), Errors::UNAUTHORIZED);
+
             let length = permissioned_addresses.len();
             let mut index: u32 = 0;
             while index < length {

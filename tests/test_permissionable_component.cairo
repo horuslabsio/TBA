@@ -1,5 +1,5 @@
 // *************************************************************************
-//                              COMPONENT COMPONENT TEST
+//                              PERMISSIONABLE COMPONENT TEST
 // *************************************************************************
 use starknet::{ContractAddress, account::Call, get_block_timestamp};
 use snforge_std::{
@@ -75,7 +75,7 @@ fn __setup__() -> (ContractAddress, ContractAddress) {
 
 #[test]
 #[should_panic(expected: ('Account: invalid length',))]
-fn test_when_permissioned_addresses_and_permissions_not_equal() {
+fn test_should_fail_if_unequal_permissioned_addresses_and_permissions() {
     let (contract_address, _) = __setup__();
     let acct_dispatcher = IAccountDispatcher { contract_address: contract_address };
 
@@ -98,7 +98,7 @@ fn test_when_permissioned_addresses_and_permissions_not_equal() {
 
 
 #[test]
-fn test_permissionable() {
+fn test_set_permission() {
     let (contract_address, _) = __setup__();
     let acct_dispatcher = IAccountDispatcher { contract_address: contract_address };
 
