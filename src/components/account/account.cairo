@@ -111,6 +111,12 @@ pub mod AccountComponent {
                 return false;
             }
         }
+
+        fn get_root_owner(
+            self: @ComponentState<TContractState>, token_contract: ContractAddress, token_id: u256
+        ) -> ContractAddress {
+            self._get_root_owner(token_contract, token_id)
+        }
     }
 
     // *************************************************************************
@@ -210,8 +216,10 @@ pub mod AccountComponent {
             self: @ComponentState<TContractState>, token_contract: ContractAddress, token_id: u256
         ) -> ContractAddress {
             // TODO: implement logic to get root owner
-            123.try_into().unwrap()
+
+            1.try_into().unwrap()
         }
+
 
         /// @notice internal transaction for returning the contract address and token ID of the NFT
         fn _get_token(self: @ComponentState<TContractState>) -> (ContractAddress, u256, felt252) {

@@ -15,4 +15,7 @@ pub trait IAccount<TContractState> {
     fn owner(self: @TContractState) -> ContractAddress;
     fn state(self: @TContractState) -> u256;
     fn supports_interface(self: @TContractState, interface_id: felt252) -> bool;
+    fn get_root_owner(
+        self: @TContractState, token_contract: ContractAddress, token_id: u256
+    ) -> ContractAddress;
 }
