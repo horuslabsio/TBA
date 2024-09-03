@@ -7,13 +7,18 @@ pub mod AccountPreset {
     use token_bound_accounts::components::account::account::AccountComponent;
     use token_bound_accounts::components::upgradeable::upgradeable::UpgradeableComponent;
     use token_bound_accounts::components::lockable::lockable::LockableComponent;
+    use token_bound_accounts::components::signatory::signatory::SignatoryComponent;
+    use token_bound_accounts::components::permissionable::permissionable::PermissionableComponent;
     use token_bound_accounts::interfaces::{
-        IUpgradeable::IUpgradeable, IExecutable::IExecutable, ILockable::ILockable
+        IUpgradeable::IUpgradeable, IExecutable::IExecutable, ILockable::ILockable,
+        ISignatory::ISignatory, IPermissionable::IPermissionable
     };
 
     component!(path: AccountComponent, storage: account, event: AccountEvent);
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
     component!(path: LockableComponent, storage: lockable, event: LockableEvent);
+    component!(path: SignatoryComponent, storage: signatory, event: SignatoryEvent);
+    component!(path: PermissionableComponent, storage: permissionable, event: PermissionableEvent);
 
     // Account
     #[abi(embed_v0)]
@@ -22,6 +27,7 @@ pub mod AccountPreset {
     impl AccountInternalImpl = AccountComponent::InternalImpl<ContractState>;
     impl UpgradeableInternalImpl = UpgradeableComponent::Private<ContractState>;
     impl LockableImpl = LockableComponent::LockableImpl<ContractState>;
+    impl SignerImpl = SignatoryComponent::Private<ContractState>;
 
     // *************************************************************************
     //                             STORAGE
@@ -34,6 +40,10 @@ pub mod AccountPreset {
         upgradeable: UpgradeableComponent::Storage,
         #[substorage(v0)]
         lockable: LockableComponent::Storage,
+        #[substorage(v0)]
+        signatory: SignatoryComponent::Storage,
+        #[substorage(v0)]
+        permissionable: PermissionableComponent::Storage,
     }
 
     // *************************************************************************
@@ -47,7 +57,11 @@ pub mod AccountPreset {
         #[flat]
         UpgradeableEvent: UpgradeableComponent::Event,
         #[flat]
-        LockableEvent: LockableComponent::Event
+        LockableEvent: LockableComponent::Event,
+        #[flat]
+        SignatoryEvent: SignatoryComponent::Event,
+        #[flat]
+        PermissionableEvent: PermissionableComponent::Event
     }
 
     // *************************************************************************
@@ -59,14 +73,36 @@ pub mod AccountPreset {
     }
 
     // *************************************************************************
+    //                              SIGNATORY IMPL
+    // *************************************************************************
+    #[abi(embed_v0)]
+    impl Signatory of ISignatory<ContractState> {
+        fn is_valid_signer(self: @ContractState, signer: ContractAddress) -> bool {
+            self.signatory._permissioned_signer_validation(signer)
+        }
+
+        fn is_valid_signature(
+            self: @ContractState, hash: felt252, signature: Span<felt252>
+        ) -> felt252 {
+            self.signatory._is_valid_signature(hash, signature)
+        }
+    }
+
+    // *************************************************************************
     //                              EXECUTABLE IMPL
     // *************************************************************************
     #[abi(embed_v0)]
     impl Executable of IExecutable<ContractState> {
         fn execute(ref self: ContractState, mut calls: Array<Call>) -> Array<Span<felt252>> {
+            // validate signer
+            let caller = get_caller_address();
+            assert(self.is_valid_signer(caller), 'Account: unauthorized');
+
             // cannot make this call when the account is lock
             let (is_locked, _) = self.lockable.is_locked();
             assert(is_locked != true, 'Account: locked');
+
+            // execute calls
             self.account._execute(calls)
         }
     }
@@ -77,9 +113,15 @@ pub mod AccountPreset {
     #[abi(embed_v0)]
     impl Upgradeable of IUpgradeable<ContractState> {
         fn upgrade(ref self: ContractState, new_class_hash: ClassHash) {
+            // validate signer
+            let caller = get_caller_address();
+            assert(self.is_valid_signer(caller), 'Account: unauthorized');
+
             // cannot make this call when the account is lock
             let (is_locked, _) = self.lockable.is_locked();
             assert(is_locked != true, 'Account: locked');
+
+            // upgrade account
             self.upgradeable._upgrade(new_class_hash);
         }
     }
@@ -90,10 +132,37 @@ pub mod AccountPreset {
     #[abi(embed_v0)]
     impl Lockable of ILockable<ContractState> {
         fn lock(ref self: ContractState, lock_until: u64) {
+            // validate signer
+            let caller = get_caller_address();
+            assert(self.is_valid_signer(caller), 'Account: unauthorized');
+
+            // lock account
             self.lockable.lock(lock_until);
         }
+
         fn is_locked(self: @ContractState) -> (bool, u64) {
             self.lockable.is_locked()
+        }
+    }
+
+    // *************************************************************************
+    //                              PERMISSIONABLE IMPL
+    // *************************************************************************
+    #[abi(embed_v0)]
+    impl Permissionable of IPermissionable<ContractState> {
+        fn set_permission(
+            ref self: ContractState,
+            permissioned_addresses: Array<ContractAddress>,
+            permissions: Array<bool>
+        ) {
+            // set permissions
+            self.permissionable.set_permission(permissioned_addresses, permissions)
+        }
+
+        fn has_permission(
+            self: @ContractState, owner: ContractAddress, permissioned_address: ContractAddress
+        ) -> bool {
+            self.permissionable.has_permission(owner, permissioned_address)
         }
     }
 }

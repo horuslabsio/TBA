@@ -1,4 +1,3 @@
-// lockable component
 // *************************************************************************
 //                              LOCKABLE COMPONENT
 // *************************************************************************
@@ -72,13 +71,10 @@ pub mod LockableComponent {
         +Drop<TContractState>,
         impl Account: AccountComponent::HasComponent<TContractState>
     > of ILockable<ComponentState<TContractState>> {
+        // @notice locks an account
+        // @param lock_until duration for which account should be locked
         fn lock(ref self: ComponentState<TContractState>, lock_until: u64) {
             let current_timestamp = get_block_timestamp();
-            let account_comp = get_dep_component!(@self, Account);
-
-            let is_valid = account_comp._is_valid_signer(get_caller_address());
-            assert(is_valid, Errors::UNAUTHORIZED);
-
             assert(
                 lock_until <= current_timestamp + YEAR_DAYS_SECONDS, Errors::EXCEEDS_MAX_LOCK_TIME
             );
@@ -103,6 +99,7 @@ pub mod LockableComponent {
                 );
         }
 
+        // @notice returns the lock status of an account
         fn is_locked(self: @ComponentState<TContractState>) -> (bool, u64) {
             let unlock_timestamp = self.lock_until.read();
             let current_time = get_block_timestamp();
