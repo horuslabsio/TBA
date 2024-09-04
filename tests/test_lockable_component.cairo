@@ -66,7 +66,9 @@ fn __setup__() -> (ContractAddress, ContractAddress) {
     (account_contract_address, erc721_contract_address)
 }
 
-
+// *************************************************************************
+//                              TESTS
+// *************************************************************************
 #[test]
 fn test_lockable_owner() {
     let (contract_address, erc721_contract_address) = __setup__();
@@ -81,6 +83,7 @@ fn test_lockable_owner() {
     assert(owner == token_owner, 'invalid owner');
     stop_cheat_caller_address(contract_address);
 }
+
 #[test]
 fn test_lockable() {
     let (contract_address, _) = __setup__();

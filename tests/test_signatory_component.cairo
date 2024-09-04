@@ -63,7 +63,6 @@ fn SIGNED_TX_DATA() -> SignedTransactionData {
     }
 }
 
-
 // *************************************************************************
 //                              SETUP
 // *************************************************************************
@@ -98,8 +97,11 @@ fn __setup__() -> (ContractAddress, ContractAddress) {
     (account_contract_address, erc721_contract_address)
 }
 
+// *************************************************************************
+//                              TESTS
+// *************************************************************************
 #[test]
-fn test_is_valid_signer() {
+fn test_is_valid_signer_for_base_owner() {
     let (contract_address, erc721_contract_address) = __setup__();
 
     let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };
@@ -108,12 +110,12 @@ fn test_is_valid_signer() {
     start_cheat_caller_address(contract_address, token_owner);
     let is_valid_signer = signatory_dispatcher.is_valid_signer(token_owner);
 
-    assert(is_valid_signer == true, 'should accept valid signature');
+    assert(is_valid_signer == true, 'should be a valid signature');
     stop_cheat_caller_address(contract_address);
 }
 
 #[test]
-fn test_is_valid_signer_permissioned_address() {
+fn test_is_valid_signer_for_permissioned_addresses() {
     let (contract_address, erc721_contract_address) = __setup__();
 
     let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };
@@ -133,32 +135,29 @@ fn test_is_valid_signer_permissioned_address() {
     permissionable_dispatcher.set_permission(permission_addresses, permissions);
     let is_valid_signer = signatory_dispatcher.is_valid_signer(ACCOUNT2.try_into().unwrap());
 
-    assert(is_valid_signer == true, 'should accept valid signer');
+    assert(is_valid_signer == true, 'should be a valid signer');
     stop_cheat_caller_address(contract_address);
 }
 
 #[test]
-fn test_is_valid_signer_root_owner() {
-    let (contract_address, erc721_contract_address) = __setup__();
-
-    let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };
+fn test_is_valid_signer_for_root_owner() {
+    let (contract_address, _) = __setup__();
     let account_dispatcher = IAccountDispatcher { contract_address };
-    let token_owner = token_dispatcher.ownerOf(1.try_into().unwrap());
+    let (account_contract, _, _) = account_dispatcher.token();
 
-    let root_owner = account_dispatcher.get_root_owner(token_owner, 1.try_into().unwrap());
+    let root_owner = account_dispatcher.get_root_owner(account_contract, 1.try_into().unwrap());
     let signatory_dispatcher = ISignatoryDispatcher { contract_address: contract_address };
 
     start_cheat_caller_address(contract_address, root_owner);
 
     let is_valid_signer = signatory_dispatcher.is_valid_signer(root_owner);
+    assert(is_valid_signer == true, 'should be a valid signer');
 
-    assert(is_valid_signer == true, 'should accept valid signer');
     stop_cheat_caller_address(contract_address);
 }
 
-
 #[test]
-fn test_is_valid_signature() {
+fn test_is_valid_signature_for_base_owner() {
     let (contract_address, erc721_contract_address) = __setup__();
 
     let data = SIGNED_TX_DATA();
@@ -169,29 +168,30 @@ fn test_is_valid_signature() {
     let signatory_dispatcher = ISignatoryDispatcher { contract_address: contract_address };
 
     start_cheat_caller_address(contract_address, token_owner);
+
     let mut good_signature = array![data.r, data.s];
     let is_valid = signatory_dispatcher.is_valid_signature(hash, good_signature.span());
-    assert(is_valid == 'VALID', 'should accept valid signature');
+    assert(is_valid == 'VALID', 'should be a valid signature');
+
     stop_cheat_caller_address(contract_address);
 }
 
 #[test]
-fn test_is_valid_signature1_root_owner() {
-    let (contract_address, erc721_contract_address) = __setup__();
+fn test_is_valid_signature_for_root_owner() {
+    let (contract_address, _) = __setup__();
     let data = SIGNED_TX_DATA();
     let hash = data.transaction_hash;
-    let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };
     let account_dispatcher = IAccountDispatcher { contract_address };
-    let token_owner = token_dispatcher.ownerOf(1.try_into().unwrap());
+    let (account_contract, _, _) = account_dispatcher.token();
 
-    let root_owner = account_dispatcher.get_root_owner(token_owner, 1.try_into().unwrap());
+    let root_owner = account_dispatcher.get_root_owner(account_contract, 1.try_into().unwrap());
     let signatory_dispatcher = ISignatoryDispatcher { contract_address: contract_address };
 
     start_cheat_caller_address(contract_address, root_owner);
 
     let mut good_signature = array![data.r, data.s];
     let is_valid_signer = signatory_dispatcher.is_valid_signature(hash, good_signature.span());
-    assert(is_valid_signer == 'VALID', 'should accept valid signature');
+    assert(is_valid_signer == 'VALID', 'should be a valid signature');
 
     stop_cheat_caller_address(contract_address);
 }

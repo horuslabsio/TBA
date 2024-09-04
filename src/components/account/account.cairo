@@ -90,6 +90,15 @@ pub mod AccountComponent {
             self._get_owner(token_contract, token_id)
         }
 
+        /// @notice returns the root owner for nested tokenbound accounts
+        /// @param token_contract the contract address of the NFT
+        /// @param token_id the token ID of the NFT
+        fn get_root_owner(
+            self: @ComponentState<TContractState>, token_contract: ContractAddress, token_id: u256
+        ) -> ContractAddress {
+            self._get_root_owner(token_contract, token_id)
+        }
+
         /// @notice returns the contract address and token ID of the associated NFT
         fn token(self: @ComponentState<TContractState>) -> (ContractAddress, u256, felt252) {
             self._get_token()
@@ -110,12 +119,6 @@ pub mod AccountComponent {
             } else {
                 return false;
             }
-        }
-
-        fn get_root_owner(
-            self: @ComponentState<TContractState>, token_contract: ContractAddress, token_id: u256
-        ) -> ContractAddress {
-            self._get_root_owner(token_contract, token_id)
         }
     }
 

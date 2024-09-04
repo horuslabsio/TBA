@@ -1,5 +1,5 @@
 // *************************************************************************
-//                              COMPONENT COMPONENT TEST
+//                              PERMISSIONABLE COMPONENT TEST
 // *************************************************************************
 use starknet::{ContractAddress, account::Call, get_block_timestamp};
 use snforge_std::{
@@ -73,9 +73,12 @@ fn __setup__() -> (ContractAddress, ContractAddress) {
     (account_contract_address, erc721_contract_address)
 }
 
+// *************************************************************************
+//                              TESTS
+// *************************************************************************
 #[test]
 #[should_panic(expected: ('Account: invalid length',))]
-fn test_when_permissioned_addresses_and_permissions_not_equal() {
+fn test_should_fail_if_unequal_permissioned_addresses_and_permissions() {
     let (contract_address, _) = __setup__();
     let acct_dispatcher = IAccountDispatcher { contract_address: contract_address };
 
@@ -98,7 +101,7 @@ fn test_when_permissioned_addresses_and_permissions_not_equal() {
 
 
 #[test]
-fn test_permissionable() {
+fn test_set_permissions() {
     let (contract_address, _) = __setup__();
     let acct_dispatcher = IAccountDispatcher { contract_address: contract_address };
 
@@ -150,22 +153,18 @@ fn test_has_permissions() {
 
     let has_permission2 = permissionable_dispatcher
         .has_permission(owner, ACCOUNT2.try_into().unwrap());
-
     assert(has_permission2 == true, 'Account: permitted');
 
     let has_permission3 = permissionable_dispatcher
         .has_permission(owner, ACCOUNT3.try_into().unwrap());
-
     assert(has_permission3 == true, 'Account: permitted');
 
     let has_permission4 = permissionable_dispatcher
         .has_permission(owner, ACCOUNT4.try_into().unwrap());
-
     assert(has_permission4 == false, 'Account: permitted');
 
     stop_cheat_caller_address(contract_address);
 }
-
 
 #[test]
 fn test_set_permission_emits_event() {
