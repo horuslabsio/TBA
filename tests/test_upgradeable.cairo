@@ -9,6 +9,7 @@ use snforge_std::{
 use core::hash::HashStateTrait;
 use core::pedersen::PedersenTrait;
 
+use token_bound_accounts::interfaces::IRegistry::{IRegistryDispatcherTrait, IRegistryDispatcher};
 use token_bound_accounts::interfaces::IAccount::{
     IAccountDispatcher, IAccountDispatcherTrait, IAccountSafeDispatcher, IAccountSafeDispatcherTrait
 };
@@ -17,6 +18,7 @@ use token_bound_accounts::interfaces::IUpgradeable::{
 };
 use token_bound_accounts::components::presets::account_preset::AccountPreset;
 use token_bound_accounts::components::upgradeable::upgradeable::UpgradeableComponent;
+use token_bound_accounts::registry::registry::Registry;
 
 use token_bound_accounts::test_helper::{
     erc721_helper::{IERC721Dispatcher, IERC721DispatcherTrait, ERC721},
@@ -50,9 +52,20 @@ fn __setup__() -> (ContractAddress, ContractAddress) {
     let dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };
     dispatcher.mint(recipient, 1.try_into().unwrap());
 
+    // deploy registry contract
+    let registry_contract = declare("Registry").unwrap();
+    let (registry_contract_address, _) = registry_contract.deploy(@array![]).unwrap();
+
     // deploy account contract
     let account_contract = declare("AccountPreset").unwrap();
-    let mut acct_constructor_calldata = array![erc721_contract_address.try_into().unwrap(), 1, 0];
+    let mut acct_constructor_calldata = array![
+        erc721_contract_address.try_into().unwrap(),
+        1,
+        0,
+        registry_contract_address.try_into().unwrap(),
+        account_contract.class_hash.into(),
+        20
+    ];
     let (account_contract_address, _) = account_contract
         .deploy(@acct_constructor_calldata)
         .unwrap();

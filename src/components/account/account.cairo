@@ -29,7 +29,8 @@ pub mod AccountComponent {
     pub struct Storage {
         account_token_contract: ContractAddress, // contract address of NFT
         account_token_id: u256, // token ID of NFT
-        state: u256
+        context: Context, // account deployment details
+        state: u256 // account state
     }
 
     // *************************************************************************
@@ -66,6 +67,16 @@ pub mod AccountComponent {
     }
 
     // *************************************************************************
+    //                              STRUCTS
+    // *************************************************************************
+    #[derive(Copy, Drop, starknet::Store)]
+    struct Context {
+        registry: ContractAddress,
+        implementation_hash: felt252,
+        salt: felt252
+    }
+
+    // *************************************************************************
     //                              ERRORS
     // *************************************************************************
     pub mod Errors {
@@ -88,15 +99,6 @@ pub mod AccountComponent {
             let token_contract = self.account_token_contract.read();
             let token_id = self.account_token_id.read();
             self._get_owner(token_contract, token_id)
-        }
-
-        /// @notice returns the root owner for nested tokenbound accounts
-        /// @param token_contract the contract address of the NFT
-        /// @param token_id the token ID of the NFT
-        fn get_root_owner(
-            self: @ComponentState<TContractState>, token_contract: ContractAddress, token_id: u256
-        ) -> ContractAddress {
-            self._get_root_owner(token_contract, token_id)
         }
 
         /// @notice returns the contract address and token ID of the associated NFT
@@ -133,13 +135,20 @@ pub mod AccountComponent {
         fn initializer(
             ref self: ComponentState<TContractState>,
             token_contract: ContractAddress,
-            token_id: u256
+            token_id: u256,
+            registry: ContractAddress,
+            implementation_hash: felt252,
+            salt: felt252
         ) {
             let owner = self._get_owner(token_contract, token_id);
             assert(owner.is_non_zero(), Errors::UNAUTHORIZED);
+
             // initialize account
             self.account_token_contract.write(token_contract);
             self.account_token_id.write(token_id);
+            self.context.write(Context { registry, implementation_hash, salt });
+
+            // emit event
             self
                 .emit(
                     TBACreated {
@@ -208,21 +217,46 @@ pub mod AccountComponent {
             Serde::<ContractAddress>::deserialize(ref address).unwrap()
         }
 
-        /// @notice internal function for getting the root NFT owner
-        /// @param token_contract contract address of NFT
-        // @param token_id token ID of NFT
-        // NB: This function aims for compatibility with all contracts (snake or camel case) but do
-        // not work as expected on mainnet as low level calls do not return err at the moment.
-        // Should work for contracts which implements CamelCase but not snake_case until starknet
-        // v0.15.
-        fn _get_root_owner(
-            self: @ComponentState<TContractState>, token_contract: ContractAddress, token_id: u256
-        ) -> ContractAddress {
-            // TODO: implement logic to get root owner
-
-            1.try_into().unwrap()
+        /// @notice internal function to retrieve deployment details of an account
+        fn _context(self: @ComponentState<TContractState>) -> (ContractAddress, felt252, felt252) {
+            let context = self.context.read();
+            (context.registry, context.implementation_hash, context.salt)
         }
 
+        /// @notice internal function for checking if an account is a tokenbound account
+        /// @param token_contract contract address of NFT
+        /// @param token_id token ID of NFT
+        fn _is_tokenbound_account(
+            self: @ComponentState<TContractState>,
+            account: ContractAddress,
+            token_contract: ContractAddress,
+            token_id: u256,
+            registry: ContractAddress,
+            implementation: felt252,
+            salt: felt252
+        ) -> bool {
+            let constructor_calldata_hash = PedersenTrait::new(0)
+                .update(token_contract.into())
+                .update(token_id.low.into())
+                .update(token_id.high.into())
+                .update(registry.into())
+                .update(implementation)
+                .update(salt)
+                .update(6)
+                .finalize();
+
+            let prefix: felt252 = 'STARKNET_CONTRACT_ADDRESS';
+            let account_address = PedersenTrait::new(0)
+                .update(prefix)
+                .update(0)
+                .update(salt)
+                .update(implementation)
+                .update(constructor_calldata_hash)
+                .update(5)
+                .finalize();
+
+            account_address.try_into().unwrap() == account
+        }
 
         /// @notice internal transaction for returning the contract address and token ID of the NFT
         fn _get_token(self: @ComponentState<TContractState>) -> (ContractAddress, u256, felt252) {

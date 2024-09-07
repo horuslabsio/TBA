@@ -68,8 +68,15 @@ pub mod AccountPreset {
     //                              CONSTRUCTOR
     // *************************************************************************
     #[constructor]
-    fn constructor(ref self: ContractState, token_contract: ContractAddress, token_id: u256) {
-        self.account.initializer(token_contract, token_id);
+    fn constructor(
+        ref self: ContractState,
+        token_contract: ContractAddress,
+        token_id: u256,
+        registry: ContractAddress,
+        implementation_hash: felt252,
+        salt: felt252
+    ) {
+        self.account.initializer(token_contract, token_id, registry, implementation_hash, salt);
     }
 
     // *************************************************************************
