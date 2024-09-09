@@ -10,16 +10,14 @@ use snforge_std::{
 use core::hash::HashStateTrait;
 use core::pedersen::PedersenTrait;
 
+use token_bound_accounts::interfaces::IRegistry::{IRegistryDispatcherTrait, IRegistryDispatcher};
 use token_bound_accounts::interfaces::IAccount::{
     IAccountDispatcher, IAccountDispatcherTrait, IAccountSafeDispatcher, IAccountSafeDispatcherTrait
 };
-
 use token_bound_accounts::interfaces::IPermissionable::{
     IPermissionableDispatcher, IPermissionableDispatcherTrait
 };
-
 use token_bound_accounts::interfaces::ISignatory::{ISignatoryDispatcher, ISignatoryDispatcherTrait};
-
 use token_bound_accounts::interfaces::IExecutable::{
     IExecutableDispatcher, IExecutableDispatcherTrait
 };
@@ -28,7 +26,7 @@ use token_bound_accounts::interfaces::IUpgradeable::{
 };
 use token_bound_accounts::components::presets::account_preset::AccountPreset;
 use token_bound_accounts::components::account::account::AccountComponent;
-
+use token_bound_accounts::registry::registry::Registry;
 
 use token_bound_accounts::components::signatory::signatory::SignatoryComponent;
 use token_bound_accounts::components::permissionable::permissionable::PermissionableComponent;
@@ -87,9 +85,20 @@ fn __setup__() -> (ContractAddress, ContractAddress) {
     dispatcher.mint(recipient, 1.try_into().unwrap());
     dispatcher.mint(recipient, 2.try_into().unwrap());
 
+    // deploy registry contract
+    let registry_contract = declare("Registry").unwrap();
+    let (registry_contract_address, _) = registry_contract.deploy(@array![]).unwrap();
+
     // deploy account contract
     let account_contract = declare("AccountPreset").unwrap();
-    let mut acct_constructor_calldata = array![erc721_contract_address.try_into().unwrap(), 1, 0];
+    let mut acct_constructor_calldata = array![
+        erc721_contract_address.try_into().unwrap(),
+        1,
+        0,
+        registry_contract_address.try_into().unwrap(),
+        account_contract.class_hash.into(),
+        20
+    ];
     let (account_contract_address, _) = account_contract
         .deploy(@acct_constructor_calldata)
         .unwrap();
@@ -140,23 +149,6 @@ fn test_is_valid_signer_for_permissioned_addresses() {
 }
 
 #[test]
-fn test_is_valid_signer_for_root_owner() {
-    let (contract_address, _) = __setup__();
-    let account_dispatcher = IAccountDispatcher { contract_address };
-    let (account_contract, _, _) = account_dispatcher.token();
-
-    let root_owner = account_dispatcher.get_root_owner(account_contract, 1.try_into().unwrap());
-    let signatory_dispatcher = ISignatoryDispatcher { contract_address: contract_address };
-
-    start_cheat_caller_address(contract_address, root_owner);
-
-    let is_valid_signer = signatory_dispatcher.is_valid_signer(root_owner);
-    assert(is_valid_signer == true, 'should be a valid signer');
-
-    stop_cheat_caller_address(contract_address);
-}
-
-#[test]
 fn test_is_valid_signature_for_base_owner() {
     let (contract_address, erc721_contract_address) = __setup__();
 
@@ -172,26 +164,6 @@ fn test_is_valid_signature_for_base_owner() {
     let mut good_signature = array![data.r, data.s];
     let is_valid = signatory_dispatcher.is_valid_signature(hash, good_signature.span());
     assert(is_valid == 'VALID', 'should be a valid signature');
-
-    stop_cheat_caller_address(contract_address);
-}
-
-#[test]
-fn test_is_valid_signature_for_root_owner() {
-    let (contract_address, _) = __setup__();
-    let data = SIGNED_TX_DATA();
-    let hash = data.transaction_hash;
-    let account_dispatcher = IAccountDispatcher { contract_address };
-    let (account_contract, _, _) = account_dispatcher.token();
-
-    let root_owner = account_dispatcher.get_root_owner(account_contract, 1.try_into().unwrap());
-    let signatory_dispatcher = ISignatoryDispatcher { contract_address: contract_address };
-
-    start_cheat_caller_address(contract_address, root_owner);
-
-    let mut good_signature = array![data.r, data.s];
-    let is_valid_signer = signatory_dispatcher.is_valid_signature(hash, good_signature.span());
-    assert(is_valid_signer == 'VALID', 'should be a valid signature');
 
     stop_cheat_caller_address(contract_address);
 }

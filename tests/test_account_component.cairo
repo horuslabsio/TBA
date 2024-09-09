@@ -3,12 +3,15 @@
 // *************************************************************************
 use starknet::{ContractAddress, account::Call};
 use snforge_std::{
-    declare, start_cheat_caller_address, stop_cheat_caller_address, start_cheat_transaction_hash,
-    start_cheat_nonce, spy_events, EventSpyAssertionsTrait, ContractClassTrait, ContractClass
+    declare, start_cheat_caller_address, stop_cheat_caller_address,
+    start_cheat_account_contract_address, stop_cheat_account_contract_address,
+    start_cheat_transaction_hash, start_cheat_nonce, spy_events, EventSpyAssertionsTrait,
+    ContractClassTrait, ContractClass
 };
 use core::hash::HashStateTrait;
 use core::pedersen::PedersenTrait;
 
+use token_bound_accounts::interfaces::IRegistry::{IRegistryDispatcherTrait, IRegistryDispatcher};
 use token_bound_accounts::interfaces::IAccount::{
     IAccountDispatcher, IAccountDispatcherTrait, IAccountSafeDispatcher, IAccountSafeDispatcherTrait
 };
@@ -17,6 +20,7 @@ use token_bound_accounts::interfaces::IExecutable::{
 };
 use token_bound_accounts::components::presets::account_preset::AccountPreset;
 use token_bound_accounts::components::account::account::AccountComponent;
+use token_bound_accounts::registry::registry::Registry;
 
 use token_bound_accounts::test_helper::{
     hello_starknet::{IHelloStarknetDispatcher, IHelloStarknetDispatcherTrait, HelloStarknet},
@@ -31,7 +35,9 @@ const SALT: felt252 = 123;
 // *************************************************************************
 //                              SETUP
 // *************************************************************************
-fn __setup__() -> (ContractAddress, ContractAddress) {
+fn __setup__() -> (
+    ContractAddress, ContractAddress, ContractAddress, ContractClass, ContractClass
+) {
     // deploy erc721 helper contract
     let erc721_contract = declare("ERC721").unwrap();
     let mut erc721_constructor_calldata = array!['tokenbound', 'TBA'];
@@ -40,8 +46,8 @@ fn __setup__() -> (ContractAddress, ContractAddress) {
         .unwrap();
 
     // deploy recipient contract
-    let account_contract = declare("SimpleAccount").unwrap();
-    let (recipient, _) = account_contract
+    let recipient_contract_class = declare("SimpleAccount").unwrap();
+    let (recipient, _) = recipient_contract_class
         .deploy(
             @array![883045738439352841478194533192765345509759306772397516907181243450667673002]
         )
@@ -51,14 +57,31 @@ fn __setup__() -> (ContractAddress, ContractAddress) {
     let dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };
     dispatcher.mint(recipient, 1.try_into().unwrap());
 
+    // deploy registry contract
+    let registry_contract = declare("Registry").unwrap();
+    let (registry_contract_address, _) = registry_contract.deploy(@array![]).unwrap();
+
     // deploy account contract
-    let account_contract = declare("AccountPreset").unwrap();
-    let mut acct_constructor_calldata = array![erc721_contract_address.try_into().unwrap(), 1, 0];
-    let (account_contract_address, _) = account_contract
+    let account_contract_class = declare("AccountPreset").unwrap();
+    let mut acct_constructor_calldata = array![
+        erc721_contract_address.try_into().unwrap(),
+        1,
+        0,
+        registry_contract_address.try_into().unwrap(),
+        account_contract_class.class_hash.into(),
+        20
+    ];
+    let (account_contract_address, _) = account_contract_class
         .deploy(@acct_constructor_calldata)
         .unwrap();
 
-    (account_contract_address, erc721_contract_address)
+    (
+        account_contract_address,
+        erc721_contract_address,
+        registry_contract_address,
+        recipient_contract_class,
+        account_contract_class
+    )
 }
 
 // *************************************************************************
@@ -66,7 +89,7 @@ fn __setup__() -> (ContractAddress, ContractAddress) {
 // *************************************************************************
 #[test]
 fn test_constructor() {
-    let (contract_address, erc721_contract_address) = __setup__();
+    let (contract_address, erc721_contract_address, _, _, _) = __setup__();
     let dispatcher = IAccountDispatcher { contract_address };
 
     let (token_contract, token_id, chain_id) = dispatcher.token();
@@ -91,9 +114,20 @@ fn test_event_is_emitted_on_initialization() {
     // spy on emitted events
     let mut spy = spy_events();
 
+    // deploy registry contract
+    let registry_contract = declare("Registry").unwrap();
+    let (registry_contract_address, _) = registry_contract.deploy(@array![]).unwrap();
+
     // deploy account contract
     let account_contract = declare("AccountPreset").unwrap();
-    let mut acct_constructor_calldata = array![erc721_contract_address.try_into().unwrap(), 1, 0];
+    let mut acct_constructor_calldata = array![
+        erc721_contract_address.try_into().unwrap(),
+        1,
+        0,
+        registry_contract_address.try_into().unwrap(),
+        account_contract.class_hash.into(),
+        20
+    ];
     let (account_contract_address, _) = account_contract
         .deploy(@acct_constructor_calldata)
         .unwrap();
@@ -119,7 +153,7 @@ fn test_event_is_emitted_on_initialization() {
 
 #[test]
 fn test_execute() {
-    let (contract_address, erc721_contract_address) = __setup__();
+    let (contract_address, erc721_contract_address, _, _, _) = __setup__();
     let dispatcher = IExecutableDispatcher { contract_address };
 
     // deploy `HelloStarknet` contract for testing
@@ -153,7 +187,7 @@ fn test_execute() {
 
 #[test]
 fn test_execute_multicall() {
-    let (contract_address, erc721_contract_address) = __setup__();
+    let (contract_address, erc721_contract_address, _, _, _) = __setup__();
     let dispatcher = IExecutableDispatcher { contract_address };
 
     // deploy `HelloStarknet` contract for testing
@@ -194,7 +228,7 @@ fn test_execute_multicall() {
 #[test]
 #[should_panic(expected: ('Account: unauthorized',))]
 fn test_execution_fails_if_invalid_signer() {
-    let (contract_address, _) = __setup__();
+    let (contract_address, _, _, _, _) = __setup__();
     let dispatcher = IExecutableDispatcher { contract_address };
 
     // deploy `HelloStarknet` contract for testing
@@ -219,7 +253,7 @@ fn test_execution_fails_if_invalid_signer() {
 
 #[test]
 fn test_execution_emits_event() {
-    let (contract_address, erc721_contract_address) = __setup__();
+    let (contract_address, erc721_contract_address, _, _, _) = __setup__();
     let dispatcher = IExecutableDispatcher { contract_address };
 
     // deploy `HelloStarknet` contract for testing
@@ -269,7 +303,7 @@ fn test_execution_emits_event() {
 
 #[test]
 fn test_execution_updates_state() {
-    let (contract_address, erc721_contract_address) = __setup__();
+    let (contract_address, erc721_contract_address, _, _, _) = __setup__();
     let dispatcher = IExecutableDispatcher { contract_address };
     let account_dispatcher = IAccountDispatcher { contract_address };
 
@@ -307,7 +341,7 @@ fn test_execution_updates_state() {
 
 #[test]
 fn test_token() {
-    let (contract_address, erc721_contract_address) = __setup__();
+    let (contract_address, erc721_contract_address, _, _, _) = __setup__();
     let dispatcher = IAccountDispatcher { contract_address };
 
     let (token_contract, token_id, chain_id) = dispatcher.token();
@@ -318,7 +352,7 @@ fn test_token() {
 
 #[test]
 fn test_owner() {
-    let (contract_address, erc721_contract_address) = __setup__();
+    let (contract_address, erc721_contract_address, _, _, _) = __setup__();
     let acct_dispatcher = IAccountDispatcher { contract_address: contract_address };
     let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };
 
@@ -326,3 +360,92 @@ fn test_owner() {
     let token_owner = token_dispatcher.ownerOf(1.try_into().unwrap());
     assert(owner == token_owner, 'invalid owner');
 }
+// #[test]
+// fn test_root_owner() {
+//     let (_, erc721_contract_address, registry_contract_address, simple_account_class,
+//     account_class) = __setup__();
+
+//     // deploy recipient contract
+//     let (recipient, _) = simple_account_class
+//         .deploy(
+//             @array![883045738439352841478194533192765345509759306772397516907181243450667673002]
+//         )
+//         .unwrap();
+
+//     // mint a new token to recipient
+//     let dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };
+//     dispatcher.mint(recipient, 1.try_into().unwrap());
+
+//     // deploy account 1
+//     start_cheat_caller_address(registry_contract_address, recipient);
+//     let registry_dispatcher = IRegistryDispatcher { contract_address: registry_contract_address
+//     };
+//     let account_1 = registry_dispatcher
+//         .create_account(
+//             account_class.class_hash.into(),
+//             erc721_contract_address,
+//             1.try_into().unwrap(),
+//             2525201,
+//             'SN_SEPOLIA'
+//         );
+//     stop_cheat_caller_address(registry_contract_address);
+
+//     // mint a new token to account 1
+//     dispatcher.mint(account_1, 2.try_into().unwrap());
+
+//     // deploy account 1-2
+//     start_cheat_caller_address(registry_contract_address, account_1);
+//     let account_1_2 = registry_dispatcher
+//         .create_account(
+//             account_class.class_hash.into(),
+//             erc721_contract_address,
+//             2.try_into().unwrap(),
+//             2525202,
+//             'SN_SEPOLIA'
+//         );
+//     stop_cheat_caller_address(registry_contract_address);
+
+//     // mint a new token to account 1-2
+//     let dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };
+//     dispatcher.mint(account_1_2, 3.try_into().unwrap());
+
+//     // deploy account 1-2-3
+//     start_cheat_caller_address(registry_contract_address, account_1_2);
+//     let account_1_2_3 = registry_dispatcher
+//         .create_account(
+//             account_class.class_hash.into(),
+//             erc721_contract_address,
+//             3.try_into().unwrap(),
+//             2525203,
+//             'SN_SEPOLIA'
+//         );
+//     stop_cheat_caller_address(registry_contract_address);
+
+//     println!("account_1_2_3: {:?}", account_1_2_3);
+//     println!("account_1_2: {:?}", account_1_2);
+//     println!("account_1: {:?}", account_1);
+//     println!("recipient: {:?}", recipient);
+
+//     // get root owners
+//     start_cheat_account_contract_address(account_1_2_3, account_1_2_3);
+//     let root_owner_for_account_1_2_3 = IAccountDispatcher { contract_address: account_1_2_3
+//     }.root_owner(erc721_contract_address, 3, 'SN_SEPOLIA');
+//     stop_cheat_account_contract_address(account_1_2_3);
+
+//     start_cheat_account_contract_address(account_1_2, account_1_2);
+//     let root_owner_for_account_1_2 = IAccountDispatcher { contract_address: account_1_2
+//     }.root_owner(erc721_contract_address, 2, 'SN_SEPOLIA');
+//     stop_cheat_account_contract_address(account_1_2);
+
+//     start_cheat_account_contract_address(account_1, account_1);
+//     let root_owner_for_account_1 = IAccountDispatcher { contract_address: account_1
+//     }.root_owner(erc721_contract_address, 1, 'SN_SEPOLIA');
+//     stop_cheat_account_contract_address(account_1);
+
+//     // check root owner is valid
+//     assert(root_owner_for_account_1_2_3 == recipient, 'invalid root owner');
+//     assert(root_owner_for_account_1_2 == recipient, 'invalid root owner');
+//     assert(root_owner_for_account_1 == recipient, 'invalid root owner');
+// }
+
+

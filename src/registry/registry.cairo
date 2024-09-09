@@ -10,8 +10,9 @@ pub mod Registry {
     use core::hash::HashStateTrait;
     use core::pedersen::PedersenTrait;
     use starknet::{
-        ContractAddress, get_caller_address, syscalls::{call_contract_syscall, deploy_syscall},
-        class_hash::ClassHash, SyscallResultTrait, storage::Map
+        ContractAddress, get_caller_address, get_contract_address,
+        syscalls::{call_contract_syscall, deploy_syscall}, class_hash::ClassHash,
+        SyscallResultTrait, storage::Map
     };
 
     use token_bound_accounts::interfaces::IERC721::{IERC721DispatcherTrait, IERC721Dispatcher};
@@ -72,7 +73,12 @@ pub mod Registry {
             assert(owner == get_caller_address(), Errors::CALLER_IS_NOT_OWNER);
 
             let mut constructor_calldata: Array<felt252> = array![
-                token_contract.into(), token_id.low.into(), token_id.high.into()
+                token_contract.into(),
+                token_id.low.into(),
+                token_id.high.into(),
+                get_contract_address().into(),
+                implementation_hash,
+                salt
             ];
 
             let class_hash: ClassHash = implementation_hash.try_into().unwrap();
@@ -100,7 +106,10 @@ pub mod Registry {
                 .update(token_contract.into())
                 .update(token_id.low.into())
                 .update(token_id.high.into())
-                .update(3)
+                .update(get_contract_address().into())
+                .update(implementation_hash)
+                .update(salt)
+                .update(6)
                 .finalize();
 
             let prefix: felt252 = 'STARKNET_CONTRACT_ADDRESS';
