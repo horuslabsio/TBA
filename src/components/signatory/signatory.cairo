@@ -9,6 +9,7 @@ pub mod SignatoryComponent {
     use starknet::{get_caller_address, get_contract_address, ContractAddress};
     use token_bound_accounts::components::account::account::AccountComponent;
     use token_bound_accounts::components::account::account::AccountComponent::AccountPrivateImpl;
+    use token_bound_accounts::components::account::account::AccountComponent::AccountImpl;
 
     use token_bound_accounts::components::permissionable::permissionable::PermissionableComponent;
     use token_bound_accounts::components::permissionable::permissionable::PermissionableComponent::PermissionablePrivateImpl;
