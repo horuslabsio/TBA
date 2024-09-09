@@ -8,9 +8,11 @@ pub mod SignatoryComponent {
     // *************************************************************************
     use starknet::{get_caller_address, get_contract_address, ContractAddress};
     use token_bound_accounts::components::account::account::AccountComponent;
-    use token_bound_accounts::components::account::account::AccountComponent::AccountImpl;
+    use token_bound_accounts::components::account::account::AccountComponent::AccountPrivateImpl;
+    use token_bound_accounts::components::account::account::AccountComponent::AccountInternalImpl;
+
     use token_bound_accounts::components::permissionable::permissionable::PermissionableComponent;
-    use token_bound_accounts::components::permissionable::permissionable::PermissionableComponent::PermissionableImpl;
+    use token_bound_accounts::components::permissionable::permissionable::PermissionableComponent::PermissionablePrivateImpl;
     use token_bound_accounts::interfaces::ISRC6::{ISRC6Dispatcher, ISRC6DispatcherTrait};
 
     // *************************************************************************
@@ -32,13 +34,13 @@ pub mod SignatoryComponent {
     //                              PRIVATE FUNCTIONS
     // *************************************************************************
     #[generate_trait]
-    pub impl Private<
+    pub impl SignatoryPrivateImpl<
         TContractState,
         +HasComponent<TContractState>,
         +Drop<TContractState>,
         impl Account: AccountComponent::HasComponent<TContractState>,
         impl Permissionable: PermissionableComponent::HasComponent<TContractState>
-    > of PrivateTrait<TContractState> {
+    > of SignatoryPrivateTrait<TContractState> {
         /// @notice implements a simple signer validation where only NFT owner is a valid signer.
         /// @param signer the address to be validated
         fn _base_signer_validation(

@@ -88,7 +88,7 @@ pub mod AccountComponent {
     // *************************************************************************
     //                              EXTERNAL FUNCTIONS
     // *************************************************************************
-    #[embeddable_as(AccountImpl)]
+    #[embeddable_as(AccountInternalImpl)]
     pub impl Account<
         TContractState, +HasComponent<TContractState>, +Drop<TContractState>
     > of IAccount<ComponentState<TContractState>> {
@@ -128,9 +128,9 @@ pub mod AccountComponent {
     //                              PRIVATE FUNCTIONS
     // *************************************************************************
     #[generate_trait]
-    pub impl InternalImpl<
+    pub impl AccountPrivateImpl<
         TContractState, +HasComponent<TContractState>, +Drop<TContractState>
-    > of InternalTrait<TContractState> {
+    > of AccountPrivateTrait<TContractState> {
         /// @notice initializes the account by setting the initial token contract and token id
         fn initializer(
             ref self: ComponentState<TContractState>,

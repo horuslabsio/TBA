@@ -11,7 +11,7 @@ pub mod LockableComponent {
     use starknet::{ContractAddress, get_caller_address, get_block_timestamp};
     use token_bound_accounts::components::account::account::AccountComponent;
     use token_bound_accounts::interfaces::IAccount::{IAccount, IAccountDispatcherTrait};
-    use token_bound_accounts::components::account::account::AccountComponent::InternalImpl;
+    use token_bound_accounts::components::account::account::AccountComponent::AccountPrivateImpl;
     use token_bound_accounts::interfaces::ILockable::{
         ILockable, ILockableDispatcher, ILockableDispatcherTrait
     };
@@ -62,15 +62,15 @@ pub mod LockableComponent {
     pub const YEAR_DAYS_SECONDS: u64 = 31536000;
 
     // *************************************************************************
-    //                              EXTERNAL FUNCTIONS
+    //                              PRIVATE FUNCTIONS
     // *************************************************************************
-    #[embeddable_as(LockableImpl)]
-    pub impl Lockable<
+    #[generate_trait]
+    pub impl LockablePrivateImpl<
         TContractState,
         +HasComponent<TContractState>,
         +Drop<TContractState>,
-        impl Account: AccountComponent::HasComponent<TContractState>
-    > of ILockable<ComponentState<TContractState>> {
+        impl Account: AccountComponent::HasComponent<TContractState>,
+    > of LockablePrivateTrait<TContractState> {
         // @notice locks an account
         // @param lock_until duration for which account should be locked
         fn lock(ref self: ComponentState<TContractState>, lock_until: u64) {

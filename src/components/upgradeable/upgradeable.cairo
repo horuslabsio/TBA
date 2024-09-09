@@ -11,7 +11,7 @@ pub mod UpgradeableComponent {
     };
     use core::num::traits::zero::Zero;
     use token_bound_accounts::components::account::account::AccountComponent;
-    use token_bound_accounts::components::account::account::AccountComponent::InternalImpl;
+    use token_bound_accounts::components::account::account::AccountComponent::AccountPrivateImpl;
 
     // *************************************************************************
     //                              STORAGE
@@ -47,12 +47,12 @@ pub mod UpgradeableComponent {
     //                              PRIVATE FUNCTIONS
     // *************************************************************************
     #[generate_trait]
-    pub impl Private<
+    pub impl UpgradeablePrivateImpl<
         TContractState,
         +HasComponent<TContractState>,
         +Drop<TContractState>,
         impl Account: AccountComponent::HasComponent<TContractState>
-    > of PrivateTrait<TContractState> {
+    > of UpgradeablePrivateTrait<TContractState> {
         /// @notice replaces the contract's class hash with `new_class_hash`.
         /// Emits an `Upgraded` event.
         fn _upgrade(ref self: ComponentState<TContractState>, new_class_hash: ClassHash) {
