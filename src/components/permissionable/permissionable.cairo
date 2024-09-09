@@ -10,7 +10,7 @@ pub mod PermissionableComponent {
     use starknet::{ContractAddress, get_caller_address, get_block_timestamp};
     use token_bound_accounts::components::account::account::AccountComponent;
     use token_bound_accounts::interfaces::IAccount::{IAccount, IAccountDispatcherTrait};
-    use token_bound_accounts::components::account::account::AccountComponent::InternalImpl;
+    use token_bound_accounts::components::account::account::AccountComponent::AccountPrivateImpl;
     use token_bound_accounts::interfaces::IPermissionable::{
         IPermissionable, IPermissionableDispatcher, IPermissionableDispatcherTrait
     };
@@ -58,12 +58,12 @@ pub mod PermissionableComponent {
     //                              PRIVATE FUNCTIONS
     // *************************************************************************
     #[generate_trait]
-    pub impl Private<
+    pub impl PermissionablePrivateImpl<
         TContractState,
         +HasComponent<TContractState>,
         +Drop<TContractState>,
         impl Account: AccountComponent::HasComponent<TContractState>,
-    > of PrivateTrait<TContractState> {
+    > of PermissionablePrivateTrait<TContractState> {
         // @notice sets permission for an account
         // @permissioned_addresses array of addresses who's permission is to be updated
         // @param permssions permission value <true, false>

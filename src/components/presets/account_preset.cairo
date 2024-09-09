@@ -24,11 +24,11 @@ pub mod AccountPreset {
     #[abi(embed_v0)]
     impl AccountImpl = AccountComponent::AccountImpl<ContractState>;
 
-    impl AccountInternalImpl = AccountComponent::InternalImpl<ContractState>;
+    impl AccountInternalImpl = AccountComponent::AccountPrivateImpl<ContractState>;
     impl UpgradeableInternalImpl = UpgradeableComponent::Private<ContractState>;
-    impl LockableImpl = LockableComponent::Private<ContractState>;
-    impl SignerImpl = SignatoryComponent::SingnatoryPrivate<ContractState>;
-    impl PermissionableImpl = PermissionableComponent::Private<ContractState>;
+    impl LockableImpl = LockableComponent::LockablePrivateImpl<ContractState>;
+    impl SignerImpl = SignatoryComponent::SignatoryPrivateImpl<ContractState>;
+    impl PermissionableImpl = PermissionableComponent::PermissionablePrivateImpl<ContractState>;
 
     // *************************************************************************
     //                             STORAGE

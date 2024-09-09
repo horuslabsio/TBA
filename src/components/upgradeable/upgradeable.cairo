@@ -11,7 +11,7 @@ pub mod UpgradeableComponent {
     };
     use core::num::traits::zero::Zero;
     use token_bound_accounts::components::account::account::AccountComponent;
-    use token_bound_accounts::components::account::account::AccountComponent::InternalImpl;
+    use token_bound_accounts::components::account::account::AccountComponent::AccountPrivateImpl;
 
     // *************************************************************************
     //                              STORAGE

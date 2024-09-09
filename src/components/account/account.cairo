@@ -126,9 +126,9 @@ pub mod AccountComponent {
     //                              PRIVATE FUNCTIONS
     // *************************************************************************
     #[generate_trait]
-    pub impl InternalImpl<
+    pub impl AccountPrivateImpl<
         TContractState, +HasComponent<TContractState>, +Drop<TContractState>
-    > of InternalTrait<TContractState> {
+    > of AccountPrivateTrait<TContractState> {
         /// @notice initializes the account by setting the initial token contract and token id
         fn initializer(
             ref self: ComponentState<TContractState>,
