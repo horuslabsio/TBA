@@ -26,8 +26,9 @@ pub mod AccountPreset {
 
     impl AccountInternalImpl = AccountComponent::InternalImpl<ContractState>;
     impl UpgradeableInternalImpl = UpgradeableComponent::Private<ContractState>;
-    impl LockableImpl = LockableComponent::LockableImpl<ContractState>;
-    impl SignerImpl = SignatoryComponent::Private<ContractState>;
+    impl LockableImpl = LockableComponent::Private<ContractState>;
+    impl SignerImpl = SignatoryComponent::SingnatoryPrivate<ContractState>;
+    impl PermissionableImpl = PermissionableComponent::Private<ContractState>;
 
     // *************************************************************************
     //                             STORAGE

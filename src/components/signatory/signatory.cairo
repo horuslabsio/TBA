@@ -10,7 +10,7 @@ pub mod SignatoryComponent {
     use token_bound_accounts::components::account::account::AccountComponent;
     use token_bound_accounts::components::account::account::AccountComponent::InternalImpl;
     use token_bound_accounts::components::permissionable::permissionable::PermissionableComponent;
-    use token_bound_accounts::components::permissionable::permissionable::PermissionableComponent::PermissionableImpl;
+    use token_bound_accounts::components::permissionable::permissionable::PermissionableComponent::Private;
     use token_bound_accounts::interfaces::ISRC6::{ISRC6Dispatcher, ISRC6DispatcherTrait};
 
     // *************************************************************************
@@ -32,7 +32,7 @@ pub mod SignatoryComponent {
     //                              PRIVATE FUNCTIONS
     // *************************************************************************
     #[generate_trait]
-    pub impl Private<
+    pub impl SingnatoryPrivate<
         TContractState,
         +HasComponent<TContractState>,
         +Drop<TContractState>,
