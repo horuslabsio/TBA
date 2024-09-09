@@ -70,7 +70,7 @@ pub mod LockableComponent {
         +HasComponent<TContractState>,
         +Drop<TContractState>,
         impl Account: AccountComponent::HasComponent<TContractState>,
-    > of  LockablePrivateTrait<TContractState> {
+    > of LockablePrivateTrait<TContractState> {
         // @notice locks an account
         // @param lock_until duration for which account should be locked
         fn lock(ref self: ComponentState<TContractState>, lock_until: u64) {
