@@ -88,7 +88,7 @@ pub mod AccountComponent {
     // *************************************************************************
     //                              EXTERNAL FUNCTIONS
     // *************************************************************************
-    #[embeddable_as(AccountImpl)]
+    #[embeddable_as(AccountInternalImpl)]
     pub impl Account<
         TContractState, +HasComponent<TContractState>, +Drop<TContractState>
     > of IAccount<ComponentState<TContractState>> {
