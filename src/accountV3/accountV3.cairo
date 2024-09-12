@@ -4,7 +4,7 @@
 
 #[starknet::contract]
 pub mod AccountV3 {
-    use starknet::{ContractAddress, get_caller_address, ClassHash, account::Call};
+    use starknet::{ContractAddress, get_caller_address, get_tx_info, ClassHash, account::Call};
     use token_bound_accounts::components::account::account::AccountComponent;
     use token_bound_accounts::components::upgradeable::upgradeable::UpgradeableComponent;
     use token_bound_accounts::components::lockable::lockable::LockableComponent;
@@ -86,12 +86,20 @@ pub mod AccountV3 {
     // *************************************************************************
     #[abi(embed_v0)]
     impl AccountV3 of IAccountV3<ContractState> {
-        // fn on_erc721_received(
-        //     self: @ContractState,
-        //     token_contract: ContractAddress,
-        //     token_id: u256,
-        //     calldata: Span<felt252>
-        // ) -> (felt252, ByteArray) {}
+        fn on_erc721_received(
+            self: @ContractState,
+            _token_contract: ContractAddress,
+            _token_id: u256,
+            calldata: Span<felt252>
+        ) -> ByteArray {
+            let (token_contract_adddres, token_id, chain_id) = self.account.token();
+            let tx_info = get_tx_info().unbox();
+            let _chain_id = tx_info.chain_id;
+            assert(_token_contract == token_contract_adddres, 'Account Recieved it own token');
+            assert(_token_id == token_id, 'Account Recieved it own token');
+            assert(_chain_id == chain_id, 'Account Recieved it own token');
+            return "erjgtky;lhgehtikep";
+        }
         fn get_context(self: @ContractState) -> (ContractAddress, felt252, felt252) {
             self.account._context()
         }
