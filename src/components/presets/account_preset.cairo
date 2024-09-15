@@ -4,6 +4,8 @@
 #[starknet::contract]
 pub mod AccountPreset {
     use starknet::{ContractAddress, get_caller_address, ClassHash, account::Call};
+    use openzeppelin::introspection::src5::SRC5Component;
+
     use token_bound_accounts::components::account::account::AccountComponent;
     use token_bound_accounts::components::upgradeable::upgradeable::UpgradeableComponent;
     use token_bound_accounts::components::lockable::lockable::LockableComponent;
@@ -19,16 +21,18 @@ pub mod AccountPreset {
     component!(path: LockableComponent, storage: lockable, event: LockableEvent);
     component!(path: SignatoryComponent, storage: signatory, event: SignatoryEvent);
     component!(path: PermissionableComponent, storage: permissionable, event: PermissionableEvent);
+    component!(path: SRC5Component, storage: src5, event: SRC5Event);
 
     // Account
     #[abi(embed_v0)]
-    impl AccountImpl = AccountComponent::AccountInternalImpl<ContractState>;
+    impl AccountImpl = AccountComponent::AccountImpl<ContractState>;
 
     impl AccountInternalImpl = AccountComponent::AccountPrivateImpl<ContractState>;
     impl UpgradeableInternalImpl = UpgradeableComponent::UpgradeablePrivateImpl<ContractState>;
-    impl LockableImpl = LockableComponent::LockablePrivateImpl<ContractState>;
-    impl SignerImpl = SignatoryComponent::SignatoryPrivateImpl<ContractState>;
-    impl PermissionableImpl = PermissionableComponent::PermissionablePrivateImpl<ContractState>;
+    impl LockableInternalImpl = LockableComponent::LockablePrivateImpl<ContractState>;
+    impl SignerInternalImpl = SignatoryComponent::SignatoryPrivateImpl<ContractState>;
+    impl PermissionableInternalImpl =
+        PermissionableComponent::PermissionablePrivateImpl<ContractState>;
 
     // *************************************************************************
     //                             STORAGE
@@ -45,6 +49,8 @@ pub mod AccountPreset {
         signatory: SignatoryComponent::Storage,
         #[substorage(v0)]
         permissionable: PermissionableComponent::Storage,
+        #[substorage(v0)]
+        src5: SRC5Component::Storage
     }
 
     // *************************************************************************
@@ -62,7 +68,9 @@ pub mod AccountPreset {
         #[flat]
         SignatoryEvent: SignatoryComponent::Event,
         #[flat]
-        PermissionableEvent: PermissionableComponent::Event
+        PermissionableEvent: PermissionableComponent::Event,
+        #[flat]
+        SRC5Event: SRC5Component::Event
     }
 
     // *************************************************************************

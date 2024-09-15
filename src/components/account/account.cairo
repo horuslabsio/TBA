@@ -1,26 +1,25 @@
-// *************************************************************************
-//                              ACCOUNT COMPONENT
-// *************************************************************************
 #[starknet::component]
 pub mod AccountComponent {
     // *************************************************************************
     //                              IMPORTS
     // *************************************************************************
-    use starknet::storage::StoragePointerWriteAccess;
     use starknet::storage::StoragePointerReadAccess;
-    use core::result::ResultTrait;
-    use core::hash::HashStateTrait;
-    use core::pedersen::PedersenTrait;
-    use core::num::traits::zero::Zero;
+    use core::{
+        result::ResultTrait, hash::HashStateTrait, pedersen::PedersenTrait, num::traits::zero::Zero
+    };
     use starknet::{
         get_tx_info, get_caller_address, get_contract_address, get_block_timestamp, ContractAddress,
         account::Call, syscalls::call_contract_syscall, syscalls::replace_class_syscall, ClassHash,
-        SyscallResultTrait
+        SyscallResultTrait, storage::StoragePointerWriteAccess
     };
+
     use token_bound_accounts::interfaces::IERC721::{IERC721DispatcherTrait, IERC721Dispatcher};
     use token_bound_accounts::interfaces::IAccount::{
         IAccount, IAccountDispatcherTrait, IAccountDispatcher, TBA_INTERFACE_ID
     };
+
+    use openzeppelin::introspection::src5::SRC5Component;
+    use openzeppelin::introspection::src5::SRC5Component::{SRC5Impl, InternalImpl};
 
     // *************************************************************************
     //                              STORAGE
@@ -30,7 +29,7 @@ pub mod AccountComponent {
         account_token_contract: ContractAddress, // contract address of NFT
         account_token_id: u256, // token ID of NFT
         context: Context, // account deployment details
-        state: u256 // account state
+        state: u256, // account state
     }
 
     // *************************************************************************
@@ -88,9 +87,12 @@ pub mod AccountComponent {
     // *************************************************************************
     //                              EXTERNAL FUNCTIONS
     // *************************************************************************
-    #[embeddable_as(AccountInternalImpl)]
+    #[embeddable_as(AccountImpl)]
     pub impl Account<
-        TContractState, +HasComponent<TContractState>, +Drop<TContractState>
+        TContractState,
+        +HasComponent<TContractState>,
+        +Drop<TContractState>,
+        impl SRC5: SRC5Component::HasComponent<TContractState>
     > of IAccount<ComponentState<TContractState>> {
         /// @notice gets the NFT owner
         /// @param token_contract the contract address of the NFT
@@ -116,11 +118,7 @@ pub mod AccountComponent {
         fn supports_interface(
             self: @ComponentState<TContractState>, interface_id: felt252
         ) -> bool {
-            if (interface_id == TBA_INTERFACE_ID) {
-                return true;
-            } else {
-                return false;
-            }
+            get_dep_component!(self, SRC5).supports_interface(interface_id)
         }
     }
 
@@ -129,7 +127,10 @@ pub mod AccountComponent {
     // *************************************************************************
     #[generate_trait]
     pub impl AccountPrivateImpl<
-        TContractState, +HasComponent<TContractState>, +Drop<TContractState>
+        TContractState,
+        +HasComponent<TContractState>,
+        +Drop<TContractState>,
+        impl SRC5: SRC5Component::HasComponent<TContractState>
     > of AccountPrivateTrait<TContractState> {
         /// @notice initializes the account by setting the initial token contract and token id
         fn initializer(
@@ -147,6 +148,13 @@ pub mod AccountComponent {
             self.account_token_contract.write(token_contract);
             self.account_token_id.write(token_id);
             self.context.write(Context { registry, implementation_hash, salt });
+
+            // register interfaces
+            let IERC721_RECEIVER_ID =
+                0x3a0dff5f70d80458ad14ae37bb182a728e3c8cdda0402a5daa86620bdf910bc;
+            let mut src5_instance = get_dep_component_mut!(ref self, SRC5);
+            src5_instance.register_interface(TBA_INTERFACE_ID);
+            src5_instance.register_interface(IERC721_RECEIVER_ID);
 
             // emit event
             self

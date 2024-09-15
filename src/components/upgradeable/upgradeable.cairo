@@ -1,6 +1,3 @@
-// *************************************************************************
-//                              UPGRADEABLE COMPONENT
-// *************************************************************************
 #[starknet::component]
 pub mod UpgradeableComponent {
     // *************************************************************************
@@ -10,8 +7,11 @@ pub mod UpgradeableComponent {
         ClassHash, SyscallResultTrait, get_caller_address, get_contract_address, ContractAddress
     };
     use core::num::traits::zero::Zero;
+
     use token_bound_accounts::components::account::account::AccountComponent;
     use token_bound_accounts::components::account::account::AccountComponent::AccountPrivateImpl;
+
+    use openzeppelin::introspection::src5::SRC5Component;
 
     // *************************************************************************
     //                              STORAGE
@@ -51,7 +51,8 @@ pub mod UpgradeableComponent {
         TContractState,
         +HasComponent<TContractState>,
         +Drop<TContractState>,
-        impl Account: AccountComponent::HasComponent<TContractState>
+        impl Account: AccountComponent::HasComponent<TContractState>,
+        impl SRC5: SRC5Component::HasComponent<TContractState>
     > of UpgradeablePrivateTrait<TContractState> {
         /// @notice replaces the contract's class hash with `new_class_hash`.
         /// Emits an `Upgraded` event.

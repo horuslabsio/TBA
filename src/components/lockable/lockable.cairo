@@ -1,6 +1,3 @@
-// *************************************************************************
-//                              LOCKABLE COMPONENT
-// *************************************************************************
 #[starknet::component]
 pub mod LockableComponent {
     // *************************************************************************
@@ -9,12 +6,15 @@ pub mod LockableComponent {
     use starknet::storage::StoragePointerWriteAccess;
     use starknet::storage::StoragePointerReadAccess;
     use starknet::{ContractAddress, get_caller_address, get_block_timestamp};
+
     use token_bound_accounts::components::account::account::AccountComponent;
     use token_bound_accounts::interfaces::IAccount::{IAccount, IAccountDispatcherTrait};
     use token_bound_accounts::components::account::account::AccountComponent::AccountPrivateImpl;
     use token_bound_accounts::interfaces::ILockable::{
         ILockable, ILockableDispatcher, ILockableDispatcherTrait
     };
+
+    use openzeppelin::introspection::src5::SRC5Component;
 
     // *************************************************************************
     //                              STORAGE
@@ -70,6 +70,7 @@ pub mod LockableComponent {
         +HasComponent<TContractState>,
         +Drop<TContractState>,
         impl Account: AccountComponent::HasComponent<TContractState>,
+        impl SRC5: SRC5Component::HasComponent<TContractState>
     > of LockablePrivateTrait<TContractState> {
         // @notice locks an account
         // @param lock_until duration for which account should be locked
