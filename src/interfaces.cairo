@@ -7,3 +7,4 @@ pub mod IExecutable;
 pub mod ILockable;
 pub mod ISignatory;
 pub mod IPermissionable;
+pub mod IAccountV3;
