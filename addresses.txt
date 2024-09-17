@@ -27,3 +27,13 @@ Registry:
 
 Account:
     - ClassHash: 0x45d67b8590561c9b54e14dd309c9f38c4e2c554dd59414021f9d079811621bd
+
+---------------------------------------------------------------------------------------------------
+SEPOLIA v3 :
+
+Registry:
+    - ClassHash: 0x7bf0cad6d569f43780ab5d3a50aa874050ac45192f471e3c88f2ce9ae0b3d75
+    - Contract: 0x23a6d289a1e5067d905e195056c322381a78a3bc9ab3b0480f542fad87cc580
+
+Account:
+    - ClassHash: 0x7396dc2e3ac3b50eac9b12447d7dcc2cfddef27405c680d46d6b13dae90d804
