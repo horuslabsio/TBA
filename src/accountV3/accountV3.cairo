@@ -127,14 +127,14 @@ pub mod AccountV3 {
             if (get_caller_address() == _token_contract
                 && token_id == _token_id
                 && tx_info.chain_id == _chain_id) {
-                panic!("Account: ownership cycle!");
+                panic(array!['Account: ownership cycle!']);
             }
 
             return 0x3a0dff5f70d80458ad14ae37bb182a728e3c8cdda0402a5daa86620bdf910bc;
         }
 
         /// @notice retrieves deployment details of an account
-        fn get_context(self: @ContractState) -> (ContractAddress, felt252, felt252) {
+        fn context(self: @ContractState) -> (ContractAddress, felt252, felt252) {
             self.account._context()
         }
     }
@@ -191,9 +191,9 @@ pub mod AccountV3 {
         /// @notice replaces the contract's class hash with `new_class_hash`.
         /// Emits an `Upgraded` event.
         fn upgrade(ref self: ContractState, new_class_hash: ClassHash) {
-            // validate signer
+            // validate signer is owner
             let caller = get_caller_address();
-            assert(self.is_valid_signer(caller), Errors::UNAUTHORIZED);
+            assert(self.signatory._base_signer_validation(caller), Errors::UNAUTHORIZED);
 
             // cannot make this call when the account is lock
             let (is_locked, _) = self.lockable.is_locked();

@@ -8,17 +8,15 @@ use snforge_std::{
 };
 
 use token_bound_accounts::interfaces::IRegistry::{IRegistryDispatcherTrait, IRegistryDispatcher};
+use token_bound_accounts::interfaces::IAccount::{IAccountDispatcher, IAccountDispatcherTrait};
+use token_bound_accounts::interfaces::IERC721::{IERC721Dispatcher, IERC721DispatcherTrait};
+use token_bound_accounts::components::presets::account_preset::AccountPreset;
 use token_bound_accounts::registry::registry::Registry;
 
-use token_bound_accounts::interfaces::IUpgradeable::{
-    IUpgradeableDispatcher, IUpgradeableDispatcherTrait
-};
-
-use token_bound_accounts::interfaces::IAccount::{IAccountDispatcher, IAccountDispatcherTrait};
-use token_bound_accounts::components::presets::account_preset::AccountPreset;
-
-use token_bound_accounts::test_helper::erc721_helper::{
-    IERC721Dispatcher, IERC721DispatcherTrait, ERC721
+use token_bound_accounts::test_helper::{
+    hello_starknet::{IHelloStarknetDispatcher, IHelloStarknetDispatcherTrait, HelloStarknet},
+    simple_account::{ISimpleAccountDispatcher, ISimpleAccountDispatcherTrait, SimpleAccount},
+    erc721_helper::ERC721
 };
 
 const ACCOUNT: felt252 = 1234;

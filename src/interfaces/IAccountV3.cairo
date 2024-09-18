@@ -12,5 +12,5 @@ pub trait IAccountV3<TContractState> {
         token_id: u256,
         data: Span<felt252>
     ) -> felt252;
-    fn get_context(self: @TContractState) -> (ContractAddress, felt252, felt252);
+    fn context(self: @TContractState) -> (ContractAddress, felt252, felt252);
 }

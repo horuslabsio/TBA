@@ -11,30 +11,19 @@ use core::hash::HashStateTrait;
 use core::pedersen::PedersenTrait;
 
 use token_bound_accounts::interfaces::IRegistry::{IRegistryDispatcherTrait, IRegistryDispatcher};
-use token_bound_accounts::interfaces::IAccount::{
-    IAccountDispatcher, IAccountDispatcherTrait, IAccountSafeDispatcher, IAccountSafeDispatcherTrait
-};
+use token_bound_accounts::interfaces::IAccount::{IAccountDispatcher, IAccountDispatcherTrait};
 use token_bound_accounts::interfaces::IPermissionable::{
     IPermissionableDispatcher, IPermissionableDispatcherTrait
 };
 use token_bound_accounts::interfaces::ISignatory::{ISignatoryDispatcher, ISignatoryDispatcherTrait};
-use token_bound_accounts::interfaces::IExecutable::{
-    IExecutableDispatcher, IExecutableDispatcherTrait
-};
-use token_bound_accounts::interfaces::IUpgradeable::{
-    IUpgradeableDispatcher, IUpgradeableDispatcherTrait
-};
+use token_bound_accounts::interfaces::IERC721::{IERC721Dispatcher, IERC721DispatcherTrait};
 use token_bound_accounts::components::presets::account_preset::AccountPreset;
-use token_bound_accounts::components::account::account::AccountComponent;
-use token_bound_accounts::registry::registry::Registry;
-
 use token_bound_accounts::components::signatory::signatory::SignatoryComponent;
-use token_bound_accounts::components::permissionable::permissionable::PermissionableComponent;
 
 use token_bound_accounts::test_helper::{
     hello_starknet::{IHelloStarknetDispatcher, IHelloStarknetDispatcherTrait, HelloStarknet},
-    erc721_helper::{IERC721Dispatcher, IERC721DispatcherTrait, ERC721},
-    simple_account::{ISimpleAccountDispatcher, ISimpleAccountDispatcherTrait, SimpleAccount}
+    simple_account::{ISimpleAccountDispatcher, ISimpleAccountDispatcherTrait, SimpleAccount},
+    erc721_helper::ERC721
 };
 
 const ACCOUNT1: felt252 = 5729;
