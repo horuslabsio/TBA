@@ -116,16 +116,16 @@ fn __setup__() -> (
 #[test]
 fn test_on_erc721_received() {
     let (contract_address, erc721_contract_address, _, _, _, account_v3_contract_address) =
-    __setup__();
+        __setup__();
     let dispatcher = IAccountDispatcher { contract_address };
     let dispatcher_v3 = IAccountV3Dispatcher { contract_address: account_v3_contract_address };
     let owner = dispatcher.owner();
     let (token_contract, token_id, chain_id) = dispatcher.token();
 
-     let mut extra_data = array![];
-     start_cheat_caller_address(account_v3_contract_address, owner);
-    let on_erc721_received = dispatcher_v3.on_erc721_received(owner, token_contract, token_id,
-    extra_data.span());
+    let mut extra_data = array![];
+    start_cheat_caller_address(account_v3_contract_address, owner);
+    let on_erc721_received = dispatcher_v3
+        .on_erc721_received(owner, token_contract, token_id, extra_data.span());
     println!("result of on_erc721_received: {:?}", on_erc721_received);
     stop_cheat_caller_address(account_v3_contract_address);
 }
