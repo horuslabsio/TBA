@@ -212,3 +212,48 @@ fn test_set_permission_emits_event() {
         );
 }
 
+
+#[test]
+fn test_permissioned_accounts_can_execute() {
+    let (contract_address, _) = __setup__();
+    let acct_dispatcher = IAccountDispatcher { contract_address: contract_address };
+    let safe_dispatcher = IExecutableDispatcher { contract_address };
+    let owner = acct_dispatcher.owner();
+
+    let mut permission_addresses = ArrayTrait::new();
+    permission_addresses.append(ACCOUNT2.try_into().unwrap());
+    permission_addresses.append(ACCOUNT3.try_into().unwrap());
+    permission_addresses.append(ACCOUNT4.try_into().unwrap());
+
+    let mut permissions = ArrayTrait::new();
+    permissions.append(true);
+    permissions.append(true);
+    permissions.append(false);
+
+    start_cheat_caller_address(contract_address, owner);
+
+    let permissionable_dispatcher = IPermissionableDispatcher { contract_address };
+    permissionable_dispatcher.set_permission(permission_addresses, permissions);
+
+    let has_permission2 = permissionable_dispatcher
+        .has_permission(owner, ACCOUNT2.try_into().unwrap());
+    assert(has_permission2 == true, 'Account: permitted');
+
+    // deploy `HelloStarknet` contract for testing
+    let test_contract = declare("HelloStarknet").unwrap();
+    let (test_address, _) = test_contract.deploy(@array![]).unwrap();
+
+    // craft calldata for call array
+    let mut calldata = array![100].span();
+    let call = Call {
+        to: test_address,
+        selector: 1530486729947006463063166157847785599120665941190480211966374137237989315360,
+        calldata: calldata
+    };
+
+    start_cheat_caller_address(contract_address, ACCOUNT2.try_into().unwrap());
+    safe_dispatcher.execute(array![call]);
+
+    stop_cheat_caller_address(contract_address);
+}
+
