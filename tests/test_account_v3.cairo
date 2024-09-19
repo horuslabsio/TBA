@@ -13,6 +13,11 @@ use token_bound_accounts::interfaces::IRegistry::{IRegistryDispatcherTrait, IReg
 use token_bound_accounts::interfaces::IERC721::{
     IERC721Dispatcher, IERC721DispatcherTrait, IERC721SafeDispatcher, IERC721SafeDispatcherTrait
 };
+use token_bound_accounts::interfaces::IAccount::{IAccountDispatcher, IAccountDispatcherTrait};
+use token_bound_accounts::interfaces::IPermissionable::{
+    IPermissionableDispatcher, IPermissionableDispatcherTrait
+};
+use token_bound_accounts::interfaces::ISignatory::{ISignatoryDispatcher, ISignatoryDispatcherTrait};
 use token_bound_accounts::interfaces::IAccountV3::{IAccountV3Dispatcher, IAccountV3DispatcherTrait};
 use token_bound_accounts::test_helper::{
     hello_starknet::{IHelloStarknetDispatcher, IHelloStarknetDispatcherTrait, HelloStarknet},
@@ -22,6 +27,7 @@ use token_bound_accounts::test_helper::{
 
 
 const ACCOUNT: felt252 = 1234;
+const ACCOUNT1: felt252 = 5739;
 const ACCOUNT2: felt252 = 5729;
 const SALT: felt252 = 123;
 
@@ -124,3 +130,55 @@ fn test_context() {
     assert(_implementation == implementation, 'invalid implementation');
     assert(_salt == 20, 'invalid salt');
 }
+
+
+#[test]
+fn test_owner_and_permissioned_accounts_is_valid_signer() {
+    let (erc721_contract_address, _, account_v3_contract_address, _, _,) = __setup__();
+    let acct_dispatcher = IAccountDispatcher { contract_address: account_v3_contract_address };
+
+    let signatory_dispatcher = ISignatoryDispatcher {
+        contract_address: account_v3_contract_address
+    };
+
+    let owner = acct_dispatcher.owner();
+
+    // get token owner
+    let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };
+    let token_owner = token_dispatcher.ownerOf(1.try_into().unwrap());
+
+    let mut permission_addresses = ArrayTrait::new();
+    permission_addresses.append(ACCOUNT2.try_into().unwrap());
+    permission_addresses.append(token_owner);
+
+    let mut permissions = ArrayTrait::new();
+    permissions.append(true);
+    permissions.append(true);
+
+    start_cheat_caller_address(account_v3_contract_address, owner);
+
+    let permissionable_dispatcher = IPermissionableDispatcher {
+        contract_address: account_v3_contract_address
+    };
+    permissionable_dispatcher.set_permission(permission_addresses, permissions);
+
+    let has_permission2 = permissionable_dispatcher.has_permission(owner, token_owner);
+    assert(has_permission2 == true, 'Account: permitted');
+
+    stop_cheat_caller_address(account_v3_contract_address);
+
+    // check owner is a valid signer
+    start_cheat_caller_address(account_v3_contract_address, owner);
+    let is_valid_signer = signatory_dispatcher.is_valid_signer(owner);
+    assert(is_valid_signer == true, 'should be a valid signer');
+
+    stop_cheat_caller_address(account_v3_contract_address);
+
+    // check permission address is a valid signer
+    start_cheat_caller_address(account_v3_contract_address, token_owner);
+    let is_valid_signer = signatory_dispatcher.is_valid_signer(token_owner);
+    assert(is_valid_signer == true, 'should be a valid signer');
+
+    stop_cheat_caller_address(account_v3_contract_address);
+}
+
