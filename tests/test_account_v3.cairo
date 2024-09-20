@@ -1,9 +1,9 @@
 use starknet::{ContractAddress, account::Call};
 use snforge_std::{
-    declare, start_cheat_caller_address, stop_cheat_caller_address,
-    start_cheat_transaction_hash, start_cheat_nonce, spy_events, EventSpyAssertionsTrait,
-    ContractClassTrait, ContractClass, start_cheat_chain_id, stop_cheat_chain_id,
-    start_cheat_chain_id_global, stop_cheat_chain_id_global,
+    declare, start_cheat_caller_address, stop_cheat_caller_address, start_cheat_transaction_hash,
+    start_cheat_nonce, spy_events, EventSpyAssertionsTrait, ContractClassTrait, ContractClass,
+    start_cheat_chain_id, stop_cheat_chain_id, start_cheat_chain_id_global,
+    stop_cheat_chain_id_global,
 };
 use core::hash::HashStateTrait;
 use core::pedersen::PedersenTrait;
@@ -143,8 +143,12 @@ fn test_context() {
 fn test_owner_and_permissioned_accounts_are_valid_signers() {
     let (_, _, account_v3_contract_address, _, _,) = __setup__();
     let acct_dispatcher = IAccountDispatcher { contract_address: account_v3_contract_address };
-    let signatory_dispatcher = ISignatoryDispatcher { contract_address: account_v3_contract_address };
-    let permissionable_dispatcher = IPermissionableDispatcher { contract_address: account_v3_contract_address };
+    let signatory_dispatcher = ISignatoryDispatcher {
+        contract_address: account_v3_contract_address
+    };
+    let permissionable_dispatcher = IPermissionableDispatcher {
+        contract_address: account_v3_contract_address
+    };
     let owner = acct_dispatcher.owner();
 
     // create array of permissioned addresses and permissions
@@ -169,12 +173,18 @@ fn test_owner_and_permissioned_accounts_are_valid_signers() {
 fn test_owner_and_any_permissioned_account_can_execute() {
     let (_, _, account_v3_contract_address, _, _,) = __setup__();
     let acct_dispatcher = IAccountDispatcher { contract_address: account_v3_contract_address };
-    let executable_dispatcher = IExecutableDispatcher { contract_address: account_v3_contract_address };
-    let permissionable_dispatcher = IPermissionableDispatcher { contract_address: account_v3_contract_address };
+    let executable_dispatcher = IExecutableDispatcher {
+        contract_address: account_v3_contract_address
+    };
+    let permissionable_dispatcher = IPermissionableDispatcher {
+        contract_address: account_v3_contract_address
+    };
     let owner = acct_dispatcher.owner();
 
     // create array of permissioned addresses and permissions
-    let mut permissioned_addresses = array![ACCOUNT2.try_into().unwrap(), ACCOUNT3.try_into().unwrap()];
+    let mut permissioned_addresses = array![
+        ACCOUNT2.try_into().unwrap(), ACCOUNT3.try_into().unwrap()
+    ];
     let mut permissions = array![true, true];
 
     start_cheat_caller_address(account_v3_contract_address, owner);
@@ -216,7 +226,9 @@ fn test_owner_and_any_permissioned_account_can_execute() {
 fn test_locked_account_cannot_execute() {
     let (_, _, account_v3_contract_address, _, _,) = __setup__();
     let acct_dispatcher = IAccountDispatcher { contract_address: account_v3_contract_address };
-    let executable_dispatcher = IExecutableDispatcher { contract_address: account_v3_contract_address };
+    let executable_dispatcher = IExecutableDispatcher {
+        contract_address: account_v3_contract_address
+    };
     let lockable_dispatcher = ILockableDispatcher { contract_address: account_v3_contract_address };
 
     let owner = acct_dispatcher.owner();
@@ -238,6 +250,52 @@ fn test_locked_account_cannot_execute() {
     };
 
     executable_dispatcher.execute(array![call]);
+    stop_cheat_caller_address(account_v3_contract_address);
+}
+
+
+#[test]
+fn test_owner_can_lock_account() {
+    let (_, _, account_v3_contract_address, _, _,) = __setup__();
+    let acct_dispatcher = IAccountDispatcher { contract_address: account_v3_contract_address };
+    let lockable_dispatcher = ILockableDispatcher { contract_address: account_v3_contract_address };
+    let owner = acct_dispatcher.owner();
+
+    // check owner can lock account
+    start_cheat_caller_address(account_v3_contract_address, owner);
+    lockable_dispatcher.lock(500);
+    let (lock_status, _) = lockable_dispatcher.is_locked();
+    assert(lock_status == true, 'account not locked!');
+    stop_cheat_caller_address(account_v3_contract_address);
+}
+
+#[test]
+fn test_permissioned_addresses_can_lock_account() {
+    let (_, _, account_v3_contract_address, _, _,) = __setup__();
+    let acct_dispatcher = IAccountDispatcher { contract_address: account_v3_contract_address };
+    let permissionable_dispatcher = IPermissionableDispatcher {
+        contract_address: account_v3_contract_address
+    };
+    let lockable_dispatcher = ILockableDispatcher { contract_address: account_v3_contract_address };
+    let owner = acct_dispatcher.owner();
+
+    // create array of permissioned addresses and permissions
+    let mut permissioned_addresses = array![
+        ACCOUNT2.try_into().unwrap(), ACCOUNT3.try_into().unwrap()
+    ];
+    let mut permissions = array![true, true];
+
+    // set permissions
+    start_cheat_caller_address(account_v3_contract_address, owner);
+    permissionable_dispatcher.set_permission(permissioned_addresses, permissions);
+    stop_cheat_caller_address(account_v3_contract_address);
+
+    // check permissioned account can lock account
+    start_cheat_caller_address(account_v3_contract_address, ACCOUNT2.try_into().unwrap());
+    lockable_dispatcher.lock(500);
+
+    let (lock_status, _) = lockable_dispatcher.is_locked();
+    assert(lock_status == true, 'account not locked!');
     stop_cheat_caller_address(account_v3_contract_address);
 }
 
@@ -269,13 +327,17 @@ fn test_owner_can_upgrade() {
 fn test_permissioned_accounts_cannot_upgrade() {
     let (_, _, account_v3_contract_address, _, _,) = __setup__();
     let acct_dispatcher = IAccountDispatcher { contract_address: account_v3_contract_address };
-    let permissionable_dispatcher = IPermissionableDispatcher { contract_address: account_v3_contract_address };
+    let permissionable_dispatcher = IPermissionableDispatcher {
+        contract_address: account_v3_contract_address
+    };
     let dispatcher = IUpgradeableDispatcher { contract_address: account_v3_contract_address };
     let new_class_hash = declare("UpgradedAccount").unwrap().class_hash;
     let owner = acct_dispatcher.owner();
 
     // create array of permissioned addresses and permissions
-    let mut permissioned_addresses = array![ACCOUNT2.try_into().unwrap(), ACCOUNT3.try_into().unwrap()];
+    let mut permissioned_addresses = array![
+        ACCOUNT2.try_into().unwrap(), ACCOUNT3.try_into().unwrap()
+    ];
     let mut permissions = array![true, true];
 
     start_cheat_caller_address(account_v3_contract_address, owner);
@@ -290,12 +352,16 @@ fn test_permissioned_accounts_cannot_upgrade() {
 fn test_owner_can_set_permissions() {
     let (_, _, account_v3_contract_address, _, _,) = __setup__();
     let acct_dispatcher = IAccountDispatcher { contract_address: account_v3_contract_address };
-    let permissionable_dispatcher = IPermissionableDispatcher { contract_address: account_v3_contract_address };
+    let permissionable_dispatcher = IPermissionableDispatcher {
+        contract_address: account_v3_contract_address
+    };
 
     let owner = acct_dispatcher.owner();
 
     // create array of permissioned addresses and permissions
-    let mut permissioned_addresses = array![ACCOUNT2.try_into().unwrap(), ACCOUNT3.try_into().unwrap()];
+    let mut permissioned_addresses = array![
+        ACCOUNT2.try_into().unwrap(), ACCOUNT3.try_into().unwrap()
+    ];
     let mut permissions = array![true, true];
 
     start_cheat_caller_address(account_v3_contract_address, owner);
@@ -311,11 +377,14 @@ fn test_owner_can_set_permissions() {
 #[should_panic(expected: ('Account: unauthorized',))]
 fn test_permissioned_accounts_caanot_set_permissions() {
     let (_, _, account_v3_contract_address, _, _,) = __setup__();
-    let acct_dispatcher = IAccountDispatcher { contract_address: account_v3_contract_address };
-    let permissionable_dispatcher = IPermissionableDispatcher { contract_address: account_v3_contract_address };
+    let permissionable_dispatcher = IPermissionableDispatcher {
+        contract_address: account_v3_contract_address
+    };
 
     // create array of permissioned addresses and permissions
-    let mut permissioned_addresses = array![ACCOUNT2.try_into().unwrap(), ACCOUNT3.try_into().unwrap()];
+    let mut permissioned_addresses = array![
+        ACCOUNT2.try_into().unwrap(), ACCOUNT3.try_into().unwrap()
+    ];
     let mut permissions = array![true, true];
 
     start_cheat_caller_address(account_v3_contract_address, ACCOUNT2.try_into().unwrap());

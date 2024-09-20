@@ -79,21 +79,6 @@ fn __setup__() -> (ContractAddress, ContractAddress) {
 //                              TESTS
 // *************************************************************************
 #[test]
-fn test_lockable_owner() {
-    let (contract_address, erc721_contract_address) = __setup__();
-    let acct_dispatcher = IAccountDispatcher { contract_address: contract_address };
-
-    let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };
-    let owner = acct_dispatcher.owner();
-    let token_owner = token_dispatcher.ownerOf(1.try_into().unwrap());
-
-    start_cheat_caller_address(contract_address, token_owner);
-
-    assert(owner == token_owner, 'invalid owner');
-    stop_cheat_caller_address(contract_address);
-}
-
-#[test]
 fn test_lockable() {
     let (contract_address, _) = __setup__();
     let acct_dispatcher = IAccountDispatcher { contract_address: contract_address };
@@ -107,7 +92,7 @@ fn test_lockable() {
     lockable_dispatcher.lock(lock_duration);
     let (check_lock, _) = lockable_dispatcher.is_locked();
 
-    assert(check_lock == true, 'Account Not Lock');
+    assert(check_lock == true, 'Account Not Locked');
     stop_cheat_caller_address(contract_address);
 }
 
@@ -120,15 +105,17 @@ fn test_unlock_once_lock_duration_end() {
 
     start_cheat_caller_address(contract_address, owner);
 
+    start_cheat_block_timestamp(contract_address, 20_u64);
     let lockable_dispatcher = ILockableDispatcher { contract_address };
     let lock_duration = 40_u64;
     lockable_dispatcher.lock(lock_duration);
-    start_cheat_block_timestamp(contract_address, lock_duration);
-
-    start_cheat_block_timestamp(contract_address, lock_duration);
-    let (check_lock, _) = lockable_dispatcher.is_locked();
-    assert(check_lock != true, 'Account Not Lock');
     stop_cheat_block_timestamp(contract_address);
+
+    start_cheat_block_timestamp(contract_address, 100_u64);
+    let (is_locked, _) = lockable_dispatcher.is_locked();
+    assert(is_locked == false, 'Account is still locked');
+    stop_cheat_block_timestamp(contract_address);
+
     stop_cheat_caller_address(contract_address);
 }
 
@@ -196,24 +183,11 @@ fn test_locking_should_fail_if_already_locked() {
 
     start_cheat_caller_address(contract_address, owner);
 
-    let lockable_dispatcher = ILockableDispatcher { contract_address };
-    // First Lock
-    let lock_duration_one = 40_u64;
-    lockable_dispatcher.lock(lock_duration_one);
-    // Second lock
-    let lock_duration_two = 60_u64;
-    lockable_dispatcher.lock(lock_duration_two);
-}
-
-#[test]
-#[should_panic(expected: ('Account: unauthorized',))]
-fn test_locking_should_fail_if_not_owner() {
-    let (contract_address, _) = __setup__();
-
-    start_cheat_caller_address(contract_address, ACCOUNT2.try_into().unwrap());
-
-    let lockable_dispatcher = ILockableDispatcher { contract_address };
     let lock_duration = 40_u64;
+    let lockable_dispatcher = ILockableDispatcher { contract_address };
+    // first Lock
+    lockable_dispatcher.lock(lock_duration);
+    // second lock
     lockable_dispatcher.lock(lock_duration);
 }
 

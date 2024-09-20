@@ -107,7 +107,6 @@ fn test_should_fail_if_unequal_permissioned_addresses_and_permissions() {
     permissionable_dispatcher.set_permission(permission_addresses, permissions)
 }
 
-
 #[test]
 fn test_set_permissions() {
     let (contract_address, _) = __setup__();
@@ -161,11 +160,11 @@ fn test_has_permissions() {
 
     let has_permission2 = permissionable_dispatcher
         .has_permission(owner, ACCOUNT2.try_into().unwrap());
-    assert(has_permission2 == true, 'Account: permitted');
+    assert(has_permission2 == true, 'Account: not permitted');
 
     let has_permission3 = permissionable_dispatcher
         .has_permission(owner, ACCOUNT3.try_into().unwrap());
-    assert(has_permission3 == true, 'Account: permitted');
+    assert(has_permission3 == true, 'Account: not permitted');
 
     let has_permission4 = permissionable_dispatcher
         .has_permission(owner, ACCOUNT4.try_into().unwrap());
@@ -216,12 +215,11 @@ fn test_set_permission_emits_event() {
         );
 }
 
-
 #[test]
 fn test_permissioned_accounts_can_execute() {
     let (contract_address, _) = __setup__();
     let acct_dispatcher = IAccountDispatcher { contract_address: contract_address };
-    let safe_dispatcher = IExecutableDispatcher { contract_address };
+    let executable_dispatcher = IExecutableDispatcher { contract_address };
     let owner = acct_dispatcher.owner();
 
     let mut permission_addresses = ArrayTrait::new();
@@ -256,8 +254,11 @@ fn test_permissioned_accounts_can_execute() {
     };
 
     start_cheat_caller_address(contract_address, ACCOUNT2.try_into().unwrap());
-    safe_dispatcher.execute(array![call]);
-
+    executable_dispatcher.execute(array![call]);
+    // check test contract state was updated
+    let test_dispatcher = IHelloStarknetDispatcher { contract_address: test_address };
+    let balance = test_dispatcher.get_balance();
+    assert(balance == 100, 'execute was not successful');
     stop_cheat_caller_address(contract_address);
 }
 

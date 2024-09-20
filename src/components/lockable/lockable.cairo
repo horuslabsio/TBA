@@ -59,7 +59,7 @@ pub mod LockableComponent {
     // *************************************************************************
     //                              CONSTANTS
     // *************************************************************************
-    pub const YEAR_DAYS_SECONDS: u64 = 31536000;
+    pub const YEAR_TO_SECONDS: u64 = 31536000;
 
     // *************************************************************************
     //                              PRIVATE FUNCTIONS
@@ -73,11 +73,11 @@ pub mod LockableComponent {
         impl SRC5: SRC5Component::HasComponent<TContractState>
     > of LockablePrivateTrait<TContractState> {
         // @notice locks an account
-        // @param lock_until duration for which account should be locked
+        // @param lock_until time at which this account will no longer be locked
         fn lock(ref self: ComponentState<TContractState>, lock_until: u64) {
             let current_timestamp = get_block_timestamp();
             assert(
-                lock_until <= current_timestamp + YEAR_DAYS_SECONDS, Errors::EXCEEDS_MAX_LOCK_TIME
+                lock_until <= current_timestamp + YEAR_TO_SECONDS, Errors::EXCEEDS_MAX_LOCK_TIME
             );
 
             let (lock_status, _) = self.is_locked();
@@ -89,12 +89,11 @@ pub mod LockableComponent {
 
             // set the lock_util which set the period the account is lock
             self.lock_until.write(lock_until);
-            // emit event
             self
                 .emit(
                     AccountLocked {
                         account: get_caller_address(),
-                        locked_at: get_block_timestamp(),
+                        locked_at: current_timestamp,
                         lock_until: lock_until
                     }
                 );

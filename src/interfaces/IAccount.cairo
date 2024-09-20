@@ -5,9 +5,9 @@ use starknet::ContractAddress;
 use starknet::ClassHash;
 use starknet::account::Call;
 
-// SRC5 interface for token bound accounts
+// SRC5 interface
 pub const TBA_INTERFACE_ID: felt252 =
-    0xd050d1042482f6e9a28d0c039d0a8428266bf4fd59fe95cee66d8e0e8b3b2e;
+    0x2f8e98cc382ee33eaee204ec389718628a8ce59efa3eb7e72e4d5c0f2dfa06b;
 
 #[starknet::interface]
 pub trait IAccount<TContractState> {

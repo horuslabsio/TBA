@@ -239,10 +239,6 @@ pub mod AccountV3 {
             permissioned_addresses: Array<ContractAddress>,
             permissions: Array<bool>
         ) {
-            // validate signer is owner
-            let caller = get_caller_address();
-            assert(self.signatory._base_signer_validation(caller), Errors::UNAUTHORIZED);
-
             // set permissions
             self.permissionable.set_permission(permissioned_addresses, permissions)
         }

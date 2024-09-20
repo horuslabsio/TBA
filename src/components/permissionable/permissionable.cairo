@@ -75,9 +75,14 @@ pub mod PermissionableComponent {
         ) {
             assert(permissioned_addresses.len() == permissions.len(), Errors::INVALID_LENGTH);
 
+            // check only owner can set permissions
             let account_comp = get_dep_component!(@self, Account);
             let owner = account_comp.owner();
             assert(owner == get_caller_address(), Errors::UNAUTHORIZED);
+
+            // update account state
+            let mut account_comp_mut = get_dep_component_mut!(ref self, Account);
+            account_comp_mut._update_state();
 
             let length = permissioned_addresses.len();
             let mut index: u32 = 0;
