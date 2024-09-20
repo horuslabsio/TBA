@@ -301,3 +301,41 @@ fn test_owner_can_upgrade() {
     assert(version == 1_u8, 'upgrade unsuccessful');
     stop_cheat_caller_address(account_v3_contract_address);
 }
+
+#[test]
+#[should_panic(expected: ('Account: unauthorized',))]
+fn test_permissioned_accounts_can_not_upgrade() {
+    // let (contract_address, _) = __setup__();
+    let (erc721_contract_address, _, account_v3_contract_address, _, _,) = __setup__();
+    let acct_dispatcher = IAccountDispatcher { contract_address: account_v3_contract_address };
+    let safe_dispatcher = IExecutableDispatcher { contract_address: account_v3_contract_address };
+    let new_class_hash = declare("UpgradedAccount").unwrap().class_hash;
+    let owner = acct_dispatcher.owner();
+
+    let mut permission_addresses = ArrayTrait::new();
+    permission_addresses.append(ACCOUNT2.try_into().unwrap());
+    permission_addresses.append(ACCOUNT3.try_into().unwrap());
+    permission_addresses.append(ACCOUNT4.try_into().unwrap());
+
+    let mut permissions = ArrayTrait::new();
+    permissions.append(true);
+    permissions.append(true);
+    permissions.append(false);
+
+    start_cheat_caller_address(account_v3_contract_address, owner);
+
+    let permissionable_dispatcher = IPermissionableDispatcher {
+        contract_address: account_v3_contract_address
+    };
+    permissionable_dispatcher.set_permission(permission_addresses, permissions);
+
+    let has_permission2 = permissionable_dispatcher
+        .has_permission(owner, ACCOUNT2.try_into().unwrap());
+    assert(has_permission2 == true, 'Account: permitted');
+
+    // call the upgrade function
+    let dispatcher = IUpgradeableDispatcher { contract_address: account_v3_contract_address };
+    start_cheat_caller_address(account_v3_contract_address, ACCOUNT2.try_into().unwrap());
+    dispatcher.upgrade(new_class_hash);
+}
+
