@@ -4,7 +4,7 @@ use snforge_std::{
     start_cheat_account_contract_address, stop_cheat_account_contract_address,
     start_cheat_transaction_hash, start_cheat_nonce, spy_events, EventSpyAssertionsTrait,
     ContractClassTrait, ContractClass, start_cheat_chain_id, stop_cheat_chain_id,
-    start_cheat_chain_id_global, stop_cheat_chain_id_global
+    start_cheat_chain_id_global, stop_cheat_chain_id_global,
 };
 use core::hash::HashStateTrait;
 use core::pedersen::PedersenTrait;
@@ -194,7 +194,6 @@ fn test_owner_and_permissioned_accounts_is_valid_signer() {
 
 #[test]
 fn test_owner_and_any_permissioned_accounts_can_execute() {
-    // let (contract_address, _) = __setup__();
     let (erc721_contract_address, _, account_v3_contract_address, _, _,) = __setup__();
     let acct_dispatcher = IAccountDispatcher { contract_address: account_v3_contract_address };
     let safe_dispatcher = IExecutableDispatcher { contract_address: account_v3_contract_address };
@@ -247,7 +246,6 @@ fn test_owner_and_any_permissioned_accounts_can_execute() {
 #[test]
 #[should_panic(expected: ('Account: locked',))]
 fn test_locked_account_cannot_execute() {
-    // let (contract_address, _) = __setup__();
     let (erc721_contract_address, _, account_v3_contract_address, _, _,) = __setup__();
     let acct_dispatcher = IAccountDispatcher { contract_address: account_v3_contract_address };
     let safe_dispatcher = IExecutableDispatcher { contract_address: account_v3_contract_address };
@@ -280,7 +278,6 @@ fn test_locked_account_cannot_execute() {
 
 #[test]
 fn test_owner_can_upgrade() {
-    // let (contract_address, erc721_contract_address) = __setup__();
     let (erc721_contract_address, _, account_v3_contract_address, _, _,) = __setup__();
     let new_class_hash = declare("UpgradedAccount").unwrap().class_hash;
 
@@ -305,7 +302,6 @@ fn test_owner_can_upgrade() {
 #[test]
 #[should_panic(expected: ('Account: unauthorized',))]
 fn test_permissioned_accounts_can_not_upgrade() {
-    // let (contract_address, _) = __setup__();
     let (erc721_contract_address, _, account_v3_contract_address, _, _,) = __setup__();
     let acct_dispatcher = IAccountDispatcher { contract_address: account_v3_contract_address };
     let safe_dispatcher = IExecutableDispatcher { contract_address: account_v3_contract_address };
@@ -339,3 +335,33 @@ fn test_permissioned_accounts_can_not_upgrade() {
     dispatcher.upgrade(new_class_hash);
 }
 
+#[test]
+fn test_only_owner_can_set_permissions() {
+    let (erc721_contract_address, _, account_v3_contract_address, _, _,) = __setup__();
+    let acct_dispatcher = IAccountDispatcher { contract_address: account_v3_contract_address };
+
+    let owner = acct_dispatcher.owner();
+
+    let mut permission_addresses = ArrayTrait::new();
+    permission_addresses.append(ACCOUNT2.try_into().unwrap());
+    permission_addresses.append(ACCOUNT3.try_into().unwrap());
+    permission_addresses.append(ACCOUNT4.try_into().unwrap());
+
+    let mut permissions = ArrayTrait::new();
+    permissions.append(true);
+    permissions.append(true);
+    permissions.append(true);
+
+    start_cheat_caller_address(account_v3_contract_address, owner);
+
+    let permissionable_dispatcher = IPermissionableDispatcher {
+        contract_address: account_v3_contract_address
+    };
+    permissionable_dispatcher.set_permission(permission_addresses, permissions);
+
+    let has_permission = permissionable_dispatcher
+        .has_permission(owner, ACCOUNT2.try_into().unwrap());
+
+    assert(has_permission == true, 'Account: not permitted');
+    stop_cheat_caller_address(account_v3_contract_address);
+}
