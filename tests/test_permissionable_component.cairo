@@ -18,6 +18,10 @@ use token_bound_accounts::interfaces::IPermissionable::{
 use token_bound_accounts::interfaces::IExecutable::{
     IExecutableDispatcher, IExecutableDispatcherTrait
 };
+
+use token_bound_accounts::interfaces::IUpgradeable::{
+    IUpgradeableDispatcher, IUpgradeableDispatcherTrait
+};
 use token_bound_accounts::interfaces::IERC721::{IERC721Dispatcher, IERC721DispatcherTrait};
 use token_bound_accounts::components::presets::account_preset::AccountPreset;
 use token_bound_accounts::components::permissionable::permissionable::PermissionableComponent;
@@ -210,5 +214,88 @@ fn test_set_permission_emits_event() {
                 )
             ]
         );
+}
+
+
+#[test]
+fn test_permissioned_accounts_can_execute() {
+    let (contract_address, _) = __setup__();
+    let acct_dispatcher = IAccountDispatcher { contract_address: contract_address };
+    let safe_dispatcher = IExecutableDispatcher { contract_address };
+    let owner = acct_dispatcher.owner();
+
+    let mut permission_addresses = ArrayTrait::new();
+    permission_addresses.append(ACCOUNT2.try_into().unwrap());
+    permission_addresses.append(ACCOUNT3.try_into().unwrap());
+    permission_addresses.append(ACCOUNT4.try_into().unwrap());
+
+    let mut permissions = ArrayTrait::new();
+    permissions.append(true);
+    permissions.append(true);
+    permissions.append(false);
+
+    start_cheat_caller_address(contract_address, owner);
+
+    let permissionable_dispatcher = IPermissionableDispatcher { contract_address };
+    permissionable_dispatcher.set_permission(permission_addresses, permissions);
+
+    let has_permission2 = permissionable_dispatcher
+        .has_permission(owner, ACCOUNT2.try_into().unwrap());
+    assert(has_permission2 == true, 'Account: permitted');
+
+    // deploy `HelloStarknet` contract for testing
+    let test_contract = declare("HelloStarknet").unwrap();
+    let (test_address, _) = test_contract.deploy(@array![]).unwrap();
+
+    // craft calldata for call array
+    let mut calldata = array![100].span();
+    let call = Call {
+        to: test_address,
+        selector: 1530486729947006463063166157847785599120665941190480211966374137237989315360,
+        calldata: calldata
+    };
+
+    start_cheat_caller_address(contract_address, ACCOUNT2.try_into().unwrap());
+    safe_dispatcher.execute(array![call]);
+
+    stop_cheat_caller_address(contract_address);
+}
+
+#[test]
+fn test_permissioned_accounts_can_upgrade() {
+    let (contract_address, erc721_contract_address) = __setup__();
+    let acct_dispatcher = IAccountDispatcher { contract_address: contract_address };
+    let owner = acct_dispatcher.owner();
+
+    // get token owner
+    let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };
+    let token_owner = token_dispatcher.ownerOf(1.try_into().unwrap());
+
+    let mut permission_addresses = ArrayTrait::new();
+    permission_addresses.append(ACCOUNT2.try_into().unwrap());
+    permission_addresses.append(token_owner);
+
+    let mut permissions = ArrayTrait::new();
+    permissions.append(true);
+    permissions.append(true);
+
+    start_cheat_caller_address(contract_address, owner);
+
+    let permissionable_dispatcher = IPermissionableDispatcher { contract_address };
+    permissionable_dispatcher.set_permission(permission_addresses, permissions);
+
+    let has_permission2 = permissionable_dispatcher.has_permission(owner, token_owner);
+    assert(has_permission2 == true, 'Account: permitted');
+
+    stop_cheat_caller_address(contract_address);
+
+    let new_class_hash = declare("UpgradedAccount").unwrap().class_hash;
+
+    // call the upgrade function
+    let dispatcher = IUpgradeableDispatcher { contract_address };
+
+    start_cheat_caller_address(contract_address, token_owner);
+    dispatcher.upgrade(new_class_hash);
+    stop_cheat_caller_address(contract_address);
 }
 
