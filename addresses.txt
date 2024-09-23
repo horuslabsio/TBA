@@ -36,4 +36,4 @@ Registry:
     - Contract: 0x23a6d289a1e5067d905e195056c322381a78a3bc9ab3b0480f542fad87cc580
 
 Account:
-    - ClassHash: 0x7396dc2e3ac3b50eac9b12447d7dcc2cfddef27405c680d46d6b13dae90d804
+    - ClassHash: 0x29d2a1b11dd97289e18042502f11356133a2201dd19e716813fb01fbee9e9a4
