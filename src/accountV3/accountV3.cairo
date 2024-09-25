@@ -175,7 +175,7 @@ pub mod AccountV3 {
             assert(self.is_valid_signer(caller), Errors::UNAUTHORIZED);
 
             // cannot make this call when the account is lock
-            let (is_locked, _) = self.lockable.is_locked();
+            let (is_locked, _) = self.lockable._is_locked();
             assert(is_locked != true, Errors::ACCOUNT_LOCKED);
 
             // execute calls
@@ -196,7 +196,7 @@ pub mod AccountV3 {
             assert(self.signatory._base_signer_validation(caller), Errors::UNAUTHORIZED);
 
             // cannot make this call when the account is lock
-            let (is_locked, _) = self.lockable.is_locked();
+            let (is_locked, _) = self.lockable._is_locked();
             assert(is_locked != true, Errors::ACCOUNT_LOCKED);
 
             // upgrade account
@@ -217,12 +217,12 @@ pub mod AccountV3 {
             assert(self.is_valid_signer(caller), Errors::UNAUTHORIZED);
 
             // lock account
-            self.lockable.lock(lock_until);
+            self.lockable._lock(lock_until);
         }
 
         // @notice returns the lock status of an account
         fn is_locked(self: @ContractState) -> (bool, u64) {
-            self.lockable.is_locked()
+            self.lockable._is_locked()
         }
     }
 
@@ -240,7 +240,7 @@ pub mod AccountV3 {
             permissions: Array<bool>
         ) {
             // set permissions
-            self.permissionable.set_permission(permissioned_addresses, permissions)
+            self.permissionable._set_permission(permissioned_addresses, permissions)
         }
 
         // @notice returns if a user has permission or not
@@ -249,7 +249,7 @@ pub mod AccountV3 {
         fn has_permission(
             self: @ContractState, owner: ContractAddress, permissioned_address: ContractAddress
         ) -> bool {
-            self.permissionable.has_permission(owner, permissioned_address)
+            self.permissionable._has_permission(owner, permissioned_address)
         }
     }
 }

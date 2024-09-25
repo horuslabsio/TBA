@@ -115,7 +115,7 @@ pub mod AccountPreset {
             assert(self.is_valid_signer(caller), 'Account: unauthorized');
 
             // cannot make this call when the account is lock
-            let (is_locked, _) = self.lockable.is_locked();
+            let (is_locked, _) = self.lockable._is_locked();
             assert(is_locked != true, 'Account: locked');
 
             // execute calls
@@ -134,7 +134,7 @@ pub mod AccountPreset {
             assert(self.is_valid_signer(caller), 'Account: unauthorized');
 
             // cannot make this call when the account is lock
-            let (is_locked, _) = self.lockable.is_locked();
+            let (is_locked, _) = self.lockable._is_locked();
             assert(is_locked != true, 'Account: locked');
 
             // upgrade account
@@ -153,11 +153,11 @@ pub mod AccountPreset {
             assert(self.is_valid_signer(caller), 'Account: unauthorized');
 
             // lock account
-            self.lockable.lock(lock_until);
+            self.lockable._lock(lock_until);
         }
 
         fn is_locked(self: @ContractState) -> (bool, u64) {
-            self.lockable.is_locked()
+            self.lockable._is_locked()
         }
     }
 
@@ -172,13 +172,13 @@ pub mod AccountPreset {
             permissions: Array<bool>
         ) {
             // set permissions
-            self.permissionable.set_permission(permissioned_addresses, permissions)
+            self.permissionable._set_permission(permissioned_addresses, permissions)
         }
 
         fn has_permission(
             self: @ContractState, owner: ContractAddress, permissioned_address: ContractAddress
         ) -> bool {
-            self.permissionable.has_permission(owner, permissioned_address)
+            self.permissionable._has_permission(owner, permissioned_address)
         }
     }
 }

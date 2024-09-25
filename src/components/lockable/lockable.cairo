@@ -74,13 +74,13 @@ pub mod LockableComponent {
     > of LockablePrivateTrait<TContractState> {
         // @notice locks an account
         // @param lock_until time at which this account will no longer be locked
-        fn lock(ref self: ComponentState<TContractState>, lock_until: u64) {
+        fn _lock(ref self: ComponentState<TContractState>, lock_until: u64) {
             let current_timestamp = get_block_timestamp();
             assert(
                 lock_until <= current_timestamp + YEAR_TO_SECONDS, Errors::EXCEEDS_MAX_LOCK_TIME
             );
 
-            let (lock_status, _) = self.is_locked();
+            let (lock_status, _) = self._is_locked();
             assert(lock_status != true, Errors::LOCKED_ACCOUNT);
 
             // update account state
@@ -100,7 +100,7 @@ pub mod LockableComponent {
         }
 
         // @notice returns the lock status of an account
-        fn is_locked(self: @ComponentState<TContractState>) -> (bool, u64) {
+        fn _is_locked(self: @ComponentState<TContractState>) -> (bool, u64) {
             let unlock_timestamp = self.lock_until.read();
             let current_time = get_block_timestamp();
             if (current_time < unlock_timestamp) {
