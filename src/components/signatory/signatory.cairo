@@ -68,7 +68,7 @@ pub mod SignatoryComponent {
 
             // check if signer has permissions
             let permission = get_dep_component!(self, Permissionable);
-            let is_permissioned = permission.has_permission(owner, signer);
+            let is_permissioned = permission._has_permission(owner, signer);
 
             // validate
             if (signer == owner) {

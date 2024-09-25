@@ -68,7 +68,7 @@ pub mod PermissionableComponent {
         // @notice sets permission for an account
         // @permissioned_addresses array of addresses who's permission is to be updated
         // @param permssions permission value <true, false>
-        fn set_permission(
+        fn _set_permission(
             ref self: ComponentState<TContractState>,
             permissioned_addresses: Array<ContractAddress>,
             permissions: Array<bool>
@@ -105,7 +105,7 @@ pub mod PermissionableComponent {
         // @notice returns if a user has permission or not
         // @param owner tokenbound account owner
         // @param permissioned_address address to check permission for
-        fn has_permission(
+        fn _has_permission(
             self: @ComponentState<TContractState>,
             owner: ContractAddress,
             permissioned_address: ContractAddress
