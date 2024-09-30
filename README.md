@@ -1,8 +1,8 @@
-# ERC-6551 Reference Implementation on Starknet (SNIP-14)
+# ERC-6551 Implementation on Starknet (SNIP-14)
 
 This repository contains the reference implementation of ERC-6551 on Starknet.
 
-**NB:** This project is under active development and may undergo changes until SNIP-14 is finalized. 
+**NB:** This project is under active development and may undergo changes until [SNIP-14](https://github.com/starknet-io/SNIPs/blob/main/SNIPS/snip-14.md) is finalized. 
 
 ## The Tokenbound Standard
 This proposal defines a system which assigns contract accounts to Non-fungible tokens (ERC-721s).

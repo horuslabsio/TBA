@@ -11,11 +11,8 @@ pub mod Registry {
     use core::pedersen::PedersenTrait;
     use starknet::{
         ContractAddress, get_caller_address, get_contract_address,
-        syscalls::{call_contract_syscall, deploy_syscall}, class_hash::ClassHash,
-        SyscallResultTrait, storage::Map
+        syscalls::{call_contract_syscall, deploy_syscall}, class_hash::ClassHash, SyscallResultTrait
     };
-
-    use token_bound_accounts::interfaces::IERC721::{IERC721DispatcherTrait, IERC721Dispatcher};
     use token_bound_accounts::interfaces::IRegistry::IRegistry;
 
     // *************************************************************************

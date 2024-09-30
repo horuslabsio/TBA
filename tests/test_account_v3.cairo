@@ -1,14 +1,9 @@
 use starknet::{ContractAddress, account::Call};
 use snforge_std::{
-    declare, start_cheat_caller_address, stop_cheat_caller_address, start_cheat_transaction_hash,
-    start_cheat_nonce, spy_events, EventSpyAssertionsTrait, ContractClassTrait, ContractClass,
-    start_cheat_chain_id, stop_cheat_chain_id, start_cheat_chain_id_global,
-    stop_cheat_chain_id_global,
+    declare, start_cheat_caller_address, stop_cheat_caller_address, start_cheat_chain_id_global,
+    ContractClassTrait, DeclareResultTrait
 };
-use core::hash::HashStateTrait;
-use core::pedersen::PedersenTrait;
 
-use token_bound_accounts::interfaces::IRegistry::{IRegistryDispatcherTrait, IRegistryDispatcher};
 use token_bound_accounts::interfaces::IERC721::{
     IERC721Dispatcher, IERC721DispatcherTrait, IERC721SafeDispatcher, IERC721SafeDispatcherTrait
 };
@@ -26,10 +21,8 @@ use token_bound_accounts::interfaces::IPermissionable::{
 use token_bound_accounts::interfaces::ISignatory::{ISignatoryDispatcher, ISignatoryDispatcherTrait};
 use token_bound_accounts::interfaces::IAccountV3::{IAccountV3Dispatcher, IAccountV3DispatcherTrait};
 use token_bound_accounts::test_helper::{
-    hello_starknet::{IHelloStarknetDispatcher, IHelloStarknetDispatcherTrait, HelloStarknet},
-    simple_account::{ISimpleAccountDispatcher, ISimpleAccountDispatcherTrait, SimpleAccount},
-    account_upgrade::{IUpgradedAccountDispatcher, IUpgradedAccountDispatcherTrait, UpgradedAccount},
-    erc721_helper::ERC721
+    hello_starknet::{IHelloStarknetDispatcher, IHelloStarknetDispatcherTrait},
+    account_upgrade::{IUpgradedAccountDispatcher, IUpgradedAccountDispatcherTrait}
 };
 
 
@@ -46,14 +39,14 @@ const SALT: felt252 = 123;
 // *************************************************************************
 fn __setup__() -> (ContractAddress, ContractAddress, ContractAddress, ContractAddress, felt252) {
     // deploy erc721 helper contract
-    let erc721_contract = declare("ERC721").unwrap();
+    let erc721_contract = declare("ERC721").unwrap().contract_class();
     let mut erc721_constructor_calldata = array!['tokenbound', 'TBA'];
     let (erc721_contract_address, _) = erc721_contract
         .deploy(@erc721_constructor_calldata)
         .unwrap();
 
     // deploy recipient contract
-    let recipient_contract_class = declare("SimpleAccount").unwrap();
+    let recipient_contract_class = declare("SimpleAccount").unwrap().contract_class();
     let (recipient, _) = recipient_contract_class
         .deploy(
             @array![883045738439352841478194533192765345509759306772397516907181243450667673002]
@@ -66,17 +59,17 @@ fn __setup__() -> (ContractAddress, ContractAddress, ContractAddress, ContractAd
     dispatcher.mint(recipient, 2.try_into().unwrap());
 
     // deploy registry contract
-    let registry_contract = declare("Registry").unwrap();
+    let registry_contract = declare("Registry").unwrap().contract_class();
     let (registry_contract_address, _) = registry_contract.deploy(@array![]).unwrap();
 
     // deploy account V3 contract
-    let account_v3_contract_class = declare("AccountV3").unwrap();
+    let account_v3_contract_class = declare("AccountV3").unwrap().contract_class();
     let mut acct_constructor_calldata = array![
         erc721_contract_address.try_into().unwrap(),
         1,
         0,
         registry_contract_address.try_into().unwrap(),
-        account_v3_contract_class.class_hash.into(),
+        (*account_v3_contract_class.class_hash).into(),
         20
     ];
     let (account_v3_contract_address, _) = account_v3_contract_class
@@ -88,7 +81,7 @@ fn __setup__() -> (ContractAddress, ContractAddress, ContractAddress, ContractAd
         recipient,
         account_v3_contract_address,
         registry_contract_address,
-        account_v3_contract_class.class_hash.into()
+        (*account_v3_contract_class.class_hash).into()
     )
 }
 
@@ -191,7 +184,7 @@ fn test_owner_and_any_permissioned_account_can_execute() {
     permissionable_dispatcher.set_permission(permissioned_addresses, permissions);
 
     // deploy `HelloStarknet` contract for testing
-    let test_contract = declare("HelloStarknet").unwrap();
+    let test_contract = declare("HelloStarknet").unwrap().contract_class();
     let (test_address, _) = test_contract.deploy(@array![]).unwrap();
 
     // craft calldata for call array
@@ -238,7 +231,7 @@ fn test_locked_account_cannot_execute() {
     lockable_dispatcher.lock(lock_duration);
 
     // deploy `HelloStarknet` contract for testing
-    let test_contract = declare("HelloStarknet").unwrap();
+    let test_contract = declare("HelloStarknet").unwrap().contract_class();
     let (test_address, _) = test_contract.deploy(@array![]).unwrap();
 
     // craft calldata for call array
@@ -304,7 +297,8 @@ fn test_owner_can_upgrade() {
     let (_, _, account_v3_contract_address, _, _,) = __setup__();
     let acct_dispatcher = IAccountDispatcher { contract_address: account_v3_contract_address };
     let dispatcher = IUpgradeableDispatcher { contract_address: account_v3_contract_address };
-    let new_class_hash = declare("UpgradedAccount").unwrap().class_hash;
+    let upgraded_account_class = declare("UpgradedAccount").unwrap().contract_class();
+    let new_class_hash = *upgraded_account_class.class_hash;
 
     // get owner
     let owner = acct_dispatcher.owner();
@@ -331,7 +325,8 @@ fn test_permissioned_accounts_cannot_upgrade() {
         contract_address: account_v3_contract_address
     };
     let dispatcher = IUpgradeableDispatcher { contract_address: account_v3_contract_address };
-    let new_class_hash = declare("UpgradedAccount").unwrap().class_hash;
+    let upgraded_account_class = declare("UpgradedAccount").unwrap().contract_class();
+    let new_class_hash = *upgraded_account_class.class_hash;
     let owner = acct_dispatcher.owner();
 
     // create array of permissioned addresses and permissions

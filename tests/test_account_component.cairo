@@ -3,28 +3,21 @@
 // *************************************************************************
 use starknet::{ContractAddress, account::Call};
 use snforge_std::{
-    declare, start_cheat_caller_address, stop_cheat_caller_address,
-    start_cheat_account_contract_address, stop_cheat_account_contract_address,
-    start_cheat_transaction_hash, start_cheat_nonce, spy_events, EventSpyAssertionsTrait,
-    ContractClassTrait, ContractClass
+    declare, start_cheat_caller_address, start_cheat_transaction_hash, start_cheat_nonce,
+    spy_events, EventSpyAssertionsTrait, ContractClass, ContractClassTrait, DeclareResultTrait
 };
 use core::hash::HashStateTrait;
 use core::pedersen::PedersenTrait;
 
-use token_bound_accounts::interfaces::IRegistry::{IRegistryDispatcherTrait, IRegistryDispatcher};
 use token_bound_accounts::interfaces::IAccount::{IAccountDispatcher, IAccountDispatcherTrait};
 use token_bound_accounts::interfaces::IExecutable::{
     IExecutableDispatcher, IExecutableDispatcherTrait
 };
 use token_bound_accounts::interfaces::IERC721::{IERC721Dispatcher, IERC721DispatcherTrait};
-use token_bound_accounts::components::presets::account_preset::AccountPreset;
 use token_bound_accounts::components::account::account::AccountComponent;
-use token_bound_accounts::registry::registry::Registry;
 
 use token_bound_accounts::test_helper::{
-    hello_starknet::{IHelloStarknetDispatcher, IHelloStarknetDispatcherTrait, HelloStarknet},
-    simple_account::{ISimpleAccountDispatcher, ISimpleAccountDispatcherTrait, SimpleAccount},
-    erc721_helper::ERC721
+    hello_starknet::{IHelloStarknetDispatcher, IHelloStarknetDispatcherTrait},
 };
 
 const ACCOUNT: felt252 = 1234;
@@ -38,14 +31,14 @@ fn __setup__() -> (
     ContractAddress, ContractAddress, ContractAddress, ContractClass, ContractClass
 ) {
     // deploy erc721 helper contract
-    let erc721_contract = declare("ERC721").unwrap();
+    let erc721_contract = declare("ERC721").unwrap().contract_class();
     let mut erc721_constructor_calldata = array!['tokenbound', 'TBA'];
     let (erc721_contract_address, _) = erc721_contract
         .deploy(@erc721_constructor_calldata)
         .unwrap();
 
     // deploy recipient contract
-    let recipient_contract_class = declare("SimpleAccount").unwrap();
+    let recipient_contract_class = declare("SimpleAccount").unwrap().contract_class();
     let (recipient, _) = recipient_contract_class
         .deploy(
             @array![883045738439352841478194533192765345509759306772397516907181243450667673002]
@@ -57,17 +50,17 @@ fn __setup__() -> (
     dispatcher.mint(recipient, 1.try_into().unwrap());
 
     // deploy registry contract
-    let registry_contract = declare("Registry").unwrap();
+    let registry_contract = declare("Registry").unwrap().contract_class();
     let (registry_contract_address, _) = registry_contract.deploy(@array![]).unwrap();
 
     // deploy account contract
-    let account_contract_class = declare("AccountPreset").unwrap();
-    let mut acct_constructor_calldata = array![
+    let account_contract_class = declare("AccountPreset").unwrap().contract_class();
+    let mut acct_constructor_calldata: Array<felt252> = array![
         erc721_contract_address.try_into().unwrap(),
         1,
         0,
         registry_contract_address.try_into().unwrap(),
-        account_contract_class.class_hash.into(),
+        (*account_contract_class.class_hash).into(),
         20
     ];
     let (account_contract_address, _) = account_contract_class
@@ -78,8 +71,8 @@ fn __setup__() -> (
         account_contract_address,
         erc721_contract_address,
         registry_contract_address,
-        recipient_contract_class,
-        account_contract_class
+        *recipient_contract_class,
+        *account_contract_class
     )
 }
 
@@ -99,8 +92,8 @@ fn test_constructor() {
 
 #[test]
 fn test_event_is_emitted_on_initialization() {
-    // deploy erc721 contract
-    let erc721_contract = declare("ERC721").unwrap();
+    // deploy erc721 helper contract
+    let erc721_contract = declare("ERC721").unwrap().contract_class();
     let mut erc721_constructor_calldata = array!['tokenbound', 'TBA'];
     let (erc721_contract_address, _) = erc721_contract
         .deploy(@erc721_constructor_calldata)
@@ -114,17 +107,17 @@ fn test_event_is_emitted_on_initialization() {
     let mut spy = spy_events();
 
     // deploy registry contract
-    let registry_contract = declare("Registry").unwrap();
+    let registry_contract = declare("Registry").unwrap().contract_class();
     let (registry_contract_address, _) = registry_contract.deploy(@array![]).unwrap();
 
     // deploy account contract
-    let account_contract = declare("AccountPreset").unwrap();
+    let account_contract = declare("AccountPreset").unwrap().contract_class();
     let mut acct_constructor_calldata = array![
         erc721_contract_address.try_into().unwrap(),
         1,
         0,
         registry_contract_address.try_into().unwrap(),
-        account_contract.class_hash.into(),
+        (*account_contract.class_hash).into(),
         20
     ];
     let (account_contract_address, _) = account_contract
@@ -156,7 +149,7 @@ fn test_execute() {
     let dispatcher = IExecutableDispatcher { contract_address };
 
     // deploy `HelloStarknet` contract for testing
-    let test_contract = declare("HelloStarknet").unwrap();
+    let test_contract = declare("HelloStarknet").unwrap().contract_class();
     let (test_address, _) = test_contract.deploy(@array![]).unwrap();
 
     // craft calldata for call array
@@ -190,7 +183,7 @@ fn test_execute_multicall() {
     let dispatcher = IExecutableDispatcher { contract_address };
 
     // deploy `HelloStarknet` contract for testing
-    let test_contract = declare("HelloStarknet").unwrap();
+    let test_contract = declare("HelloStarknet").unwrap().contract_class();
     let (test_address, _) = test_contract.deploy(@array![]).unwrap();
 
     // craft calldata and create call array
@@ -231,7 +224,7 @@ fn test_execution_fails_if_invalid_signer() {
     let dispatcher = IExecutableDispatcher { contract_address };
 
     // deploy `HelloStarknet` contract for testing
-    let test_contract = declare("HelloStarknet").unwrap();
+    let test_contract = declare("HelloStarknet").unwrap().contract_class();
     let (test_address, _) = test_contract.deploy(@array![]).unwrap();
 
     // craft calldata for call array
@@ -256,7 +249,7 @@ fn test_execution_emits_event() {
     let dispatcher = IExecutableDispatcher { contract_address };
 
     // deploy `HelloStarknet` contract for testing
-    let test_contract = declare("HelloStarknet").unwrap();
+    let test_contract = declare("HelloStarknet").unwrap().contract_class();
     let (test_address, _) = test_contract.deploy(@array![]).unwrap();
 
     // craft calldata for call array
@@ -307,7 +300,7 @@ fn test_execution_updates_state() {
     let account_dispatcher = IAccountDispatcher { contract_address };
 
     // deploy `HelloStarknet` contract for testing
-    let test_contract = declare("HelloStarknet").unwrap();
+    let test_contract = declare("HelloStarknet").unwrap().contract_class();
     let (test_address, _) = test_contract.deploy(@array![]).unwrap();
 
     // craft calldata for call array

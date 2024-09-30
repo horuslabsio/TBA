@@ -8,15 +8,10 @@ pub mod AccountComponent {
         result::ResultTrait, hash::HashStateTrait, pedersen::PedersenTrait, num::traits::zero::Zero
     };
     use starknet::{
-        get_tx_info, get_caller_address, get_contract_address, get_block_timestamp, ContractAddress,
-        account::Call, syscalls::call_contract_syscall, syscalls::replace_class_syscall, ClassHash,
-        SyscallResultTrait, storage::StoragePointerWriteAccess
+        get_tx_info, get_contract_address, ContractAddress, account::Call,
+        syscalls::call_contract_syscall, storage::StoragePointerWriteAccess
     };
-
-    use token_bound_accounts::interfaces::IERC721::{IERC721DispatcherTrait, IERC721Dispatcher};
-    use token_bound_accounts::interfaces::IAccount::{
-        IAccount, IAccountDispatcherTrait, IAccountDispatcher, TBA_INTERFACE_ID
-    };
+    use token_bound_accounts::interfaces::IAccount::{IAccount, TBA_INTERFACE_ID};
 
     use openzeppelin::introspection::src5::SRC5Component;
     use openzeppelin::introspection::src5::SRC5Component::{SRC5Impl, InternalImpl};

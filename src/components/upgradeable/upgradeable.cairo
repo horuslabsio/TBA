@@ -3,9 +3,7 @@ pub mod UpgradeableComponent {
     // *************************************************************************
     //                              IMPORTS
     // *************************************************************************
-    use starknet::{
-        ClassHash, SyscallResultTrait, get_caller_address, get_contract_address, ContractAddress
-    };
+    use starknet::{ClassHash, SyscallResultTrait, get_contract_address, ContractAddress};
     use core::num::traits::zero::Zero;
 
     use token_bound_accounts::components::account::account::AccountComponent;

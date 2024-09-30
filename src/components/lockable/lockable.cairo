@@ -8,12 +8,7 @@ pub mod LockableComponent {
     use starknet::{ContractAddress, get_caller_address, get_block_timestamp};
 
     use token_bound_accounts::components::account::account::AccountComponent;
-    use token_bound_accounts::interfaces::IAccount::{IAccount, IAccountDispatcherTrait};
     use token_bound_accounts::components::account::account::AccountComponent::AccountPrivateImpl;
-    use token_bound_accounts::interfaces::ILockable::{
-        ILockable, ILockableDispatcher, ILockableDispatcherTrait
-    };
-
     use openzeppelin::introspection::src5::SRC5Component;
 
     // *************************************************************************

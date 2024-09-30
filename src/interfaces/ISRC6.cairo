@@ -1,5 +1,3 @@
-use starknet::ContractAddress;
-use starknet::ClassHash;
 use starknet::account::Call;
 
 #[starknet::interface]

@@ -2,8 +2,6 @@
 //                              BASE ACCOUNT INTERFACE
 // *************************************************************************
 use starknet::ContractAddress;
-use starknet::ClassHash;
-use starknet::account::Call;
 
 // SRC5 interface
 pub const TBA_INTERFACE_ID: felt252 =

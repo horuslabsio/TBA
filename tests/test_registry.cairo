@@ -4,20 +4,13 @@
 use starknet::ContractAddress;
 use snforge_std::{
     declare, start_cheat_caller_address, stop_cheat_caller_address, spy_events,
-    EventSpyAssertionsTrait, ContractClassTrait, ContractClass
+    EventSpyAssertionsTrait, ContractClassTrait, DeclareResultTrait
 };
 
 use token_bound_accounts::interfaces::IRegistry::{IRegistryDispatcherTrait, IRegistryDispatcher};
 use token_bound_accounts::interfaces::IAccount::{IAccountDispatcher, IAccountDispatcherTrait};
 use token_bound_accounts::interfaces::IERC721::{IERC721Dispatcher, IERC721DispatcherTrait};
-use token_bound_accounts::components::presets::account_preset::AccountPreset;
 use token_bound_accounts::registry::registry::Registry;
-
-use token_bound_accounts::test_helper::{
-    hello_starknet::{IHelloStarknetDispatcher, IHelloStarknetDispatcherTrait, HelloStarknet},
-    simple_account::{ISimpleAccountDispatcher, ISimpleAccountDispatcherTrait, SimpleAccount},
-    erc721_helper::ERC721
-};
 
 const ACCOUNT: felt252 = 1234;
 
@@ -26,7 +19,7 @@ const ACCOUNT: felt252 = 1234;
 // *************************************************************************
 fn __setup__() -> (ContractAddress, ContractAddress) {
     // deploy erc721 helper contract
-    let erc721_contract = declare("ERC721").unwrap();
+    let erc721_contract = declare("ERC721").unwrap().contract_class();
     let (erc721_contract_address, _) = erc721_contract
         .deploy(@array!['tokenbound', 'TBA'])
         .unwrap();
@@ -37,7 +30,7 @@ fn __setup__() -> (ContractAddress, ContractAddress) {
     dispatcher.mint(recipient, 1.try_into().unwrap());
 
     // deploy registry contract
-    let registry_contract = declare("Registry").unwrap();
+    let registry_contract = declare("Registry").unwrap().contract_class();
     let (registry_contract_address, _) = registry_contract.deploy(@array![]).unwrap();
 
     (registry_contract_address, erc721_contract_address)
@@ -57,7 +50,8 @@ fn test_create_account() {
     start_cheat_caller_address(registry_contract_address, token_owner);
 
     // create account
-    let acct_class_hash = declare("AccountPreset").unwrap().class_hash;
+    let account_class = declare("AccountPreset").unwrap().contract_class();
+    let acct_class_hash = *account_class.class_hash;
     let account_address = registry_dispatcher
         .create_account(
             acct_class_hash.into(),
@@ -81,7 +75,8 @@ fn test_create_account_should_fail_if_not_nft_owner() {
     let registry_dispatcher = IRegistryDispatcher { contract_address: registry_contract_address };
 
     // create account
-    let acct_class_hash = declare("AccountPreset").unwrap().class_hash;
+    let account_class = declare("AccountPreset").unwrap().contract_class();
+    let acct_class_hash = *account_class.class_hash;
     registry_dispatcher
         .create_account(
             acct_class_hash.into(),
@@ -106,7 +101,8 @@ fn test_create_account_emits_event() {
     start_cheat_caller_address(registry_contract_address, token_owner);
 
     // create account
-    let acct_class_hash = declare("AccountPreset").unwrap().class_hash;
+    let account_class = declare("AccountPreset").unwrap().contract_class();
+    let acct_class_hash = *account_class.class_hash;
     let account_address = registry_dispatcher
         .create_account(
             acct_class_hash.into(),
@@ -146,7 +142,8 @@ fn test_get_account() {
     start_cheat_caller_address(registry_contract_address, token_owner);
 
     // deploy account
-    let acct_class_hash = declare("AccountPreset").unwrap().class_hash;
+    let account_class = declare("AccountPreset").unwrap().contract_class();
+    let acct_class_hash = *account_class.class_hash;
     let account_address = registry_dispatcher
         .create_account(
             acct_class_hash.into(),

@@ -3,7 +3,7 @@ pub mod SignatoryComponent {
     // *************************************************************************
     //                              IMPORTS
     // *************************************************************************
-    use starknet::{get_caller_address, get_contract_address, ContractAddress};
+    use starknet::ContractAddress;
     use token_bound_accounts::components::account::account::AccountComponent;
     use token_bound_accounts::components::account::account::AccountComponent::AccountPrivateImpl;
     use token_bound_accounts::components::account::account::AccountComponent::AccountImpl;
