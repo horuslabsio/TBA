@@ -11,6 +11,7 @@ pub mod AccountComponent {
         get_tx_info, get_contract_address, ContractAddress, account::Call,
         syscalls::call_contract_syscall, storage::StoragePointerWriteAccess
     };
+    use token_bound_accounts::utils::array_ext::ArrayExt;
     use token_bound_accounts::interfaces::IAccount::{IAccount, TBA_INTERFACE_ID};
 
     use openzeppelin::introspection::src5::SRC5Component;
@@ -277,13 +278,21 @@ pub mod AccountComponent {
         ) -> Array<Span<felt252>> {
             let mut result: Array<Span<felt252>> = ArrayTrait::new();
             let mut calls = calls;
+            let mut index = 0;
 
             loop {
                 match calls.pop_front() {
                     Option::Some(call) => {
                         match call_contract_syscall(call.to, call.selector, call.calldata) {
-                            Result::Ok(mut retdata) => { result.append(retdata); },
-                            Result::Err(_) => { panic(array!['multicall_failed']); }
+                            Result::Ok(mut retdata) => {
+                                result.append(retdata);
+                                index += 1;
+                            },
+                            Result::Err(err) => {
+                                let mut data = array!['multicall-failed', index];
+                                data.append_all(err.span());
+                                panic(data);
+                            }
                         }
                     },
                     Option::None(_) => { break (); }

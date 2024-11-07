@@ -109,12 +109,37 @@ pub mod AccountV3 {
     #[abi(embed_v0)]
     impl AccountV3 of IAccountV3<ContractState> {
         /// @notice called whenever an ERC-721 token is received.
-        /// @notice revferts if token being received is the token account is bound to.
+        /// @notice reverts if token being received is the token account is bound to
         /// @param operator who sent the NFT (typically the caller)
         /// @param from previous owner (caller who called `safe_transfer_from`)
         /// @param token_id the NFT token ID being transferred
         /// @param data additional data
         fn on_erc721_received(
+            self: @ContractState,
+            operator: ContractAddress,
+            from: ContractAddress,
+            token_id: u256,
+            data: Span<felt252>
+        ) -> felt252 {
+            let (_token_contract, _token_id, _chain_id) = self.account.token();
+            let tx_info = get_tx_info().unbox();
+
+            if (get_caller_address() == _token_contract
+                && token_id == _token_id
+                && tx_info.chain_id == _chain_id) {
+                panic(array!['Account: ownership cycle!']);
+            }
+
+            return 0x3a0dff5f70d80458ad14ae37bb182a728e3c8cdda0402a5daa86620bdf910bc;
+        }
+
+        /// @notice called whenever an ERC-721 token is received.
+        /// @notice reverts if token being received is the token account is bound to
+        /// @param operator who sent the NFT (typically the caller)
+        /// @param from previous owner (caller who called `safe_transfer_from`)
+        /// @param token_id the NFT token ID being transferred
+        /// @param data additional data
+        fn onERC721Received(
             self: @ContractState,
             operator: ContractAddress,
             from: ContractAddress,

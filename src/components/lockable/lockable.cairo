@@ -47,7 +47,8 @@ pub mod LockableComponent {
     pub mod Errors {
         pub const UNAUTHORIZED: felt252 = 'Account: unauthorized';
         pub const NOT_OWNER: felt252 = 'Account: Not Account Owner';
-        pub const EXCEEDS_MAX_LOCK_TIME: felt252 = 'Account: Lock time exceeded';
+        pub const EXCEEDS_MAX_LOCK_TIME: felt252 = 'Account: Lock time > 1 year';
+        pub const INVALID_LOCK_TIME: felt252 = 'Account: Lock time set in past';
         pub const LOCKED_ACCOUNT: felt252 = 'Account: Locked';
     }
 
@@ -71,9 +72,11 @@ pub mod LockableComponent {
         // @param lock_until time at which this account will no longer be locked
         fn _lock(ref self: ComponentState<TContractState>, lock_until: u64) {
             let current_timestamp = get_block_timestamp();
+            // check that lock_until is not set in the past and is not greater than 1 year
             assert(
                 lock_until <= current_timestamp + YEAR_TO_SECONDS, Errors::EXCEEDS_MAX_LOCK_TIME
             );
+            assert(lock_until > current_timestamp, Errors::INVALID_LOCK_TIME);
 
             let (lock_status, _) = self._is_locked();
             assert(lock_status != true, Errors::LOCKED_ACCOUNT);
@@ -82,7 +85,6 @@ pub mod LockableComponent {
             let mut account_comp_mut = get_dep_component_mut!(ref self, Account);
             account_comp_mut._update_state();
 
-            // set the lock_util which set the period the account is lock
             self.lock_until.write(lock_until);
             self
                 .emit(

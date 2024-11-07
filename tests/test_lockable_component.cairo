@@ -182,7 +182,7 @@ fn test_locking_should_fail_if_already_locked() {
 }
 
 #[test]
-#[should_panic(expected: ('Account: Lock time exceeded',))]
+#[should_panic(expected: ('Account: Lock time > 1 year',))]
 fn test_should_fail_for_greater_than_a_year_lock_time() {
     let (contract_address, _) = __setup__();
     let acct_dispatcher = IAccountDispatcher { contract_address: contract_address };
@@ -194,6 +194,22 @@ fn test_should_fail_for_greater_than_a_year_lock_time() {
 
     start_cheat_caller_address(contract_address, owner);
     lockable_dispatcher.lock(lock_duration);
+}
+
+#[test]
+#[should_panic(expected: ('Account: Lock time set in past',))]
+fn test_should_fail_if_lock_until_is_set_in_the_past() {
+    let (contract_address, _) = __setup__();
+    let acct_dispatcher = IAccountDispatcher { contract_address: contract_address };
+
+    let owner = acct_dispatcher.owner();
+
+    start_cheat_caller_address(contract_address, owner);
+    start_cheat_block_timestamp(contract_address, 80_u64);
+    let lockable_dispatcher = ILockableDispatcher { contract_address };
+    let lock_duration = 40_u64;
+    lockable_dispatcher.lock(lock_duration);
+    stop_cheat_block_timestamp(contract_address);
 }
 
 #[test]
