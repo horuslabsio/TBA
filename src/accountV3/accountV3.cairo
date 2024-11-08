@@ -133,7 +133,7 @@ pub mod AccountV3 {
             return 0x3a0dff5f70d80458ad14ae37bb182a728e3c8cdda0402a5daa86620bdf910bc;
         }
 
-        /// @notice called whenever an ERC-721 token is received.
+        /// @notice CamelCase implementation of on_erc721_received
         /// @notice reverts if token being received is the token account is bound to
         /// @param operator who sent the NFT (typically the caller)
         /// @param from previous owner (caller who called `safe_transfer_from`)
@@ -146,16 +146,7 @@ pub mod AccountV3 {
             token_id: u256,
             data: Span<felt252>
         ) -> felt252 {
-            let (_token_contract, _token_id, _chain_id) = self.account.token();
-            let tx_info = get_tx_info().unbox();
-
-            if (get_caller_address() == _token_contract
-                && token_id == _token_id
-                && tx_info.chain_id == _chain_id) {
-                panic(array!['Account: ownership cycle!']);
-            }
-
-            return 0x3a0dff5f70d80458ad14ae37bb182a728e3c8cdda0402a5daa86620bdf910bc;
+            self.on_erc721_received(operator, from, token_id, data)
         }
 
         /// @notice retrieves deployment details of an account
