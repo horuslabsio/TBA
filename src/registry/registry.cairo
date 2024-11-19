@@ -79,7 +79,7 @@ pub mod Registry {
             ];
 
             let class_hash: ClassHash = implementation_hash.try_into().unwrap();
-            let result = deploy_syscall(class_hash, salt, constructor_calldata.span(), true);
+            let result = deploy_syscall(class_hash, salt, constructor_calldata.span(), false);
             let (account_address, _) = result.unwrap_syscall();
 
             self.emit(AccountCreated { account_address, token_contract, token_id, });
