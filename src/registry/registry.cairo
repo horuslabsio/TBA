@@ -112,7 +112,7 @@ pub mod Registry {
             let prefix: felt252 = 'STARKNET_CONTRACT_ADDRESS';
             let account_address = PedersenTrait::new(0)
                 .update(prefix)
-                .update(0)
+                .update(get_contract_address().into())
                 .update(salt)
                 .update(implementation_hash)
                 .update(constructor_calldata_hash)
