@@ -252,7 +252,7 @@ pub mod AccountComponent {
             let prefix: felt252 = 'STARKNET_CONTRACT_ADDRESS';
             let account_address = PedersenTrait::new(0)
                 .update(prefix)
-                .update(0)
+                .update(registry.into())
                 .update(salt)
                 .update(implementation)
                 .update(constructor_calldata_hash)
