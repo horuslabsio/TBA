@@ -1,7 +1,7 @@
-use starknet::{account::Call, ContractAddress, ClassHash};
+use starknet::account::Call;
 
 #[starknet::interface]
-trait ISimpleAccount<TContractState> {
+pub trait ISimpleAccount<TContractState> {
     fn get_public_key(self: @TContractState) -> felt252;
     fn set_public_key(ref self: TContractState, new_public_key: felt252);
     fn is_valid_signature(
@@ -9,23 +9,20 @@ trait ISimpleAccount<TContractState> {
     ) -> felt252;
     fn __validate__(ref self: TContractState, calls: Array<Call>) -> felt252;
     fn __validate_declare__(self: @TContractState, class_hash: felt252) -> felt252;
-    fn __validate_deploy__(
-        self: @TContractState,
-        class_hash: felt252,
-        contract_address_salt: felt252,
-        public_key: felt252
-    ) -> felt252;
+    fn __validate_deploy__(ref self: TContractState, public_key: felt252) -> felt252;
     fn __execute__(ref self: TContractState, calls: Array<Call>) -> Array<Span<felt252>>;
 }
 
 #[starknet::contract(account)]
-mod SimpleAccount {
+pub mod SimpleAccount {
+    use starknet::storage::StoragePointerWriteAccess;
+    use starknet::storage::StoragePointerReadAccess;
     use starknet::{
-        get_tx_info, get_caller_address, get_contract_address, ContractAddress, account::Call,
-        call_contract_syscall, replace_class_syscall, ClassHash, SyscallResultTrait
+        get_tx_info, get_caller_address, get_contract_address, account::Call,
+        syscalls::call_contract_syscall
     };
     use core::ecdsa::check_ecdsa_signature;
-    use core::zeroable::Zeroable;
+    use core::num::traits::zero::Zero;
 
     #[storage]
     struct Storage {
@@ -33,8 +30,8 @@ mod SimpleAccount {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, _public_key: felt252) {
-        self._public_key.write(_public_key);
+    fn constructor(ref self: ContractState, public_key: felt252) {
+        self._public_key.write(public_key);
     }
 
     #[abi(embed_v0)]
@@ -54,12 +51,7 @@ mod SimpleAccount {
             self._is_valid_signature(hash, signature)
         }
 
-        fn __validate_deploy__(
-            self: @ContractState,
-            class_hash: felt252,
-            contract_address_salt: felt252,
-            public_key: felt252
-        ) -> felt252 {
+        fn __validate_deploy__(ref self: ContractState, public_key: felt252) -> felt252 {
             self.validate_transaction()
         }
 

@@ -1,14 +1,14 @@
 [package]
 name = "token_bound_accounts"
-version = "0.2.1"
-edition = "2023_10"
+version = "0.3.0"
+edition = "2024_07"
 authors = ["Horus Labs <horuslabsio@gmail.com>"]
 description = "A port of ERC6551 to Starknet"
 repository = "https://github.com/horuslabsio/TBA/blob/main/Scarb.toml"
 license-file = "LICENSE"
 keywords = ["ERC6551", "tokenbound", "cairo", "contracts", "starknet", "standards"]
 readme = "README.md"
-cairo_version = "2.6.0"
+cairo_version = "2.8.2"
 homepage = "https://www.tbaexplorer.com/"
 documentation = "https://github.com/horuslabsio/TBA-SDK"
 
@@ -22,10 +22,11 @@ casm = true
 [lib]
 
 [dependencies]
-starknet = "2.6.0"
+starknet = "2.8.2"
+openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", tag = "v0.17.0" }
 
 [dev-dependencies]
-snforge_std = { git = "https://github.com/foundry-rs/starknet-foundry.git", tag = "v0.20.1" }
+snforge_std = { git = "https://github.com/foundry-rs/starknet-foundry.git", tag = "v0.31.0" }
 
 [tool.snforge]
 # exit_first = true

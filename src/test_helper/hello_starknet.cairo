@@ -1,12 +1,14 @@
 #[starknet::interface]
-trait IHelloStarknet<TContractState> {
+pub trait IHelloStarknet<TContractState> {
     fn increase_balance(ref self: TContractState, amount: felt252);
     fn multiply_balance(ref self: TContractState, amount: felt252);
     fn get_balance(self: @TContractState) -> felt252;
 }
 
 #[starknet::contract]
-mod HelloStarknet {
+pub mod HelloStarknet {
+    use starknet::storage::StoragePointerReadAccess;
+    use starknet::storage::StoragePointerWriteAccess;
     #[storage]
     struct Storage {
         balance: felt252,

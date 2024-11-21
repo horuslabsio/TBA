@@ -1,17 +1,17 @@
 use starknet::{account::Call, ContractAddress, ClassHash};
 
 #[starknet::interface]
-trait IUpgradedAccount<TContractState> {
+pub trait IUpgradedAccount<TContractState> {
     fn get_public_key(self: @TContractState) -> felt252;
     fn set_public_key(ref self: TContractState, new_public_key: felt252);
     fn isValidSignature(self: @TContractState, hash: felt252, signature: Span<felt252>) -> bool;
     fn __validate__(ref self: TContractState, calls: Array<Call>) -> felt252;
     fn __validate_declare__(self: @TContractState, class_hash: felt252) -> felt252;
     fn __validate_deploy__(
-        self: @TContractState,
-        class_hash: felt252,
-        contract_address_salt: felt252,
-        public_key: felt252
+        ref self: TContractState,
+        _public_key: felt252,
+        token_contract: ContractAddress,
+        token_id: u256
     ) -> felt252;
     fn __execute__(ref self: TContractState, calls: Array<Call>) -> Array<Span<felt252>>;
     fn token(self: @TContractState) -> (ContractAddress, u256);
@@ -49,13 +49,16 @@ trait IERC721<TContractState> {
 }
 
 #[starknet::contract(account)]
-mod UpgradedAccount {
+pub mod UpgradedAccount {
+    use starknet::storage::StoragePointerWriteAccess;
+    use starknet::storage::StoragePointerReadAccess;
     use starknet::{
         get_tx_info, get_caller_address, get_contract_address, ContractAddress, account::Call,
-        call_contract_syscall, replace_class_syscall, ClassHash, SyscallResultTrait
+        syscalls::call_contract_syscall, syscalls::replace_class_syscall, ClassHash,
+        SyscallResultTrait
     };
     use core::ecdsa::check_ecdsa_signature;
-    use core::zeroable::Zeroable;
+    use core::num::traits::zero::Zero;
     use super::{IERC721DispatcherTrait, IERC721Dispatcher};
 
     #[storage]
@@ -107,10 +110,10 @@ mod UpgradedAccount {
         }
 
         fn __validate_deploy__(
-            self: @ContractState,
-            class_hash: felt252,
-            contract_address_salt: felt252,
-            public_key: felt252
+            ref self: ContractState,
+            _public_key: felt252,
+            token_contract: ContractAddress,
+            token_id: u256
         ) -> felt252 {
             self.validate_transaction()
         }

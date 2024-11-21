@@ -1,41 +1,44 @@
-use starknet::{ContractAddress, contract_address_to_felt252, class_hash_to_felt252};
-use core::integer::u256_from_felt252;
-use snforge_std::{declare, start_prank, stop_prank, ContractClassTrait, ContractClass, CheatTarget};
+// *************************************************************************
+//                              REGISTRY TEST
+// *************************************************************************
+use starknet::ContractAddress;
+use snforge_std::{
+    declare, start_cheat_caller_address, stop_cheat_caller_address, spy_events,
+    EventSpyAssertionsTrait, ContractClassTrait, DeclareResultTrait
+};
 
 use token_bound_accounts::interfaces::IRegistry::{IRegistryDispatcherTrait, IRegistryDispatcher};
-use token_bound_accounts::registry::registry::Registry;
-
-use token_bound_accounts::interfaces::IUpgradeable::{
-    IUpgradeableDispatcher, IUpgradeableDispatcherTrait
-};
-
 use token_bound_accounts::interfaces::IAccount::{IAccountDispatcher, IAccountDispatcherTrait};
-use token_bound_accounts::presets::account::Account;
-
-use token_bound_accounts::test_helper::erc721_helper::{
-    IERC721Dispatcher, IERC721DispatcherTrait, ERC721
-};
+use token_bound_accounts::interfaces::IERC721::{IERC721Dispatcher, IERC721DispatcherTrait};
+use token_bound_accounts::registry::registry::Registry;
 
 const ACCOUNT: felt252 = 1234;
 
+// *************************************************************************
+//                              SETUP
+// *************************************************************************
 fn __setup__() -> (ContractAddress, ContractAddress) {
     // deploy erc721 helper contract
-    let erc721_contract = declare("ERC721");
-    let mut erc721_constructor_calldata = array!['tokenbound', 'TBA'];
-    let erc721_contract_address = erc721_contract.deploy(@erc721_constructor_calldata).unwrap();
+    let erc721_contract = declare("ERC721").unwrap().contract_class();
+    let (erc721_contract_address, _) = erc721_contract
+        .deploy(@array!['tokenbound', 'TBA'])
+        .unwrap();
 
     // mint a new token
     let dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };
     let recipient: ContractAddress = ACCOUNT.try_into().unwrap();
-    dispatcher.mint(recipient, u256_from_felt252(1));
+    dispatcher.mint(recipient, 1.try_into().unwrap());
 
     // deploy registry contract
-    let registry_contract = declare("Registry");
-    let registry_contract_address = registry_contract.deploy(@array![]).unwrap();
+    let registry_contract = declare("Registry").unwrap().contract_class();
+    let (registry_contract_address, _) = registry_contract.deploy(@array![]).unwrap();
 
     (registry_contract_address, erc721_contract_address)
 }
 
+// *************************************************************************
+//                              TESTS
+// *************************************************************************
 #[test]
 fn test_create_account() {
     let (registry_contract_address, erc721_contract_address) = __setup__();
@@ -43,23 +46,21 @@ fn test_create_account() {
 
     // prank contract as token owner
     let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };
-    let token_owner = token_dispatcher.ownerOf(u256_from_felt252(1));
-    start_prank(CheatTarget::One(registry_contract_address), token_owner);
+    let token_owner = token_dispatcher.ownerOf(1.try_into().unwrap());
+    start_cheat_caller_address(registry_contract_address, token_owner);
 
     // create account
-    let acct_class_hash = declare("Account").class_hash;
+    let account_class = declare("AccountPreset").unwrap().contract_class();
+    let acct_class_hash = *account_class.class_hash;
     let account_address = registry_dispatcher
         .create_account(
-            class_hash_to_felt252(acct_class_hash),
+            acct_class_hash.into(),
             erc721_contract_address,
-            u256_from_felt252(1),
-            245828
+            1.try_into().unwrap(),
+            245828,
+            'SN_SEPOLIA'
         );
-
-    // check total_deployed_accounts
-    let total_deployed_accounts = registry_dispatcher
-        .total_deployed_accounts(erc721_contract_address, u256_from_felt252(1));
-    assert(total_deployed_accounts == 1_u8, 'invalid deployed TBA count');
+    stop_cheat_caller_address(registry_contract_address);
 
     // confirm account deployment by checking the account owner
     let acct_dispatcher = IAccountDispatcher { contract_address: account_address };
@@ -68,43 +69,66 @@ fn test_create_account() {
 }
 
 #[test]
-fn test_getting_total_deployed_accounts() {
+#[should_panic(expected: ('Registry: caller is not owner',))]
+fn test_create_account_should_fail_if_not_nft_owner() {
     let (registry_contract_address, erc721_contract_address) = __setup__();
     let registry_dispatcher = IRegistryDispatcher { contract_address: registry_contract_address };
 
+    // create account
+    let account_class = declare("AccountPreset").unwrap().contract_class();
+    let acct_class_hash = *account_class.class_hash;
+    registry_dispatcher
+        .create_account(
+            acct_class_hash.into(),
+            erc721_contract_address,
+            1.try_into().unwrap(),
+            245828,
+            'SN_SEPOLIA'
+        );
+}
+
+#[test]
+fn test_create_account_emits_event() {
+    let (registry_contract_address, erc721_contract_address) = __setup__();
+    let registry_dispatcher = IRegistryDispatcher { contract_address: registry_contract_address };
+
+    // spy on emitted events
+    let mut spy = spy_events();
+
     // prank contract as token owner
     let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };
-    let token_owner = token_dispatcher.ownerOf(u256_from_felt252(1));
-    start_prank(CheatTarget::One(registry_contract_address), token_owner);
+    let token_owner = token_dispatcher.ownerOf(1.try_into().unwrap());
+    start_cheat_caller_address(registry_contract_address, token_owner);
 
-    let acct_class_hash = declare("Account").class_hash;
-    // create multiple accounts for same NFT
-    registry_dispatcher
+    // create account
+    let account_class = declare("AccountPreset").unwrap().contract_class();
+    let acct_class_hash = *account_class.class_hash;
+    let account_address = registry_dispatcher
         .create_account(
-            class_hash_to_felt252(acct_class_hash),
+            acct_class_hash.into(),
             erc721_contract_address,
-            u256_from_felt252(1),
-            3554633
+            1.try_into().unwrap(),
+            245828,
+            'SN_SEPOLIA'
         );
-    registry_dispatcher
-        .create_account(
-            class_hash_to_felt252(acct_class_hash),
-            erc721_contract_address,
-            u256_from_felt252(1),
-            363256
-        );
-    registry_dispatcher
-        .create_account(
-            class_hash_to_felt252(acct_class_hash),
-            erc721_contract_address,
-            u256_from_felt252(1),
-            484734
-        );
+    stop_cheat_caller_address(registry_contract_address);
 
-    // check total_deployed_accounts
-    let total_deployed_accounts = registry_dispatcher
-        .total_deployed_accounts(erc721_contract_address, u256_from_felt252(1));
-    assert(total_deployed_accounts == 3_u8, 'invalid deployed TBA count');
+    // check events are emitted
+    spy
+        .assert_emitted(
+            @array![
+                (
+                    registry_contract_address,
+                    Registry::Event::AccountCreated(
+                        Registry::AccountCreated {
+                            account_address,
+                            token_contract: erc721_contract_address,
+                            token_id: 1.try_into().unwrap()
+                        }
+                    )
+                )
+            ]
+        );
 }
 
 #[test]
@@ -114,26 +138,30 @@ fn test_get_account() {
 
     // prank contract as token owner
     let token_dispatcher = IERC721Dispatcher { contract_address: erc721_contract_address };
-    let token_owner = token_dispatcher.ownerOf(u256_from_felt252(1));
-    start_prank(CheatTarget::One(registry_contract_address), token_owner);
+    let token_owner = token_dispatcher.ownerOf(1.try_into().unwrap());
+    start_cheat_caller_address(registry_contract_address, token_owner);
 
     // deploy account
-    let acct_class_hash = declare("Account").class_hash;
+    let account_class = declare("AccountPreset").unwrap().contract_class();
+    let acct_class_hash = *account_class.class_hash;
     let account_address = registry_dispatcher
         .create_account(
-            class_hash_to_felt252(acct_class_hash),
+            acct_class_hash.into(),
             erc721_contract_address,
-            u256_from_felt252(1),
-            252520
+            1.try_into().unwrap(),
+            252520,
+            'SN_SEPOLIA'
         );
+    stop_cheat_caller_address(registry_contract_address);
 
     // get account
     let account = registry_dispatcher
         .get_account(
-            class_hash_to_felt252(acct_class_hash),
+            acct_class_hash.into(),
             erc721_contract_address,
-            u256_from_felt252(1),
-            252520
+            1.try_into().unwrap(),
+            252520,
+            'SN_SEPOLIA'
         );
 
     // compare both addresses
