@@ -37,3 +37,13 @@ Registry:
 
 Account:
     - ClassHash: 0x29d2a1b11dd97289e18042502f11356133a2201dd19e716813fb01fbee9e9a4
+
+-----------------------------------------------------------------------------------------------------
+MAINNET v3 (Audited contract):
+
+Registry:
+    - ClassHash: 0x3755667eb6df265aeadd2e47a8d9644261513dbbeadc5a9a2ee5937635e8df9
+    - Contract: 0x4107f453e68bf4331a31316078bb73ecfcb767dc624ebd78f8c1e15b14c63bd
+
+Account:
+    - ClassHash: 0xbe8863311f24317dff8af16deb1285ec5b035e57cf9beda545c341c339b925
