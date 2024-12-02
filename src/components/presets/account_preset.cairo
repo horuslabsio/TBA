@@ -4,7 +4,7 @@
 #[starknet::contract]
 pub mod AccountPreset {
     use starknet::{ContractAddress, get_caller_address, ClassHash, account::Call};
-    use openzeppelin::introspection::src5::SRC5Component;
+    use openzeppelin_introspection::src5::SRC5Component;
 
     use token_bound_accounts::components::account::account::AccountComponent;
     use token_bound_accounts::components::upgradeable::upgradeable::UpgradeableComponent;

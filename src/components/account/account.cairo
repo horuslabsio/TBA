@@ -14,8 +14,8 @@ pub mod AccountComponent {
     use token_bound_accounts::utils::array_ext::ArrayExt;
     use token_bound_accounts::interfaces::IAccount::{IAccount, TBA_INTERFACE_ID};
 
-    use openzeppelin::introspection::src5::SRC5Component;
-    use openzeppelin::introspection::src5::SRC5Component::{SRC5Impl, InternalImpl};
+    use openzeppelin_introspection::src5::SRC5Component;
+    use openzeppelin_introspection::src5::SRC5Component::{SRC5Impl, InternalImpl};
 
     // *************************************************************************
     //                              STORAGE

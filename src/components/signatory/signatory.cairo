@@ -12,7 +12,7 @@ pub mod SignatoryComponent {
     use token_bound_accounts::components::permissionable::permissionable::PermissionableComponent::PermissionablePrivateImpl;
     use token_bound_accounts::interfaces::ISRC6::{ISRC6Dispatcher, ISRC6DispatcherTrait};
 
-    use openzeppelin::introspection::src5::SRC5Component;
+    use openzeppelin_introspection::src5::SRC5Component;
 
     // *************************************************************************
     //                              STORAGE

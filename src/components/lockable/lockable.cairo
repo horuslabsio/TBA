@@ -9,7 +9,7 @@ pub mod LockableComponent {
 
     use token_bound_accounts::components::account::account::AccountComponent;
     use token_bound_accounts::components::account::account::AccountComponent::AccountPrivateImpl;
-    use openzeppelin::introspection::src5::SRC5Component;
+    use openzeppelin_introspection::src5::SRC5Component;
 
     // *************************************************************************
     //                              STORAGE
