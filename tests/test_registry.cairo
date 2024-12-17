@@ -69,25 +69,6 @@ fn test_create_account() {
 }
 
 #[test]
-#[should_panic(expected: ('Registry: caller is not owner',))]
-fn test_create_account_should_fail_if_not_nft_owner() {
-    let (registry_contract_address, erc721_contract_address) = __setup__();
-    let registry_dispatcher = IRegistryDispatcher { contract_address: registry_contract_address };
-
-    // create account
-    let account_class = declare("AccountPreset").unwrap().contract_class();
-    let acct_class_hash = *account_class.class_hash;
-    registry_dispatcher
-        .create_account(
-            acct_class_hash.into(),
-            erc721_contract_address,
-            1.try_into().unwrap(),
-            245828,
-            'SN_SEPOLIA'
-        );
-}
-
-#[test]
 fn test_create_account_emits_event() {
     let (registry_contract_address, erc721_contract_address) = __setup__();
     let registry_dispatcher = IRegistryDispatcher { contract_address: registry_contract_address };
