@@ -1,6 +1,6 @@
 [package]
 name = "token_bound_accounts"
-version = "0.3.0"
+version = "0.3.1"
 edition = "2024_07"
 authors = ["Horus Labs <horuslabsio@gmail.com>"]
 description = "A port of ERC6551 to Starknet"
