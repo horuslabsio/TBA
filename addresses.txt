@@ -16,7 +16,7 @@ Registry:
 Account:
     - ClassHash: 0x45d67b8590561c9b54e14dd309c9f38c4e2c554dd59414021f9d079811621bd
 
----------------------------------------------------------------------------------------------------
+
 SEPOLIA v2 (Audited contract):
 
 Registry:
@@ -34,7 +34,7 @@ Registry:
 Account:
     - ClassHash: 0xbe8863311f24317dff8af16deb1285ec5b035e57cf9beda545c341c339b925
 
----------------------------------------------------------------------------------------------------
+
 SEPOLIA v3 :
 
 Registry:
@@ -43,3 +43,20 @@ Registry:
 Account:
     - ClassHash: 0x29d2a1b11dd97289e18042502f11356133a2201dd19e716813fb01fbee9e9a4
 
+-----------------------------------------------------------------------------------------------------
+MAINNET v3.1.0 (Audited contract):
+
+Registry:
+    - Contract: 0x755064b6e9a68d7c5b7dbed7bbdb23404603e08d67b44a0f97589addfd8ae27
+
+Account:
+    - ClassHash: 0xbe8863311f24317dff8af16deb1285ec5b035e57cf9beda545c341c339b925
+
+
+SEPOLIA v3.1.0 (Audited contract) :
+
+Registry:
+    - Contract: 0x41f87c7b00c3fb50cc7744f896f2d3438414be33912bd24f17318c9f48523a1
+
+Account:
+    - ClassHash: 0x29d2a1b11dd97289e18042502f11356133a2201dd19e716813fb01fbee9e9a4
