@@ -6,12 +6,11 @@ pub mod Registry {
     // *************************************************************************
     //                              IMPORTS
     // *************************************************************************
-    use core::result::ResultTrait;
     use core::hash::HashStateTrait;
     use core::pedersen::PedersenTrait;
     use starknet::{
-        ContractAddress, get_caller_address, get_contract_address,
-        syscalls::{call_contract_syscall, deploy_syscall}, class_hash::ClassHash, SyscallResultTrait
+        ContractAddress, get_contract_address, syscalls::deploy_syscall, class_hash::ClassHash,
+        SyscallResultTrait
     };
     use token_bound_accounts::interfaces::IRegistry::IRegistry;
 
@@ -41,12 +40,6 @@ pub mod Registry {
         pub token_id: u256,
     }
 
-    // *************************************************************************
-    //                              ERRORS
-    // *************************************************************************
-    pub mod Errors {
-        pub const CALLER_IS_NOT_OWNER: felt252 = 'Registry: caller is not owner';
-    }
 
     // *************************************************************************
     //                              EXTERNAL FUNCTIONS
@@ -66,9 +59,6 @@ pub mod Registry {
             salt: felt252,
             chain_id: felt252
         ) -> ContractAddress {
-            let owner = self._get_owner(token_contract, token_id);
-            assert(owner == get_caller_address(), Errors::CALLER_IS_NOT_OWNER);
-
             let mut constructor_calldata: Array<felt252> = array![
                 token_contract.into(),
                 token_id.low.into(),
@@ -120,34 +110,6 @@ pub mod Registry {
                 .finalize();
 
             account_address.try_into().unwrap()
-        }
-    }
-
-    // *************************************************************************
-    //                              PRIVATE FUNCTIONS
-    // *************************************************************************
-    #[generate_trait]
-    impl internalImpl of InternalTrait {
-        /// @notice internal function for getting NFT owner
-        /// @param token_contract contract address of NFT
-        // @param token_id token ID of NFT
-        // NB: This function aims for compatibility with all contracts (snake or camel case) but do
-        // not work as expected on mainnet as low level calls do not return err at the moment.
-        // Should work for contracts which implements CamelCase but not snake_case until starknet
-        // v0.15.
-        fn _get_owner(
-            self: @ContractState, token_contract: ContractAddress, token_id: u256
-        ) -> ContractAddress {
-            let mut calldata: Array<felt252> = ArrayTrait::new();
-            Serde::serialize(@token_id, ref calldata);
-            let mut res = call_contract_syscall(
-                token_contract, selector!("ownerOf"), calldata.span()
-            );
-            if (res.is_err()) {
-                res = call_contract_syscall(token_contract, selector!("owner_of"), calldata.span());
-            }
-            let mut address = res.unwrap();
-            Serde::<ContractAddress>::deserialize(ref address).unwrap()
         }
     }
 }
