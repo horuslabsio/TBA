@@ -386,3 +386,23 @@ fn test_permissioned_accounts_caanot_set_permissions() {
     permissionable_dispatcher.set_permission(permissioned_addresses, permissions);
     stop_cheat_caller_address(account_v3_contract_address);
 }
+
+#[test]
+fn test_proxy_account_is_a_permissioned_account() {
+    let (_, _, account_v3_contract_address, _, _,) = __setup__();
+    let permissionable_dispatcher = IPermissionableDispatcher {
+        contract_address: account_v3_contract_address
+    };
+    let acct_dispatcher = IAccountDispatcher { contract_address: account_v3_contract_address };
+
+    let owner = acct_dispatcher.owner();
+
+    let is_permissioned = permissionable_dispatcher
+        .has_permission(
+            owner,
+            3032917417587307668532203921188034170788729635078510429159624235866681562208
+                .try_into()
+                .unwrap()
+        );
+    assert(is_permissioned, 'proxy not permissioned');
+}

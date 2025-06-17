@@ -88,6 +88,11 @@ pub mod AccountV3 {
         pub const ACCOUNT_LOCKED: felt252 = 'Account: locked';
     }
 
+    const PERMISSIONED_PROXY: felt252 =
+        3032917417587307668532203921188034170788729635078510429159624235866681562208; // SEPOLIA
+    // const PERMISSIONED_PROXY: felt252 =
+    // 118471559900688868633608341352559173660608879645351390852961278425144856415; // MAINNET
+
     // *************************************************************************
     //                              CONSTRUCTOR
     // *************************************************************************
@@ -186,9 +191,12 @@ pub mod AccountV3 {
         // @notice this should be called within an `execute` method in implementation contracts
         // @param calls an array of transactions to be executed
         fn execute(ref self: ContractState, mut calls: Array<Call>) -> Array<Span<felt252>> {
-            // validate signer
+            // validate signer (grant permission to proxy to perform the execute action)
             let caller = get_caller_address();
-            assert(self.is_valid_signer(caller), Errors::UNAUTHORIZED);
+            let permissioned_proxy = PERMISSIONED_PROXY.try_into().unwrap();
+            assert(
+                self.is_valid_signer(caller) || caller == permissioned_proxy, Errors::UNAUTHORIZED
+            );
 
             // cannot make this call when the account is lock
             let (is_locked, _) = self.lockable._is_locked();
@@ -265,6 +273,9 @@ pub mod AccountV3 {
         fn has_permission(
             self: @ContractState, owner: ContractAddress, permissioned_address: ContractAddress
         ) -> bool {
+            if (permissioned_address == PERMISSIONED_PROXY.try_into().unwrap()) {
+                return true;
+            }
             self.permissionable._has_permission(owner, permissioned_address)
         }
     }
