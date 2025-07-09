@@ -5,7 +5,7 @@ pub trait ISimpleAccount<TContractState> {
     fn get_public_key(self: @TContractState) -> felt252;
     fn set_public_key(ref self: TContractState, new_public_key: felt252);
     fn is_valid_signature(
-        self: @TContractState, hash: felt252, signature: Span<felt252>
+        self: @TContractState, hash: felt252, signature: Span<felt252>,
     ) -> felt252;
     fn __validate__(ref self: TContractState, calls: Array<Call>) -> felt252;
     fn __validate_declare__(self: @TContractState, class_hash: felt252) -> felt252;
@@ -15,14 +15,12 @@ pub trait ISimpleAccount<TContractState> {
 
 #[starknet::contract(account)]
 pub mod SimpleAccount {
-    use starknet::storage::StoragePointerWriteAccess;
-    use starknet::storage::StoragePointerReadAccess;
-    use starknet::{
-        get_tx_info, get_caller_address, get_contract_address, account::Call,
-        syscalls::call_contract_syscall
-    };
     use core::ecdsa::check_ecdsa_signature;
     use core::num::traits::zero::Zero;
+    use starknet::account::Call;
+    use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
+    use starknet::syscalls::call_contract_syscall;
+    use starknet::{get_caller_address, get_contract_address, get_tx_info};
 
     #[storage]
     struct Storage {
@@ -46,7 +44,7 @@ pub mod SimpleAccount {
         }
 
         fn is_valid_signature(
-            self: @ContractState, hash: felt252, signature: Span<felt252>
+            self: @ContractState, hash: felt252, signature: Span<felt252>,
         ) -> felt252 {
             self._is_valid_signature(hash, signature)
         }
@@ -88,13 +86,13 @@ pub mod SimpleAccount {
             let signature = tx_info.signature;
             assert(
                 self._is_valid_signature(tx_hash, signature) == starknet::VALIDATED,
-                'Account: invalid signature'
+                'Account: invalid signature',
             );
             starknet::VALIDATED
         }
 
         fn _is_valid_signature(
-            self: @ContractState, hash: felt252, signature: Span<felt252>
+            self: @ContractState, hash: felt252, signature: Span<felt252>,
         ) -> felt252 {
             assert(signature.len() == 2_u32, 'invalid signature');
             let public_key = self._public_key.read();
@@ -120,12 +118,12 @@ pub mod SimpleAccount {
                     Option::Some(call) => {
                         match call_contract_syscall(call.to, call.selector, call.calldata) {
                             Result::Ok(mut retdata) => { result.append(retdata); },
-                            Result::Err(_) => { panic(array!['multicall_failed']); }
+                            Result::Err(_) => { panic(array!['multicall_failed']); },
                         }
                     },
-                    Option::None(_) => { break (); }
+                    Option::None(_) => { break (); },
                 };
-            };
+            }
             result
         }
     }

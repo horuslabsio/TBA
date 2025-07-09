@@ -1,23 +1,22 @@
 // *************************************************************************
 //                              ACCOUNT COMPONENT TEST
 // *************************************************************************
-use starknet::{ContractAddress, account::Call};
-use snforge_std::{
-    declare, start_cheat_caller_address, start_cheat_transaction_hash, start_cheat_nonce,
-    spy_events, EventSpyAssertionsTrait, ContractClass, ContractClassTrait, DeclareResultTrait
-};
 use core::hash::HashStateTrait;
 use core::pedersen::PedersenTrait;
-
-use token_bound_accounts::interfaces::IAccount::{IAccountDispatcher, IAccountDispatcherTrait};
-use token_bound_accounts::interfaces::IExecutable::{
-    IExecutableDispatcher, IExecutableDispatcherTrait
+use snforge_std::{
+    ContractClass, ContractClassTrait, DeclareResultTrait, EventSpyAssertionsTrait, declare,
+    spy_events, start_cheat_caller_address, start_cheat_nonce, start_cheat_transaction_hash,
 };
-use token_bound_accounts::interfaces::IERC721::{IERC721Dispatcher, IERC721DispatcherTrait};
+use starknet::ContractAddress;
+use starknet::account::Call;
 use token_bound_accounts::components::account::account::AccountComponent;
-
-use token_bound_accounts::test_helper::{
-    hello_starknet::{IHelloStarknetDispatcher, IHelloStarknetDispatcherTrait},
+use token_bound_accounts::interfaces::IAccount::{IAccountDispatcher, IAccountDispatcherTrait};
+use token_bound_accounts::interfaces::IERC721::{IERC721Dispatcher, IERC721DispatcherTrait};
+use token_bound_accounts::interfaces::IExecutable::{
+    IExecutableDispatcher, IExecutableDispatcherTrait,
+};
+use token_bound_accounts::test_helper::hello_starknet::{
+    IHelloStarknetDispatcher, IHelloStarknetDispatcherTrait,
 };
 
 const ACCOUNT: felt252 = 1234;
@@ -28,7 +27,7 @@ const SALT: felt252 = 123;
 //                              SETUP
 // *************************************************************************
 fn __setup__() -> (
-    ContractAddress, ContractAddress, ContractAddress, ContractClass, ContractClass
+    ContractAddress, ContractAddress, ContractAddress, ContractClass, ContractClass,
 ) {
     // deploy erc721 helper contract
     let erc721_contract = declare("ERC721").unwrap().contract_class();
@@ -41,7 +40,7 @@ fn __setup__() -> (
     let recipient_contract_class = declare("SimpleAccount").unwrap().contract_class();
     let (recipient, _) = recipient_contract_class
         .deploy(
-            @array![883045738439352841478194533192765345509759306772397516907181243450667673002]
+            @array![883045738439352841478194533192765345509759306772397516907181243450667673002],
         )
         .unwrap();
 
@@ -61,7 +60,7 @@ fn __setup__() -> (
         0,
         registry_contract_address.try_into().unwrap(),
         (*account_contract_class.class_hash).into(),
-        20
+        20,
     ];
     let (account_contract_address, _) = account_contract_class
         .deploy(@acct_constructor_calldata)
@@ -72,7 +71,7 @@ fn __setup__() -> (
         erc721_contract_address,
         registry_contract_address,
         *recipient_contract_class,
-        *account_contract_class
+        *account_contract_class,
     )
 }
 
@@ -118,7 +117,7 @@ fn test_event_is_emitted_on_initialization() {
         0,
         registry_contract_address.try_into().unwrap(),
         (*account_contract.class_hash).into(),
-        20
+        20,
     ];
     let (account_contract_address, _) = account_contract
         .deploy(@acct_constructor_calldata)
@@ -135,11 +134,11 @@ fn test_event_is_emitted_on_initialization() {
                             account_address: account_contract_address,
                             parent_account: ACCOUNT.try_into().unwrap(),
                             token_contract: erc721_contract_address,
-                            token_id: 1.try_into().unwrap()
-                        }
-                    )
-                )
-            ]
+                            token_id: 1.try_into().unwrap(),
+                        },
+                    ),
+                ),
+            ],
         );
 }
 
@@ -157,7 +156,7 @@ fn test_execute() {
     let call = Call {
         to: test_address,
         selector: 1530486729947006463063166157847785599120665941190480211966374137237989315360,
-        calldata: calldata
+        calldata: calldata,
     };
 
     // construct call array
@@ -191,13 +190,13 @@ fn test_execute_multicall() {
     let call1 = Call {
         to: test_address,
         selector: 1530486729947006463063166157847785599120665941190480211966374137237989315360,
-        calldata: calldata.span()
+        calldata: calldata.span(),
     };
     let mut calldata2 = array![200];
     let call2 = Call {
         to: test_address,
         selector: 1157683809588496510300162709548024577765603117833695133799390448986300456129,
-        calldata: calldata2.span()
+        calldata: calldata2.span(),
     };
 
     // construct call array
@@ -232,7 +231,7 @@ fn test_execution_fails_if_invalid_signer() {
     let call = Call {
         to: test_address,
         selector: 1530486729947006463063166157847785599120665941190480211966374137237989315360,
-        calldata: calldata
+        calldata: calldata,
     };
     let mut calls = array![call];
 
@@ -257,7 +256,7 @@ fn test_execution_emits_event() {
     let call = Call {
         to: test_address,
         selector: 1530486729947006463063166157847785599120665941190480211966374137237989315360,
-        calldata: calldata
+        calldata: calldata,
     };
     let mut calls = array![call];
 
@@ -285,11 +284,11 @@ fn test_execution_emits_event() {
                         AccountComponent::TransactionExecuted {
                             hash: 121432345,
                             account_address: contract_address,
-                            response: retdata.span()
-                        }
-                    )
-                )
-            ]
+                            response: retdata.span(),
+                        },
+                    ),
+                ),
+            ],
         );
 }
 
@@ -308,7 +307,7 @@ fn test_execution_updates_state() {
     let call = Call {
         to: test_address,
         selector: 1530486729947006463063166157847785599120665941190480211966374137237989315360,
-        calldata: calldata
+        calldata: calldata,
     };
     let mut calls = array![call];
 

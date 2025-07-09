@@ -3,13 +3,12 @@ pub mod PermissionableComponent {
     // *************************************************************************
     //                              IMPORTS
     // *************************************************************************
+    use openzeppelin_introspection::src5::SRC5Component;
     use starknet::storage::{Map, StorageMapReadAccess, StorageMapWriteAccess};
     use starknet::{ContractAddress, get_caller_address};
-
     use token_bound_accounts::components::account::account::AccountComponent;
-    use token_bound_accounts::interfaces::IAccount::IAccount;
     use token_bound_accounts::components::account::account::AccountComponent::AccountPrivateImpl;
-    use openzeppelin_introspection::src5::SRC5Component;
+    use token_bound_accounts::interfaces::IAccount::IAccount;
 
     // *************************************************************************
     //                              STORAGE
@@ -17,7 +16,7 @@ pub mod PermissionableComponent {
     #[storage]
     pub struct Storage {
         permissions: Map<
-            (ContractAddress, ContractAddress), bool
+            (ContractAddress, ContractAddress), bool,
         > // <<owner, permissioned_address>, bool>
     }
 
@@ -27,7 +26,7 @@ pub mod PermissionableComponent {
     #[event]
     #[derive(Drop, starknet::Event)]
     pub enum Event {
-        PermissionUpdated: PermissionUpdated
+        PermissionUpdated: PermissionUpdated,
     }
 
     // @notice emitted when permissions are updated for an account
@@ -59,7 +58,7 @@ pub mod PermissionableComponent {
         +HasComponent<TContractState>,
         +Drop<TContractState>,
         impl Account: AccountComponent::HasComponent<TContractState>,
-        impl SRC5: SRC5Component::HasComponent<TContractState>
+        impl SRC5: SRC5Component::HasComponent<TContractState>,
     > of PermissionablePrivateTrait<TContractState> {
         // @notice sets permission for an account
         // @permissioned_addresses array of addresses who's permission is to be updated
@@ -67,7 +66,7 @@ pub mod PermissionableComponent {
         fn _set_permission(
             ref self: ComponentState<TContractState>,
             permissioned_addresses: Array<ContractAddress>,
-            permissions: Array<bool>
+            permissions: Array<bool>,
         ) {
             assert(permissioned_addresses.len() == permissions.len(), Errors::INVALID_LENGTH);
 
@@ -91,8 +90,8 @@ pub mod PermissionableComponent {
                         PermissionUpdated {
                             owner: owner,
                             permissioned_address: *permissioned_addresses[index],
-                            has_permission: *permissions[index]
-                        }
+                            has_permission: *permissions[index],
+                        },
                     );
                 index += 1
             }
@@ -104,7 +103,7 @@ pub mod PermissionableComponent {
         fn _has_permission(
             self: @ComponentState<TContractState>,
             owner: ContractAddress,
-            permissioned_address: ContractAddress
+            permissioned_address: ContractAddress,
         ) -> bool {
             let permission = self.permissions.read((owner, permissioned_address));
             permission

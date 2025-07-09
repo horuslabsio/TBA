@@ -3,19 +3,18 @@ pub mod AccountComponent {
     // *************************************************************************
     //                              IMPORTS
     // *************************************************************************
-    use starknet::storage::StoragePointerReadAccess;
-    use core::{
-        result::ResultTrait, hash::HashStateTrait, pedersen::PedersenTrait, num::traits::zero::Zero
-    };
-    use starknet::{
-        get_tx_info, get_contract_address, ContractAddress, account::Call,
-        syscalls::call_contract_syscall, storage::StoragePointerWriteAccess
-    };
-    use token_bound_accounts::utils::array_ext::ArrayExt;
-    use token_bound_accounts::interfaces::IAccount::{IAccount, TBA_INTERFACE_ID};
-
+    use core::hash::HashStateTrait;
+    use core::num::traits::zero::Zero;
+    use core::pedersen::PedersenTrait;
+    use core::result::ResultTrait;
     use openzeppelin_introspection::src5::SRC5Component;
-    use openzeppelin_introspection::src5::SRC5Component::{SRC5Impl, InternalImpl};
+    use openzeppelin_introspection::src5::SRC5Component::{InternalImpl, SRC5Impl};
+    use starknet::account::Call;
+    use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
+    use starknet::syscalls::call_contract_syscall;
+    use starknet::{ContractAddress, get_contract_address, get_tx_info};
+    use token_bound_accounts::interfaces::IAccount::{IAccount, TBA_INTERFACE_ID};
+    use token_bound_accounts::utils::array_ext::ArrayExt;
 
     // *************************************************************************
     //                              STORAGE
@@ -25,7 +24,7 @@ pub mod AccountComponent {
         account_token_contract: ContractAddress, // contract address of NFT
         account_token_id: u256, // token ID of NFT
         context: Context, // account deployment details
-        state: u256, // account state
+        state: u256 // account state
     }
 
     // *************************************************************************
@@ -35,7 +34,7 @@ pub mod AccountComponent {
     #[derive(Drop, starknet::Event)]
     pub enum Event {
         TBACreated: TBACreated,
-        TransactionExecuted: TransactionExecuted
+        TransactionExecuted: TransactionExecuted,
     }
 
     /// @notice Emitted exactly once when the account is initialized
@@ -46,7 +45,7 @@ pub mod AccountComponent {
         pub account_address: ContractAddress,
         pub parent_account: ContractAddress,
         pub token_contract: ContractAddress,
-        pub token_id: u256
+        pub token_id: u256,
     }
 
     /// @notice Emitted when the account executes a transaction
@@ -58,7 +57,7 @@ pub mod AccountComponent {
         pub hash: felt252,
         #[key]
         pub account_address: ContractAddress,
-        pub response: Span<Span<felt252>>
+        pub response: Span<Span<felt252>>,
     }
 
     // *************************************************************************
@@ -68,7 +67,7 @@ pub mod AccountComponent {
     struct Context {
         registry: ContractAddress,
         implementation_hash: felt252,
-        salt: felt252
+        salt: felt252,
     }
 
     // *************************************************************************
@@ -88,7 +87,7 @@ pub mod AccountComponent {
         TContractState,
         +HasComponent<TContractState>,
         +Drop<TContractState>,
-        impl SRC5: SRC5Component::HasComponent<TContractState>
+        impl SRC5: SRC5Component::HasComponent<TContractState>,
     > of IAccount<ComponentState<TContractState>> {
         /// @notice gets the NFT owner
         /// @param token_contract the contract address of the NFT
@@ -112,7 +111,7 @@ pub mod AccountComponent {
         // @notice check that account supports TBA interface
         // @param interface_id interface to be checked against
         fn supports_interface(
-            self: @ComponentState<TContractState>, interface_id: felt252
+            self: @ComponentState<TContractState>, interface_id: felt252,
         ) -> bool {
             get_dep_component!(self, SRC5).supports_interface(interface_id)
         }
@@ -126,7 +125,7 @@ pub mod AccountComponent {
         TContractState,
         +HasComponent<TContractState>,
         +Drop<TContractState>,
-        impl SRC5: SRC5Component::HasComponent<TContractState>
+        impl SRC5: SRC5Component::HasComponent<TContractState>,
     > of AccountPrivateTrait<TContractState> {
         /// @notice initializes the account by setting the initial token contract and token id
         fn initializer(
@@ -135,7 +134,7 @@ pub mod AccountComponent {
             token_id: u256,
             registry: ContractAddress,
             implementation_hash: felt252,
-            salt: felt252
+            salt: felt252,
         ) {
             let owner = self._get_owner(token_contract, token_id);
             assert(owner.is_non_zero(), Errors::UNAUTHORIZED);
@@ -159,8 +158,8 @@ pub mod AccountComponent {
                         account_address: get_contract_address(),
                         parent_account: owner,
                         token_contract,
-                        token_id
-                    }
+                        token_id,
+                    },
                 );
         }
 
@@ -168,7 +167,7 @@ pub mod AccountComponent {
         // @notice this should be called within an `execute` method in implementation contracts
         // @param calls an array of transactions to be executed
         fn _execute(
-            ref self: ComponentState<TContractState>, mut calls: Array<Call>
+            ref self: ComponentState<TContractState>, mut calls: Array<Call>,
         ) -> Array<Span<felt252>> {
             // update state
             self._update_state();
@@ -183,7 +182,7 @@ pub mod AccountComponent {
             let response = retdata.span();
             self
                 .emit(
-                    TransactionExecuted { hash, account_address: get_contract_address(), response }
+                    TransactionExecuted { hash, account_address: get_contract_address(), response },
                 );
             retdata
         }
@@ -207,12 +206,12 @@ pub mod AccountComponent {
         // Should work for contracts which implements CamelCase but not snake_case until starknet
         // v0.15.
         fn _get_owner(
-            self: @ComponentState<TContractState>, token_contract: ContractAddress, token_id: u256
+            self: @ComponentState<TContractState>, token_contract: ContractAddress, token_id: u256,
         ) -> ContractAddress {
             let mut calldata: Array<felt252> = ArrayTrait::new();
             Serde::serialize(@token_id, ref calldata);
             let mut res = call_contract_syscall(
-                token_contract, selector!("ownerOf"), calldata.span()
+                token_contract, selector!("ownerOf"), calldata.span(),
             );
             if (res.is_err()) {
                 res = call_contract_syscall(token_contract, selector!("owner_of"), calldata.span());
@@ -237,7 +236,7 @@ pub mod AccountComponent {
             token_id: u256,
             registry: ContractAddress,
             implementation: felt252,
-            salt: felt252
+            salt: felt252,
         ) -> bool {
             let constructor_calldata_hash = PedersenTrait::new(0)
                 .update(token_contract.into())
@@ -274,7 +273,7 @@ pub mod AccountComponent {
         /// @notice internal function for executing transactions
         /// @param calls An array of transactions to be executed
         fn _execute_calls(
-            ref self: ComponentState<TContractState>, mut calls: Array<Call>
+            ref self: ComponentState<TContractState>, mut calls: Array<Call>,
         ) -> Array<Span<felt252>> {
             let mut result: Array<Span<felt252>> = ArrayTrait::new();
             let mut calls = calls;
@@ -292,12 +291,12 @@ pub mod AccountComponent {
                                 let mut data = array!['multicall-failed', index];
                                 data.append_all(err.span());
                                 panic(data);
-                            }
+                            },
                         }
                     },
-                    Option::None(_) => { break (); }
+                    Option::None(_) => { break (); },
                 };
-            };
+            }
             result
         }
     }

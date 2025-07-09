@@ -1,4 +1,5 @@
-use starknet::{account::Call, ContractAddress, ClassHash};
+use starknet::account::Call;
+use starknet::{ClassHash, ContractAddress};
 
 #[starknet::interface]
 pub trait IUpgradedAccount<TContractState> {
@@ -11,12 +12,12 @@ pub trait IUpgradedAccount<TContractState> {
         ref self: TContractState,
         _public_key: felt252,
         token_contract: ContractAddress,
-        token_id: u256
+        token_id: u256,
     ) -> felt252;
     fn __execute__(ref self: TContractState, calls: Array<Call>) -> Array<Span<felt252>>;
     fn token(self: @TContractState) -> (ContractAddress, u256);
     fn owner(
-        ref self: TContractState, token_contract: ContractAddress, token_id: u256
+        ref self: TContractState, token_contract: ContractAddress, token_id: u256,
     ) -> ContractAddress;
     fn upgrade(ref self: TContractState, implementation: ClassHash);
     fn version(self: @TContractState) -> u8;
@@ -27,20 +28,20 @@ trait IERC721<TContractState> {
     fn balance_of(self: @TContractState, account: ContractAddress) -> u256;
     fn owner_of(self: @TContractState, token_id: u256) -> ContractAddress;
     fn transfer_from(
-        ref self: TContractState, from: ContractAddress, to: ContractAddress, token_id: u256
+        ref self: TContractState, from: ContractAddress, to: ContractAddress, token_id: u256,
     );
     fn safe_transfer_from(
         ref self: TContractState,
         from: ContractAddress,
         to: ContractAddress,
         token_id: u256,
-        data: Span<felt252>
+        data: Span<felt252>,
     );
     fn approve(ref self: TContractState, to: ContractAddress, token_id: u256);
     fn set_approval_for_all(ref self: TContractState, operator: ContractAddress, approved: bool);
     fn get_approved(self: @TContractState, token_id: u256) -> ContractAddress;
     fn is_approved_for_all(
-        self: @TContractState, owner: ContractAddress, operator: ContractAddress
+        self: @TContractState, owner: ContractAddress, operator: ContractAddress,
     ) -> bool;
     // IERC721Metadata
     fn name(self: @TContractState) -> felt252;
@@ -50,16 +51,16 @@ trait IERC721<TContractState> {
 
 #[starknet::contract(account)]
 pub mod UpgradedAccount {
-    use starknet::storage::StoragePointerWriteAccess;
-    use starknet::storage::StoragePointerReadAccess;
-    use starknet::{
-        get_tx_info, get_caller_address, get_contract_address, ContractAddress, account::Call,
-        syscalls::call_contract_syscall, syscalls::replace_class_syscall, ClassHash,
-        SyscallResultTrait
-    };
     use core::ecdsa::check_ecdsa_signature;
     use core::num::traits::zero::Zero;
-    use super::{IERC721DispatcherTrait, IERC721Dispatcher};
+    use starknet::account::Call;
+    use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
+    use starknet::syscalls::{call_contract_syscall, replace_class_syscall};
+    use starknet::{
+        ClassHash, ContractAddress, SyscallResultTrait, get_caller_address, get_contract_address,
+        get_tx_info,
+    };
+    use super::{IERC721Dispatcher, IERC721DispatcherTrait};
 
     #[storage]
     struct Storage {
@@ -71,14 +72,14 @@ pub mod UpgradedAccount {
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
-        Upgraded: Upgraded
+        Upgraded: Upgraded,
     }
 
     #[derive(Drop, starknet::Event)]
     struct Upgraded {
         tokenContract: ContractAddress,
         tokenId: u256,
-        implementation: ClassHash
+        implementation: ClassHash,
     }
 
     #[constructor]
@@ -86,7 +87,7 @@ pub mod UpgradedAccount {
         ref self: ContractState,
         _public_key: felt252,
         token_contract: ContractAddress,
-        token_id: u256
+        token_id: u256,
     ) {
         self._public_key.write(_public_key);
         self._token_contract.write(token_contract);
@@ -113,7 +114,7 @@ pub mod UpgradedAccount {
             ref self: ContractState,
             _public_key: felt252,
             token_contract: ContractAddress,
-            token_id: u256
+            token_id: u256,
         ) -> felt252 {
             self.validate_transaction()
         }
@@ -137,7 +138,7 @@ pub mod UpgradedAccount {
         }
 
         fn owner(
-            ref self: ContractState, token_contract: ContractAddress, token_id: u256
+            ref self: ContractState, token_contract: ContractAddress, token_id: u256,
         ) -> ContractAddress {
             IERC721Dispatcher { contract_address: token_contract }.owner_of(token_id)
         }
@@ -158,7 +159,7 @@ pub mod UpgradedAccount {
                         tokenContract: self._token_contract.read(),
                         tokenId: self._token_id.read(),
                         implementation,
-                    }
+                    },
                 );
         }
 
@@ -184,7 +185,7 @@ pub mod UpgradedAccount {
         }
 
         fn is_valid_signature(
-            self: @ContractState, hash: felt252, signature: Span<felt252>
+            self: @ContractState, hash: felt252, signature: Span<felt252>,
         ) -> bool {
             let valid_length = signature.len() == 2_u32;
             let public_key = self._public_key.read();
@@ -210,12 +211,12 @@ pub mod UpgradedAccount {
                     Option::Some(call) => {
                         match call_contract_syscall(call.to, call.selector, call.calldata) {
                             Result::Ok(mut retdata) => { result.append(retdata); },
-                            Result::Err(_) => { panic(array!['multicall_failed']); }
+                            Result::Err(_) => { panic(array!['multicall_failed']); },
                         }
                     },
-                    Option::None(_) => { break (); }
+                    Option::None(_) => { break (); },
                 };
-            };
+            }
             result
         }
     }

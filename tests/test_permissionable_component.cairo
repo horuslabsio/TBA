@@ -1,27 +1,26 @@
 // *************************************************************************
 //                              PERMISSIONABLE COMPONENT TEST
 // *************************************************************************
-use starknet::{ContractAddress, account::Call};
 use snforge_std::{
-    declare, start_cheat_caller_address, stop_cheat_caller_address, spy_events,
-    EventSpyAssertionsTrait, ContractClassTrait, DeclareResultTrait
+    ContractClassTrait, DeclareResultTrait, EventSpyAssertionsTrait, declare, spy_events,
+    start_cheat_caller_address, stop_cheat_caller_address,
 };
-use token_bound_accounts::interfaces::IAccount::{IAccountDispatcher, IAccountDispatcherTrait};
-use token_bound_accounts::interfaces::IPermissionable::{
-    IPermissionableDispatcher, IPermissionableDispatcherTrait
-};
-use token_bound_accounts::interfaces::IExecutable::{
-    IExecutableDispatcher, IExecutableDispatcherTrait
-};
-
-use token_bound_accounts::interfaces::IUpgradeable::{
-    IUpgradeableDispatcher, IUpgradeableDispatcherTrait
-};
-use token_bound_accounts::interfaces::IERC721::{IERC721Dispatcher, IERC721DispatcherTrait};
+use starknet::ContractAddress;
+use starknet::account::Call;
 use token_bound_accounts::components::permissionable::permissionable::PermissionableComponent;
-
-use token_bound_accounts::test_helper::{
-    hello_starknet::{IHelloStarknetDispatcher, IHelloStarknetDispatcherTrait}
+use token_bound_accounts::interfaces::IAccount::{IAccountDispatcher, IAccountDispatcherTrait};
+use token_bound_accounts::interfaces::IERC721::{IERC721Dispatcher, IERC721DispatcherTrait};
+use token_bound_accounts::interfaces::IExecutable::{
+    IExecutableDispatcher, IExecutableDispatcherTrait,
+};
+use token_bound_accounts::interfaces::IPermissionable::{
+    IPermissionableDispatcher, IPermissionableDispatcherTrait,
+};
+use token_bound_accounts::interfaces::IUpgradeable::{
+    IUpgradeableDispatcher, IUpgradeableDispatcherTrait,
+};
+use token_bound_accounts::test_helper::hello_starknet::{
+    IHelloStarknetDispatcher, IHelloStarknetDispatcherTrait,
 };
 
 const ACCOUNT1: felt252 = 5729;
@@ -44,7 +43,7 @@ fn __setup__() -> (ContractAddress, ContractAddress) {
     let account_contract = declare("SimpleAccount").unwrap().contract_class();
     let (recipient, _) = account_contract
         .deploy(
-            @array![883045738439352841478194533192765345509759306772397516907181243450667673002]
+            @array![883045738439352841478194533192765345509759306772397516907181243450667673002],
         )
         .unwrap();
 
@@ -64,7 +63,7 @@ fn __setup__() -> (ContractAddress, ContractAddress) {
         0,
         registry_contract_address.try_into().unwrap(),
         (*account_contract.class_hash).into(),
-        20
+        20,
     ];
     let (account_contract_address, _) = account_contract
         .deploy(@acct_constructor_calldata)
@@ -199,11 +198,11 @@ fn test_set_permission_emits_event() {
                         PermissionableComponent::PermissionUpdated {
                             owner: owner,
                             permissioned_address: ACCOUNT4.try_into().unwrap(),
-                            has_permission: true
-                        }
-                    )
-                )
-            ]
+                            has_permission: true,
+                        },
+                    ),
+                ),
+            ],
         );
 }
 
@@ -242,7 +241,7 @@ fn test_permissioned_accounts_can_execute() {
     let call = Call {
         to: test_address,
         selector: 1530486729947006463063166157847785599120665941190480211966374137237989315360,
-        calldata: calldata
+        calldata: calldata,
     };
 
     start_cheat_caller_address(contract_address, ACCOUNT2.try_into().unwrap());

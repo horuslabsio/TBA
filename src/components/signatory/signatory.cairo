@@ -3,16 +3,15 @@ pub mod SignatoryComponent {
     // *************************************************************************
     //                              IMPORTS
     // *************************************************************************
+    use openzeppelin_introspection::src5::SRC5Component;
     use starknet::ContractAddress;
     use token_bound_accounts::components::account::account::AccountComponent;
-    use token_bound_accounts::components::account::account::AccountComponent::AccountPrivateImpl;
-    use token_bound_accounts::components::account::account::AccountComponent::AccountImpl;
-
+    use token_bound_accounts::components::account::account::AccountComponent::{
+        AccountImpl, AccountPrivateImpl,
+    };
     use token_bound_accounts::components::permissionable::permissionable::PermissionableComponent;
     use token_bound_accounts::components::permissionable::permissionable::PermissionableComponent::PermissionablePrivateImpl;
     use token_bound_accounts::interfaces::ISRC6::{ISRC6Dispatcher, ISRC6DispatcherTrait};
-
-    use openzeppelin_introspection::src5::SRC5Component;
 
     // *************************************************************************
     //                              STORAGE
@@ -39,12 +38,12 @@ pub mod SignatoryComponent {
         +Drop<TContractState>,
         impl Account: AccountComponent::HasComponent<TContractState>,
         impl Permissionable: PermissionableComponent::HasComponent<TContractState>,
-        impl SRC5: SRC5Component::HasComponent<TContractState>
+        impl SRC5: SRC5Component::HasComponent<TContractState>,
     > of SignatoryPrivateTrait<TContractState> {
         /// @notice implements a simple signer validation where only NFT owner is a valid signer.
         /// @param signer the address to be validated
         fn _base_signer_validation(
-            self: @ComponentState<TContractState>, signer: ContractAddress
+            self: @ComponentState<TContractState>, signer: ContractAddress,
         ) -> bool {
             let account = get_dep_component!(self, Account);
             let owner = account.owner();
@@ -61,7 +60,7 @@ pub mod SignatoryComponent {
         /// permissioned addresses are valid signers.
         /// @param signer the address to be validated
         fn _permissioned_signer_validation(
-            self: @ComponentState<TContractState>, signer: ContractAddress
+            self: @ComponentState<TContractState>, signer: ContractAddress,
         ) -> bool {
             let account = get_dep_component!(self, Account);
             let owner = account.owner();
@@ -84,7 +83,7 @@ pub mod SignatoryComponent {
         /// @param hash The message hash
         /// @param signature The signature to be validated
         fn _is_valid_signature(
-            self: @ComponentState<TContractState>, hash: felt252, signature: Span<felt252>
+            self: @ComponentState<TContractState>, hash: felt252, signature: Span<felt252>,
         ) -> felt252 {
             let account = get_dep_component!(self, Account);
             let owner = account.owner();

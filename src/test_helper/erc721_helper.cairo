@@ -24,7 +24,7 @@ pub mod ERC721 {
         #[substorage(v0)]
         erc721: ERC721Component::Storage,
         #[substorage(v0)]
-        src5: SRC5Component::Storage
+        src5: SRC5Component::Storage,
     }
 
     #[event]
@@ -33,7 +33,7 @@ pub mod ERC721 {
         #[flat]
         ERC721Event: ERC721Component::Event,
         #[flat]
-        SRC5Event: SRC5Component::Event
+        SRC5Event: SRC5Component::Event,
     }
 
     #[constructor]

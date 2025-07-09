@@ -10,14 +10,14 @@ pub trait IAccountV3<TContractState> {
         operator: ContractAddress,
         from: ContractAddress,
         token_id: u256,
-        data: Span<felt252>
+        data: Span<felt252>,
     ) -> felt252;
     fn onERC721Received(
         self: @TContractState,
         operator: ContractAddress,
         from: ContractAddress,
         token_id: u256,
-        data: Span<felt252>
+        data: Span<felt252>,
     ) -> felt252;
     fn context(self: @TContractState) -> (ContractAddress, felt252, felt252);
 }

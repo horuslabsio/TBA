@@ -1,15 +1,14 @@
 // *************************************************************************
 //                              REGISTRY TEST
 // *************************************************************************
-use starknet::ContractAddress;
 use snforge_std::{
-    declare, start_cheat_caller_address, stop_cheat_caller_address, spy_events,
-    EventSpyAssertionsTrait, ContractClassTrait, DeclareResultTrait
+    ContractClassTrait, DeclareResultTrait, EventSpyAssertionsTrait, declare, spy_events,
+    start_cheat_caller_address, stop_cheat_caller_address,
 };
-
-use token_bound_accounts::interfaces::IRegistry::{IRegistryDispatcherTrait, IRegistryDispatcher};
+use starknet::ContractAddress;
 use token_bound_accounts::interfaces::IAccount::{IAccountDispatcher, IAccountDispatcherTrait};
 use token_bound_accounts::interfaces::IERC721::{IERC721Dispatcher, IERC721DispatcherTrait};
+use token_bound_accounts::interfaces::IRegistry::{IRegistryDispatcher, IRegistryDispatcherTrait};
 use token_bound_accounts::registry::registry::Registry;
 
 const ACCOUNT: felt252 = 1234;
@@ -58,7 +57,7 @@ fn test_create_account() {
             erc721_contract_address,
             1.try_into().unwrap(),
             245828,
-            'SN_SEPOLIA'
+            'SN_SEPOLIA',
         );
     stop_cheat_caller_address(registry_contract_address);
 
@@ -90,7 +89,7 @@ fn test_create_account_emits_event() {
             erc721_contract_address,
             1.try_into().unwrap(),
             245828,
-            'SN_SEPOLIA'
+            'SN_SEPOLIA',
         );
     stop_cheat_caller_address(registry_contract_address);
 
@@ -104,11 +103,11 @@ fn test_create_account_emits_event() {
                         Registry::AccountCreated {
                             account_address,
                             token_contract: erc721_contract_address,
-                            token_id: 1.try_into().unwrap()
-                        }
-                    )
-                )
-            ]
+                            token_id: 1.try_into().unwrap(),
+                        },
+                    ),
+                ),
+            ],
         );
 }
 
@@ -131,7 +130,7 @@ fn test_get_account() {
             erc721_contract_address,
             1.try_into().unwrap(),
             252520,
-            'SN_SEPOLIA'
+            'SN_SEPOLIA',
         );
     stop_cheat_caller_address(registry_contract_address);
 
@@ -142,7 +141,7 @@ fn test_get_account() {
             erc721_contract_address,
             1.try_into().unwrap(),
             252520,
-            'SN_SEPOLIA'
+            'SN_SEPOLIA',
         );
 
     // compare both addresses
