@@ -3,18 +3,19 @@
 // *************************************************************************
 #[starknet::contract]
 pub mod AccountPreset {
-    use starknet::{ContractAddress, get_caller_address, ClassHash, account::Call};
     use openzeppelin_introspection::src5::SRC5Component;
-
+    use starknet::account::Call;
+    use starknet::{ClassHash, ContractAddress, get_caller_address};
     use token_bound_accounts::components::account::account::AccountComponent;
-    use token_bound_accounts::components::upgradeable::upgradeable::UpgradeableComponent;
     use token_bound_accounts::components::lockable::lockable::LockableComponent;
-    use token_bound_accounts::components::signatory::signatory::SignatoryComponent;
     use token_bound_accounts::components::permissionable::permissionable::PermissionableComponent;
-    use token_bound_accounts::interfaces::{
-        IUpgradeable::IUpgradeable, IExecutable::IExecutable, ILockable::ILockable,
-        ISignatory::ISignatory, IPermissionable::IPermissionable
-    };
+    use token_bound_accounts::components::signatory::signatory::SignatoryComponent;
+    use token_bound_accounts::components::upgradeable::upgradeable::UpgradeableComponent;
+    use token_bound_accounts::interfaces::IExecutable::IExecutable;
+    use token_bound_accounts::interfaces::ILockable::ILockable;
+    use token_bound_accounts::interfaces::IPermissionable::IPermissionable;
+    use token_bound_accounts::interfaces::ISignatory::ISignatory;
+    use token_bound_accounts::interfaces::IUpgradeable::IUpgradeable;
 
     component!(path: AccountComponent, storage: account, event: AccountEvent);
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
@@ -50,7 +51,7 @@ pub mod AccountPreset {
         #[substorage(v0)]
         permissionable: PermissionableComponent::Storage,
         #[substorage(v0)]
-        src5: SRC5Component::Storage
+        src5: SRC5Component::Storage,
     }
 
     // *************************************************************************
@@ -70,7 +71,7 @@ pub mod AccountPreset {
         #[flat]
         PermissionableEvent: PermissionableComponent::Event,
         #[flat]
-        SRC5Event: SRC5Component::Event
+        SRC5Event: SRC5Component::Event,
     }
 
     // *************************************************************************
@@ -83,7 +84,7 @@ pub mod AccountPreset {
         token_id: u256,
         registry: ContractAddress,
         implementation_hash: felt252,
-        salt: felt252
+        salt: felt252,
     ) {
         self.account.initializer(token_contract, token_id, registry, implementation_hash, salt);
     }
@@ -98,7 +99,7 @@ pub mod AccountPreset {
         }
 
         fn is_valid_signature(
-            self: @ContractState, hash: felt252, signature: Span<felt252>
+            self: @ContractState, hash: felt252, signature: Span<felt252>,
         ) -> felt252 {
             self.signatory._is_valid_signature(hash, signature)
         }
@@ -169,14 +170,14 @@ pub mod AccountPreset {
         fn set_permission(
             ref self: ContractState,
             permissioned_addresses: Array<ContractAddress>,
-            permissions: Array<bool>
+            permissions: Array<bool>,
         ) {
             // set permissions
             self.permissionable._set_permission(permissioned_addresses, permissions)
         }
 
         fn has_permission(
-            self: @ContractState, owner: ContractAddress, permissioned_address: ContractAddress
+            self: @ContractState, owner: ContractAddress, permissioned_address: ContractAddress,
         ) -> bool {
             self.permissionable._has_permission(owner, permissioned_address)
         }

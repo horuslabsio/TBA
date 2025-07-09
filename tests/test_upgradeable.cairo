@@ -1,19 +1,18 @@
 // *************************************************************************
 //                              UPGRADEABLE COMPONENT TEST
 // *************************************************************************
-use starknet::ContractAddress;
 use snforge_std::{
-    declare, start_cheat_caller_address, stop_cheat_caller_address, spy_events,
-    EventSpyAssertionsTrait, ContractClassTrait, DeclareResultTrait
+    ContractClassTrait, DeclareResultTrait, EventSpyAssertionsTrait, declare, spy_events,
+    start_cheat_caller_address, stop_cheat_caller_address,
 };
-use token_bound_accounts::interfaces::IUpgradeable::{
-    IUpgradeableDispatcher, IUpgradeableDispatcherTrait
-};
-use token_bound_accounts::interfaces::IERC721::{IERC721Dispatcher, IERC721DispatcherTrait};
+use starknet::ContractAddress;
 use token_bound_accounts::components::upgradeable::upgradeable::UpgradeableComponent;
-
-use token_bound_accounts::test_helper::{
-    account_upgrade::{IUpgradedAccountDispatcher, IUpgradedAccountDispatcherTrait}
+use token_bound_accounts::interfaces::IERC721::{IERC721Dispatcher, IERC721DispatcherTrait};
+use token_bound_accounts::interfaces::IUpgradeable::{
+    IUpgradeableDispatcher, IUpgradeableDispatcherTrait,
+};
+use token_bound_accounts::test_helper::account_upgrade::{
+    IUpgradedAccountDispatcher, IUpgradedAccountDispatcherTrait,
 };
 
 const ACCOUNT: felt252 = 1234;
@@ -34,7 +33,7 @@ fn __setup__() -> (ContractAddress, ContractAddress) {
     let account_contract = declare("SimpleAccount").unwrap().contract_class();
     let (recipient, _) = account_contract
         .deploy(
-            @array![883045738439352841478194533192765345509759306772397516907181243450667673002]
+            @array![883045738439352841478194533192765345509759306772397516907181243450667673002],
         )
         .unwrap();
 
@@ -54,7 +53,7 @@ fn __setup__() -> (ContractAddress, ContractAddress) {
         0,
         registry_contract_address.try_into().unwrap(),
         (*account_contract.class_hash).into(),
-        20
+        20,
     ];
     let (account_contract_address, _) = account_contract
         .deploy(@acct_constructor_calldata)
@@ -127,10 +126,10 @@ fn test_upgrade_emits_event() {
                     contract_address,
                     UpgradeableComponent::Event::TBAUpgraded(
                         UpgradeableComponent::TBAUpgraded {
-                            account_address: contract_address, class_hash: new_class_hash
-                        }
-                    )
-                )
-            ]
+                            account_address: contract_address, class_hash: new_class_hash,
+                        },
+                    ),
+                ),
+            ],
         );
 }

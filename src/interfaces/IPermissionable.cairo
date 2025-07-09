@@ -8,9 +8,9 @@ pub trait IPermissionable<TContractState> {
     fn set_permission(
         ref self: TContractState,
         permissioned_addresses: Array<ContractAddress>,
-        permissions: Array<bool>
+        permissions: Array<bool>,
     );
     fn has_permission(
-        self: @TContractState, owner: ContractAddress, permissioned_address: ContractAddress
+        self: @TContractState, owner: ContractAddress, permissioned_address: ContractAddress,
     ) -> bool;
 }

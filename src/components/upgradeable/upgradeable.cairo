@@ -3,13 +3,11 @@ pub mod UpgradeableComponent {
     // *************************************************************************
     //                              IMPORTS
     // *************************************************************************
-    use starknet::{ClassHash, SyscallResultTrait, get_contract_address, ContractAddress};
     use core::num::traits::zero::Zero;
-
+    use openzeppelin_introspection::src5::SRC5Component;
+    use starknet::{ClassHash, ContractAddress, SyscallResultTrait, get_contract_address};
     use token_bound_accounts::components::account::account::AccountComponent;
     use token_bound_accounts::components::account::account::AccountComponent::AccountPrivateImpl;
-
-    use openzeppelin_introspection::src5::SRC5Component;
 
     // *************************************************************************
     //                              STORAGE
@@ -23,7 +21,7 @@ pub mod UpgradeableComponent {
     #[event]
     #[derive(Drop, starknet::Event)]
     pub enum Event {
-        TBAUpgraded: TBAUpgraded
+        TBAUpgraded: TBAUpgraded,
     }
 
     /// @notice Emitted when the contract is upgraded.
@@ -31,7 +29,7 @@ pub mod UpgradeableComponent {
     #[derive(Drop, starknet::Event)]
     pub struct TBAUpgraded {
         pub account_address: ContractAddress,
-        pub class_hash: ClassHash
+        pub class_hash: ClassHash,
     }
 
     // *************************************************************************
@@ -50,7 +48,7 @@ pub mod UpgradeableComponent {
         +HasComponent<TContractState>,
         +Drop<TContractState>,
         impl Account: AccountComponent::HasComponent<TContractState>,
-        impl SRC5: SRC5Component::HasComponent<TContractState>
+        impl SRC5: SRC5Component::HasComponent<TContractState>,
     > of UpgradeablePrivateTrait<TContractState> {
         /// @notice replaces the contract's class hash with `new_class_hash`.
         /// Emits an `Upgraded` event.
@@ -67,8 +65,8 @@ pub mod UpgradeableComponent {
             self
                 .emit(
                     TBAUpgraded {
-                        account_address: get_contract_address(), class_hash: new_class_hash
-                    }
+                        account_address: get_contract_address(), class_hash: new_class_hash,
+                    },
                 );
         }
     }

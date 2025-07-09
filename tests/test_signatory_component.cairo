@@ -1,16 +1,16 @@
 // *************************************************************************
 //                              COMPONENT COMPONENT TEST
 // *************************************************************************
-use starknet::ContractAddress;
 use snforge_std::{
-    declare, start_cheat_caller_address, stop_cheat_caller_address, ContractClassTrait,
-    DeclareResultTrait
+    ContractClassTrait, DeclareResultTrait, declare, start_cheat_caller_address,
+    stop_cheat_caller_address,
 };
+use starknet::ContractAddress;
+use token_bound_accounts::interfaces::IERC721::{IERC721Dispatcher, IERC721DispatcherTrait};
 use token_bound_accounts::interfaces::IPermissionable::{
-    IPermissionableDispatcher, IPermissionableDispatcherTrait
+    IPermissionableDispatcher, IPermissionableDispatcherTrait,
 };
 use token_bound_accounts::interfaces::ISignatory::{ISignatoryDispatcher, ISignatoryDispatcherTrait};
-use token_bound_accounts::interfaces::IERC721::{IERC721Dispatcher, IERC721DispatcherTrait};
 
 const ACCOUNT1: felt252 = 5729;
 const ACCOUNT2: felt252 = 1234;
@@ -23,7 +23,7 @@ struct SignedTransactionData {
     public_key: felt252,
     transaction_hash: felt252,
     r: felt252,
-    s: felt252
+    s: felt252,
 }
 
 fn SIGNED_TX_DATA() -> SignedTransactionData {
@@ -32,7 +32,7 @@ fn SIGNED_TX_DATA() -> SignedTransactionData {
         public_key: 883045738439352841478194533192765345509759306772397516907181243450667673002,
         transaction_hash: 2717105892474786771566982177444710571376803476229898722748888396642649184538,
         r: 3068558690657879390136740086327753007413919701043650133111397282816679110801,
-        s: 3355728545224320878895493649495491771252432631648740019139167265522817576501
+        s: 3355728545224320878895493649495491771252432631648740019139167265522817576501,
     }
 }
 
@@ -51,7 +51,7 @@ fn __setup__() -> (ContractAddress, ContractAddress) {
     let account_contract = declare("SimpleAccount").unwrap().contract_class();
     let (recipient, _) = account_contract
         .deploy(
-            @array![883045738439352841478194533192765345509759306772397516907181243450667673002]
+            @array![883045738439352841478194533192765345509759306772397516907181243450667673002],
         )
         .unwrap();
 
@@ -72,7 +72,7 @@ fn __setup__() -> (ContractAddress, ContractAddress) {
         0,
         registry_contract_address.try_into().unwrap(),
         (*account_contract.class_hash).into(),
-        20
+        20,
     ];
     let (account_contract_address, _) = account_contract
         .deploy(@acct_constructor_calldata)

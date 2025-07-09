@@ -8,10 +8,9 @@ pub mod Registry {
     // *************************************************************************
     use core::hash::HashStateTrait;
     use core::pedersen::PedersenTrait;
-    use starknet::{
-        ContractAddress, get_contract_address, syscalls::deploy_syscall, class_hash::ClassHash,
-        SyscallResultTrait
-    };
+    use starknet::class_hash::ClassHash;
+    use starknet::syscalls::deploy_syscall;
+    use starknet::{ContractAddress, SyscallResultTrait, get_contract_address};
     use token_bound_accounts::interfaces::IRegistry::IRegistry;
 
     // *************************************************************************
@@ -26,7 +25,7 @@ pub mod Registry {
     #[event]
     #[derive(Drop, starknet::Event)]
     pub enum Event {
-        AccountCreated: AccountCreated
+        AccountCreated: AccountCreated,
     }
 
     /// @notice Emitted when a new tokenbound account is deployed/created
@@ -57,7 +56,7 @@ pub mod Registry {
             token_contract: ContractAddress,
             token_id: u256,
             salt: felt252,
-            chain_id: felt252
+            chain_id: felt252,
         ) -> ContractAddress {
             let mut constructor_calldata: Array<felt252> = array![
                 token_contract.into(),
@@ -65,14 +64,14 @@ pub mod Registry {
                 token_id.high.into(),
                 get_contract_address().into(),
                 implementation_hash,
-                salt
+                salt,
             ];
 
             let class_hash: ClassHash = implementation_hash.try_into().unwrap();
             let result = deploy_syscall(class_hash, salt, constructor_calldata.span(), false);
             let (account_address, _) = result.unwrap_syscall();
 
-            self.emit(AccountCreated { account_address, token_contract, token_id, });
+            self.emit(AccountCreated { account_address, token_contract, token_id });
             account_address
         }
 
@@ -87,7 +86,7 @@ pub mod Registry {
             token_contract: ContractAddress,
             token_id: u256,
             salt: felt252,
-            chain_id: felt252
+            chain_id: felt252,
         ) -> ContractAddress {
             let constructor_calldata_hash = PedersenTrait::new(0)
                 .update(token_contract.into())

@@ -7,18 +7,20 @@ pub mod AccountV3 {
     // *************************************************************************
     //                             IMPORTS
     // *************************************************************************
-    use starknet::{ContractAddress, get_caller_address, get_tx_info, ClassHash, account::Call};
     use openzeppelin_introspection::src5::SRC5Component;
-
+    use starknet::account::Call;
+    use starknet::{ClassHash, ContractAddress, get_caller_address, get_tx_info};
     use token_bound_accounts::components::account::account::AccountComponent;
-    use token_bound_accounts::components::upgradeable::upgradeable::UpgradeableComponent;
     use token_bound_accounts::components::lockable::lockable::LockableComponent;
-    use token_bound_accounts::components::signatory::signatory::SignatoryComponent;
     use token_bound_accounts::components::permissionable::permissionable::PermissionableComponent;
-    use token_bound_accounts::interfaces::{
-        IUpgradeable::IUpgradeable, IExecutable::IExecutable, ILockable::ILockable,
-        ISignatory::ISignatory, IPermissionable::IPermissionable, IAccountV3::IAccountV3
-    };
+    use token_bound_accounts::components::signatory::signatory::SignatoryComponent;
+    use token_bound_accounts::components::upgradeable::upgradeable::UpgradeableComponent;
+    use token_bound_accounts::interfaces::IAccountV3::IAccountV3;
+    use token_bound_accounts::interfaces::IExecutable::IExecutable;
+    use token_bound_accounts::interfaces::ILockable::ILockable;
+    use token_bound_accounts::interfaces::IPermissionable::IPermissionable;
+    use token_bound_accounts::interfaces::ISignatory::ISignatory;
+    use token_bound_accounts::interfaces::IUpgradeable::IUpgradeable;
 
     // *************************************************************************
     //                             COMPONENTS
@@ -57,7 +59,7 @@ pub mod AccountV3 {
         #[substorage(v0)]
         permissionable: PermissionableComponent::Storage,
         #[substorage(v0)]
-        src5: SRC5Component::Storage
+        src5: SRC5Component::Storage,
     }
 
     // *************************************************************************
@@ -77,7 +79,7 @@ pub mod AccountV3 {
         #[flat]
         PermissionableEvent: PermissionableComponent::Event,
         #[flat]
-        SRC5Event: SRC5Component::Event
+        SRC5Event: SRC5Component::Event,
     }
 
     // *************************************************************************
@@ -98,7 +100,7 @@ pub mod AccountV3 {
         token_id: u256,
         registry: ContractAddress,
         implementation_hash: felt252,
-        salt: felt252
+        salt: felt252,
     ) {
         self.account.initializer(token_contract, token_id, registry, implementation_hash, salt);
     }
@@ -119,7 +121,7 @@ pub mod AccountV3 {
             operator: ContractAddress,
             from: ContractAddress,
             token_id: u256,
-            data: Span<felt252>
+            data: Span<felt252>,
         ) -> felt252 {
             let (_token_contract, _token_id, _chain_id) = self.account.token();
             let tx_info = get_tx_info().unbox();
@@ -144,7 +146,7 @@ pub mod AccountV3 {
             operator: ContractAddress,
             from: ContractAddress,
             token_id: u256,
-            data: Span<felt252>
+            data: Span<felt252>,
         ) -> felt252 {
             self.on_erc721_received(operator, from, token_id, data)
         }
@@ -171,7 +173,7 @@ pub mod AccountV3 {
         /// @param hash The message hash
         /// @param signature The signature to be validated
         fn is_valid_signature(
-            self: @ContractState, hash: felt252, signature: Span<felt252>
+            self: @ContractState, hash: felt252, signature: Span<felt252>,
         ) -> felt252 {
             self.signatory._is_valid_signature(hash, signature)
         }
@@ -253,7 +255,7 @@ pub mod AccountV3 {
         fn set_permission(
             ref self: ContractState,
             permissioned_addresses: Array<ContractAddress>,
-            permissions: Array<bool>
+            permissions: Array<bool>,
         ) {
             // set permissions
             self.permissionable._set_permission(permissioned_addresses, permissions)
@@ -263,7 +265,7 @@ pub mod AccountV3 {
         // @param owner tokenbound account owner
         // @param permissioned_address address to check permission for
         fn has_permission(
-            self: @ContractState, owner: ContractAddress, permissioned_address: ContractAddress
+            self: @ContractState, owner: ContractAddress, permissioned_address: ContractAddress,
         ) -> bool {
             self.permissionable._has_permission(owner, permissioned_address)
         }

@@ -11,7 +11,7 @@ pub trait IRegistry<TContractState> {
         token_contract: ContractAddress,
         token_id: u256,
         salt: felt252,
-        chain_id: felt252
+        chain_id: felt252,
     ) -> ContractAddress;
 
     fn get_account(
@@ -20,6 +20,6 @@ pub trait IRegistry<TContractState> {
         token_contract: ContractAddress,
         token_id: u256,
         salt: felt252,
-        chain_id: felt252
+        chain_id: felt252,
     ) -> ContractAddress;
 }
